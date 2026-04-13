@@ -1,0 +1,82 @@
+# ============================================
+# 共通定義 (全環境で共有)
+# 環境別は docker-compose.{env}.yml でオーバーライド
+# ============================================
+#
+# 使い方:
+#   開発:       docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#   ステージング: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#   本番:       docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# または .env で COMPOSE_FILE を指定:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.dev.yml
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-anki_ai_flashcard}
+      - DB_USERNAME=${DB_USERNAME:-app_user}
+      - DB_PASSWORD=${DB_PASSWORD:-app_password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  queue:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    environment:
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-anki_ai_flashcard}
+      - DB_USERNAME=${DB_USERNAME:-app_user}
+      - DB_PASSWORD=${DB_PASSWORD:-app_password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - backend
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root_password}
+      - MYSQL_DATABASE=${DB_DATABASE:-anki_ai_flashcard}
+      - MYSQL_USER=${DB_USERNAME:-app_user}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-app_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  mysql_data:
+  redis_data:
