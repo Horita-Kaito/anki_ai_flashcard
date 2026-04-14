@@ -50,4 +50,19 @@ final class EloquentCardRepository implements CardRepositoryInterface
     {
         $card->tags()->sync($tagIds);
     }
+
+    public function countForUser(int $userId): int
+    {
+        return Card::query()->where('user_id', $userId)->count();
+    }
+
+    public function recentForUser(int $userId, int $limit = 5): array
+    {
+        return Card::query()
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->all();
+    }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentUser, useLogout } from "@/features/auth";
+import { DashboardOverview } from "@/features/dashboard";
 import { Button } from "@/shared/ui/button";
 import { useRouter } from "next/navigation";
 
@@ -39,9 +40,14 @@ export default function DashboardPage() {
 
   return (
     <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-bold">ダッシュボード</h1>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">ダッシュボード</h1>
+            <p className="text-sm text-muted-foreground">
+              {user.name} さん、おかえりなさい
+            </p>
+          </div>
           <Button
             variant="outline"
             size="sm"
@@ -53,30 +59,7 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        <div className="border rounded-xl p-4 md:p-6 space-y-2">
-          <p className="text-sm text-muted-foreground">ようこそ</p>
-          <p className="text-lg md:text-xl font-semibold">{user.name} さん</p>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <div className="border rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">今日の復習</p>
-            <p className="text-2xl font-bold mt-1">--</p>
-          </div>
-          <div className="border rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">新規候補</p>
-            <p className="text-2xl font-bold mt-1">--</p>
-          </div>
-          <div className="border rounded-xl p-4">
-            <p className="text-sm text-muted-foreground">総カード数</p>
-            <p className="text-2xl font-bold mt-1">--</p>
-          </div>
-        </div>
-
-        <p className="text-sm text-muted-foreground">
-          Phase 1 以降で機能を追加していきます。
-        </p>
+        <DashboardOverview />
       </div>
     </main>
   );

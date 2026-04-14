@@ -29,6 +29,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         \App\Contracts\Repositories\TagRepositoryInterface::class => \App\Repositories\EloquentTagRepository::class,
         \App\Contracts\Repositories\CardRepositoryInterface::class => \App\Repositories\EloquentCardRepository::class,
         \App\Contracts\Repositories\CardScheduleRepositoryInterface::class => \App\Repositories\EloquentCardScheduleRepository::class,
+        \App\Contracts\Repositories\UserSettingRepositoryInterface::class => \App\Repositories\EloquentUserSettingRepository::class,
 
         // Services (固定バインド)
         // CardGenerationServiceInterface::class => CardGenerationService::class,

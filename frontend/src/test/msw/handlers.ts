@@ -1,8 +1,10 @@
 import { authHandlers } from "./handlers/auth";
 import { cardHandlers } from "./handlers/card";
+import { dashboardHandlers } from "./handlers/dashboard";
 import { deckHandlers } from "./handlers/deck";
 import { domainTemplateHandlers } from "./handlers/domain-template";
 import { noteSeedHandlers } from "./handlers/note-seed";
+import { userSettingHandlers } from "./handlers/user-setting";
 
 /**
  * 全 feature のハンドラを集約。
@@ -14,4 +16,6 @@ export const handlers = [
   ...domainTemplateHandlers,
   ...noteSeedHandlers,
   ...cardHandlers,
+  ...dashboardHandlers,
+  ...userSettingHandlers,
 ];

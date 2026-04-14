@@ -15,4 +15,14 @@ interface CardScheduleRepositoryInterface
     public function createInitial(Card $card): CardSchedule;
 
     public function findByCard(int $cardId): ?CardSchedule;
+
+    /**
+     * 指定時刻までに due_at が到達しているスケジュール件数 (= 今日の復習対象数)
+     */
+    public function dueCountForUser(int $userId, \DateTimeInterface $before): int;
+
+    /**
+     * state='new' のスケジュール件数
+     */
+    public function newCountForUser(int $userId): int;
 }

@@ -42,4 +42,14 @@ final class EloquentNoteSeedRepository implements NoteSeedRepositoryInterface
     {
         $noteSeed->delete();
     }
+
+    public function recentForUser(int $userId, int $limit = 5): array
+    {
+        return NoteSeed::query()
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->all();
+    }
 }

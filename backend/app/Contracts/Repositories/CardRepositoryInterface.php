@@ -30,4 +30,9 @@ interface CardRepositoryInterface
      * @param  array<int, int>  $tagIds
      */
     public function syncTags(Card $card, array $tagIds): void;
+
+    public function countForUser(int $userId): int;
+
+    /** @return array<int, Card> */
+    public function recentForUser(int $userId, int $limit = 5): array;
 }

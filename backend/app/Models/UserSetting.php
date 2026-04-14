@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class UserSetting extends Model
+{
+    /** @var array<int, string> */
+    protected $fillable = [
+        'user_id',
+        'default_domain_template_id',
+        'daily_new_limit',
+        'daily_review_limit',
+        'default_ai_provider',
+        'default_ai_model',
+        'default_generation_count',
+    ];
+
+    /** @var array<string, string> */
+    protected $casts = [
+        'daily_new_limit' => 'integer',
+        'daily_review_limit' => 'integer',
+        'default_generation_count' => 'integer',
+        'default_domain_template_id' => 'integer',
+    ];
+
+    /** @return BelongsTo<User, self> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}

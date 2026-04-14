@@ -29,4 +29,20 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
     {
         return CardSchedule::query()->where('card_id', $cardId)->first();
     }
+
+    public function dueCountForUser(int $userId, \DateTimeInterface $before): int
+    {
+        return CardSchedule::query()
+            ->where('user_id', $userId)
+            ->where('due_at', '<=', $before)
+            ->count();
+    }
+
+    public function newCountForUser(int $userId): int
+    {
+        return CardSchedule::query()
+            ->where('user_id', $userId)
+            ->where('state', ScheduleState::New->value)
+            ->count();
+    }
 }

@@ -25,4 +25,7 @@ interface NoteSeedRepositoryInterface
     public function update(NoteSeed $noteSeed, array $attributes): NoteSeed;
 
     public function delete(NoteSeed $noteSeed): void;
+
+    /** @return array<int, NoteSeed> */
+    public function recentForUser(int $userId, int $limit = 5): array;
 }
