@@ -1,25 +1,54 @@
 # Project Skills
 
-このプロジェクト固有の Claude Code skill 一覧。UI 作成ワークフローを標準化するため、これらの skill を `/slash` コマンドから起動できる。
+このプロジェクト固有の Claude Code skill 一覧。UI/API 作成ワークフローを標準化する。
+
+## フロントエンド
 
 | Skill | 起動 | 用途 |
 |-------|------|------|
-| [ui-new-feature](./ui-new-feature/SKILL.md) | `/ui-new-feature <name>` | 新しい feature ディレクトリを scaffold |
-| [ui-new-component](./ui-new-component/SKILL.md) | `/ui-new-component <feature> <name>` | feature 内にコンポーネント追加 |
+| [ui-new-feature](./ui-new-feature/SKILL.md) | `/ui-new-feature <name>` | Feature ディレクトリを scaffold |
+| [ui-new-component](./ui-new-component/SKILL.md) | `/ui-new-component <feature> <name>` | Feature 内にコンポーネント追加 |
 | [ui-new-page](./ui-new-page/SKILL.md) | `/ui-new-page <path>` | App Router にページ追加 |
-| [ui-review](./ui-review/SKILL.md) | `/ui-review <path>` | 設計ルールに照らしてセルフレビュー |
+| [ui-review](./ui-review/SKILL.md) | `/ui-review <path>` | 設計ルール照合セルフレビュー |
 
-## ワークフロー
+**正典**: `docs/05_frontend_design.md`
 
-新機能実装時の標準フロー:
+## バックエンド
 
+| Skill | 起動 | 用途 |
+|-------|------|------|
+| [api-new-resource](./api-new-resource/SKILL.md) | `/api-new-resource <name>` | Interface + Repository + Service + Controller + Request + Resource + Policy + Model + Migration + Test 一式 scaffold |
+| [api-new-service](./api-new-service/SKILL.md) | `/api-new-service <name>` | Service + Interface + DI バインディング追加 |
+| [api-new-migration](./api-new-migration/SKILL.md) | `/api-new-migration <description>` | 命名規則に沿ったマイグレーション |
+| [api-review](./api-review/SKILL.md) | `/api-review <path>` | バックエンドセルフレビュー |
+
+**正典**: `docs/06_backend_design.md`
+
+## 標準ワークフロー
+
+### 新機能実装 (full stack)
 ```
-1. /ui-new-feature <name>         → feature ディレクトリ scaffold
-2. /ui-new-component <f> <name>   → 必要なコンポーネントを追加
-3. /ui-new-page <path>            → ページを作って feature を組み立てる
-4. /ui-review <path>              → コミット前セルフレビュー
+1. /api-new-resource <name>        → Interface + Repository + Service + Controller 一式
+2. /api-review backend/app/...     → バックエンドセルフレビュー
+3. /ui-new-feature <name>          → Frontend feature scaffold
+4. /ui-new-component <f> <comp>    → UI コンポーネント追加
+5. /ui-new-page <path>             → ページ追加
+6. /ui-review frontend/src/...     → フロントエンドセルフレビュー
 ```
 
-## 設計書
+### マイグレーションだけ追加
+```
+/api-new-migration add_xxx_to_yyy
+```
 
-全ての skill は `docs/05_frontend_design.md` を正典として参照する。skill の指示内容と設計書が矛盾した場合、**設計書を優先** し、skill を更新する。
+### 差し替え可能な Service 追加 (AI プロバイダ、スケジューラ等)
+```
+/api-new-service <name>
+```
+
+## Skill の更新ポリシー
+
+- 設計書 (`docs/05_frontend_design.md`, `docs/06_backend_design.md`) が正典
+- 設計書の更新があれば、対応する skill も同時に更新する
+- skill の指示と設計書が矛盾した場合、**設計書を優先**
+- 新しい共通パターンが出現したら、それを skill に吸収する
