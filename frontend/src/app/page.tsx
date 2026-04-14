@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/shared/ui/button";
 
 export default function HomePage() {
   return (
@@ -14,13 +14,16 @@ export default function HomePage() {
           メモからAIがカード候補を生成し、間隔反復で記憶定着を支援します。
         </p>
       </div>
-      <div className="flex gap-4">
-        <Link href="/login" className={buttonVariants({ size: "lg" })}>
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-xs sm:w-auto">
+        <Link
+          href="/login"
+          className={`${buttonVariants({ size: "lg" })} min-h-11 justify-center`}
+        >
           ログイン
         </Link>
         <Link
           href="/register"
-          className={buttonVariants({ variant: "outline", size: "lg" })}
+          className={`${buttonVariants({ variant: "outline", size: "lg" })} min-h-11 justify-center`}
         >
           新規登録
         </Link>

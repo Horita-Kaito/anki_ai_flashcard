@@ -46,6 +46,16 @@ docker compose exec frontend npm run lint         # Lint
 
 ## Conventions
 - Backend: PSR-12 (Laravel Pint), APIリソースクラス使用
-- Frontend: ESLint + Prettier, コンポーネントはsrc/components/配下
-- API: RESTful, /api/ prefix, JSON responses
-- Git: feature/phase{N}-{name} ブランチ命名
+- Frontend: Feature-Sliced 設計 (`src/app/`, `src/features/`, `src/entities/`, `src/widgets/`, `src/shared/`)
+- Frontend 詳細ルール: `docs/05_frontend_design.md` を必ず参照
+- API: RESTful, `/api/v1/` prefix, JSON responses
+- Git: `feature/phase{N}-{name}` ブランチ命名
+
+## UI 作成ワークフロー
+新しい画面・機能を追加する際は `.claude/skills/` の skill を使用:
+- `/ui-new-feature <name>` — feature ディレクトリ scaffold
+- `/ui-new-component <feature> <name>` — コンポーネント追加
+- `/ui-new-page <path>` — ページ追加
+- `/ui-review <path>` — コミット前セルフレビュー
+
+詳細は `.claude/skills/README.md` を参照。
