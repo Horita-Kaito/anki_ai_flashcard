@@ -4,7 +4,7 @@ description: |
   **必ず使用する条件**: backend/app/ に新しいドメインリソース (deck, card, note_seed, ai_card_candidate, domain_template 等) のテーブル + CRUD API を追加するすべてのタスク。ユーザーが「deck リソース作って」「card のAPI追加」「マイグレーションとコントローラ作って」等と指示した場合、作業開始前にこの skill を必ず起動すること。
   やること: Interface + Repository + Service + Controller + FormRequest + Resource + Policy + Model + Migration + Factory + Feature Test + Unit Test を Repository パターン+DI で一括 scaffold し、RepositoryServiceProvider への bind 登録、ルート追加、throttle 設定、user_id スコープ、Policy 所有者チェックまで含める。
   使わない場合: 既存リソースに単発のエンドポイント追加のみは api-new-service / 直接 Controller 追加。マイグレーションだけなら api-new-migration。
-  必ず docs/06_backend_design.md に従うこと。
+  必ず docs/06_backend_design.md と docs/07_testing_strategy.md に従うこと。Feature テスト (認証/認可/バリデーション/他ユーザー分離/CRUD副作用) と Unit テスト (Service は Repository モック、Repository は in-memory DB) を必ず生成する。
 ---
 
 # API New Resource Skill

@@ -294,12 +294,12 @@ jobs:
             exit 0
           fi
 
-      - name: Run tests
+      - name: Run Vitest
         run: |
-          if [ -f package.json ] && npm run | grep -q "test"; then
-            npm test -- --coverage --watchAll=false || npm test
+          if [ -f package.json ] && npm run | grep -q "test:run"; then
+            npm run test:run
           else
-            echo "test script not found; skipping"
+            echo "test:run script not found; skipping"
           fi
 
   frontend-build:

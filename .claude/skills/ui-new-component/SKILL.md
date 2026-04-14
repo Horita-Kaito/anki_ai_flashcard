@@ -4,7 +4,7 @@ description: |
   **必ず使用する条件**: frontend/src/features/<feature>/components/ や frontend/src/widgets/ や frontend/src/shared/ui/ 配下に新しい .tsx コンポーネントファイルを作成するすべてのタスク。ユーザーが「DeckList コンポーネント作って」「この画面にボタン追加して」等と指示し、新規ファイル作成が必要な場合、書き始める前にこの skill を必ず起動すること。
   やること: 責務分類 (表示/コンテナ/フォーム/レイアウト) を判定し、モバイル/PC 両対応 (44px タップターゲット、focus-visible、hover、safe-area)、a11y、Props 型、状態管理方針を埋め込んだ雛形を作る。
   使わない場合: 既存コンポーネントの小規模修正、文言変更、スタイル微調整のみの場合は skill 不要。
-  必ず docs/05_frontend_design.md に従うこと。
+  必ず docs/05_frontend_design.md と docs/07_testing_strategy.md に従うこと。container/form 系コンポーネントには Vitest + Testing Library の .test.tsx を同時に scaffold する (renderWithProviders を使用)。
 ---
 
 # UI New Component Skill

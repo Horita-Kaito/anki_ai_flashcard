@@ -4,7 +4,7 @@ description: |
   **必ず使用する条件**: frontend/src/features/<name>/ 配下に新しい feature ディレクトリを新規作成するすべてのタスク。ユーザーが「deck feature を作って」「card 機能のフロント追加」等と指示した場合、ファイルを書き始める前にこの skill を必ず起動すること。
   やること: Feature-Sliced 構造 (api/components/hooks/schemas/types/constants/index) を一括 scaffold し、api-queries, endpoints, zod schema, barrel export の雛形まで作成する。
   使わない場合: 既存 feature 内に component を追加するだけの場合は ui-new-component を使う。feature の一部ファイルを修正するだけなら skill 不要。
-  必ず docs/05_frontend_design.md に従うこと。
+  必ず docs/05_frontend_design.md と docs/07_testing_strategy.md に従うこと。schema には境界値を含む Vitest テストを同時に scaffold する。
 ---
 
 # UI New Feature Skill

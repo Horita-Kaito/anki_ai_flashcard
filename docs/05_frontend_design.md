@@ -460,15 +460,19 @@ toast.error("保存に失敗しました");
 
 ## 10. テスト戦略
 
-| レイヤー | ツール | 対象 | カバレッジ目標 |
-|----------|--------|------|----------------|
-| **Unit** | Vitest | `shared/lib/`, `features/*/schemas/`, hooks | 80%+ |
-| **Component** | Vitest + React Testing Library | `shared/ui/*`, feature コンポーネント | 重要なもの |
-| **Integration** | Vitest + MSW | feature の data flow | feature単位で主要フロー |
-| **E2E** | Playwright | 主要ユーザージャーニー | ログイン→カード採用→復習 |
+テスト戦略の **正典は `docs/07_testing_strategy.md`**。概要のみ以下に示す。
 
-- テストは対象ファイルと同じ階層に `*.test.ts(x)` で配置
-- MSW で Laravel API をモック (`shared/api/mock-handlers.ts`)
+| レイヤー | ツール | 対象 | 配置 |
+|----------|--------|------|------|
+| **Unit** | Vitest | `shared/lib/`, `features/*/schemas/`, hooks | 同階層 `*.test.ts(x)` |
+| **Component** | Vitest + Testing Library | feature components, shared/ui | 同階層 `*.test.tsx` |
+| **Integration** | Vitest + MSW | feature のデータフロー | 同階層 or `__tests__/` |
+| **E2E** | Playwright (mobile + desktop) | 主要ユーザージャーニー | `frontend/e2e/` |
+
+- MSW ハンドラは `src/test/msw/handlers/` に feature 別に配置
+- TanStack Query を含む Provider 付き render は `src/test/render.tsx` を使う
+- カバレッジ目標: 全体 60%+、schemas 100%、shared/lib 90%+
+- コマンド: `npm test` / `npm run test:run` / `npm run test:coverage` / `npm run e2e`
 
 ---
 

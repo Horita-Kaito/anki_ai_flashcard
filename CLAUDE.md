@@ -26,7 +26,8 @@ anki_ai_flashcard/
 │   ├── 03_api_specification.md
 │   ├── 04_cicd.md
 │   ├── 05_frontend_design.md  ← フロント正典
-│   └── 06_backend_design.md   ← バック正典
+│   ├── 06_backend_design.md   ← バック正典
+│   └── 07_testing_strategy.md ← テスト正典
 ├── docker-compose.{yml,dev.yml,staging.yml,prod.yml}
 └── .env.{dev,staging,prod}.example
 ```

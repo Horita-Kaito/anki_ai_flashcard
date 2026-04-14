@@ -530,25 +530,21 @@ app/Exceptions/Domain/
 
 ## 10. テスト戦略
 
+テスト戦略の **正典は `docs/07_testing_strategy.md`**。概要のみ以下に示す。
+
 | 層 | ツール | 対象 | 方針 |
 |----|--------|------|------|
-| **Unit** | PHPUnit | Service, Repository (対 fake DB), Scheduler ロジック | モックで Interface を差し替え |
-| **Feature** | PHPUnit (HTTP) | Controller + ルーティング + Middleware | 実 DB (testing) 使用、認証済みリクエスト |
-| **Integration** | PHPUnit | AI プロバイダ (モックレスポンス) | 実APIは叩かない |
+| **Unit** | PHPUnit | Service, Scheduler 等の純粋ロジック | Repository Interface をモックして検証 |
+| **Unit (Repo)** | PHPUnit + in-memory SQLite | Repository | 実 DB でクエリを検証 |
+| **Feature** | PHPUnit (HTTP) | Controller + Middleware + 認可 | 実 DB + RefreshDatabase |
+| **Integration** | PHPUnit + Http::fake() | AI プロバイダ | 外部 API をモック |
 
-### 10-1. ディレクトリ
-```
-tests/
-├── Unit/
-│   ├── Services/
-│   └── Repositories/
-├── Feature/
-│   ├── Api/
-│   │   └── V1/
-│   │       └── DeckControllerTest.php
-│   └── Auth/
-└── TestCase.php
-```
+### 10-1. 必須テスト項目 (全 Controller)
+- 認証なしで 401
+- バリデーションエラーで 422
+- 他ユーザーのリソースで 403 or 404
+- 正常系のレスポンス形状 (`assertJsonStructure`)
+- CRUD の副作用 (`assertDatabaseHas`)
 
 ### 10-2. モック (Interface の恩恵)
 ```php
@@ -559,6 +555,17 @@ $this->mock(DeckRepositoryInterface::class, function ($mock) {
         ->andReturn(new Deck(['id' => 10, 'name' => 'Test']));
 });
 ```
+
+### 10-3. コマンド
+```bash
+docker compose exec backend php artisan test
+docker compose exec backend php artisan test --filter DeckControllerTest
+docker compose exec backend php artisan test --testsuite=Unit
+docker compose exec backend php artisan test --coverage
+```
+
+### 10-4. カバレッジ目標
+- Services: 80%+ / Repositories: 70%+ / 全体 70%+
 
 ---
 

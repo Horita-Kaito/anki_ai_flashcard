@@ -4,7 +4,7 @@ description: |
   **必ず使用する条件**: frontend/src/ 配下のコード (feature, component, page) を新規作成した後、コミット/PR 前に必ずこの skill を起動してセルフレビューする。ユーザーが「レビューして」「チェックして」「コミット前に確認」等と指示した場合も起動する。
   やること: 12 観点 (命名、レイヤー依存、責務分離、Props、状態管理、モバイル対応、PC対応、a11y、スタイル、フォーム、収益化/i18n、テスト) で設計ルール違反を検出し、Critical/Recommended に分類して報告する。
   使わない場合: バックエンドコードのレビューは api-review を使う。
-  必ず docs/05_frontend_design.md に従うこと。
+  必ず docs/05_frontend_design.md と docs/07_testing_strategy.md に従うこと。テストの有無・適切性も観点に含める。
 ---
 
 # UI Review Skill

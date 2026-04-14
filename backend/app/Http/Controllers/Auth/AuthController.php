@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -10,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
-class AuthController extends Controller
+final class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
@@ -27,7 +29,7 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
-        $request->session()->regenerate();
+        $this->regenerateSession($request);
 
         return response()->json(['data' => $user], 201);
     }
@@ -45,7 +47,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $request->session()->regenerate();
+        $this->regenerateSession($request);
 
         return response()->json(['data' => Auth::user()]);
     }
@@ -53,8 +55,7 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        $this->invalidateSession($request);
 
         return response()->json(null, 204);
     }
@@ -62,5 +63,24 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json(['data' => $request->user()]);
+    }
+
+    /**
+     * セッションがある場合のみ regenerate する。
+     * Sanctum SPA 認証時 (stateful) のみ該当。
+     */
+    private function regenerateSession(Request $request): void
+    {
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+    }
+
+    private function invalidateSession(Request $request): void
+    {
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 }
