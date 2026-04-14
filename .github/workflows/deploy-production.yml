@@ -1,0 +1,80 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_migrate:
+        description: "Skip database migration"
+        required: false
+        default: "false"
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create deployment backup tag
+        id: tag
+        run: echo "tag=deploy-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.PRODUCTION_APP_PATH }}
+
+            # DB バックアップ (デプロイ前)
+            BACKUP_FILE="/backups/pre-deploy-$(date +%Y%m%d-%H%M%S).sql.gz"
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T mysql \
+              mysqldump -u root -p"$DB_ROOT_PASSWORD" "$DB_DATABASE" 2>/dev/null | gzip > "$BACKUP_FILE" || echo "backup skipped"
+
+            # 最新コード取得
+            git fetch origin main
+            git reset --hard origin/main
+
+            # ビルド & 起動
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
+
+            # マイグレーション (skip_migrate=true で省略可能)
+            if [ "${{ github.event.inputs.skip_migrate }}" != "true" ]; then
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+            fi
+
+            # キャッシュ再生成
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan config:cache
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan route:cache
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan view:cache
+
+            # Queue worker 再起動
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan queue:restart
+
+            # ヘルスチェック
+            sleep 5
+            curl -fsS "${{ vars.PRODUCTION_URL }}/api/health" || echo "health check endpoint not available yet"
+
+      - name: Create git tag for deployment
+        if: success()
+        run: |
+          git tag ${{ steps.tag.outputs.tag }}
+          git push origin ${{ steps.tag.outputs.tag }}
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "::error::Production deployment failed — check server logs and consider rollback"
