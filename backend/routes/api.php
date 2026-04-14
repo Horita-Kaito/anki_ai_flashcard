@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Api\V1\DomainTemplateController;
+use App\Http\Controllers\Api\V1\NoteSeedController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,7 @@ Route::prefix('v1')->group(function () {
 
         Route::apiResource('decks', DeckController::class);
         Route::apiResource('domain-templates', DomainTemplateController::class);
+        Route::apiResource('note-seeds', NoteSeedController::class);
     });
 });
 

@@ -1,6 +1,7 @@
 import { authHandlers } from "./handlers/auth";
 import { deckHandlers } from "./handlers/deck";
 import { domainTemplateHandlers } from "./handlers/domain-template";
+import { noteSeedHandlers } from "./handlers/note-seed";
 
 /**
  * 全 feature のハンドラを集約。
@@ -10,4 +11,5 @@ export const handlers = [
   ...authHandlers,
   ...deckHandlers,
   ...domainTemplateHandlers,
+  ...noteSeedHandlers,
 ];
