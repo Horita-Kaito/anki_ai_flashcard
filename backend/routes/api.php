@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +22,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
 
-        // 今後: deck, card, note-seed, ai-candidate, review-session...
+        Route::apiResource('decks', DeckController::class);
     });
 });
 
