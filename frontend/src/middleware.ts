@@ -33,5 +33,6 @@ export const config = {
     "/templates/:path*",
     "/stats/:path*",
     "/settings/:path*",
+    "/decks",
   ],
 };
