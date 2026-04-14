@@ -24,6 +24,7 @@ final class RepositoryServiceProvider extends ServiceProvider
     public array $bindings = [
         // Repositories
         \App\Contracts\Repositories\DeckRepositoryInterface::class => \App\Repositories\EloquentDeckRepository::class,
+        \App\Contracts\Repositories\DomainTemplateRepositoryInterface::class => \App\Repositories\EloquentDomainTemplateRepository::class,
 
         // Services (固定バインド)
         // CardGenerationServiceInterface::class => CardGenerationService::class,
