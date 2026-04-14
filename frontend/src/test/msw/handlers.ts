@@ -1,4 +1,5 @@
 import { authHandlers } from "./handlers/auth";
+import { cardHandlers } from "./handlers/card";
 import { deckHandlers } from "./handlers/deck";
 import { domainTemplateHandlers } from "./handlers/domain-template";
 import { noteSeedHandlers } from "./handlers/note-seed";
@@ -12,4 +13,5 @@ export const handlers = [
   ...deckHandlers,
   ...domainTemplateHandlers,
   ...noteSeedHandlers,
+  ...cardHandlers,
 ];

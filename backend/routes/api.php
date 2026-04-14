@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Api\V1\DomainTemplateController;
 use App\Http\Controllers\Api\V1\NoteSeedController;
+use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +29,11 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('decks', DeckController::class);
         Route::apiResource('domain-templates', DomainTemplateController::class);
         Route::apiResource('note-seeds', NoteSeedController::class);
+        Route::apiResource('cards', CardController::class);
+
+        Route::get('tags', [TagController::class, 'index']);
+        Route::post('tags', [TagController::class, 'store']);
+        Route::delete('tags/{id}', [TagController::class, 'destroy']);
     });
 });
 

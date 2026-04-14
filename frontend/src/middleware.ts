@@ -36,5 +36,6 @@ export const config = {
     "/decks",
     "/templates",
     "/notes",
+    "/cards",
   ],
 };
