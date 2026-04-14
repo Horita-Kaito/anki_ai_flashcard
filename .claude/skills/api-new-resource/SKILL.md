@@ -1,6 +1,10 @@
 ---
 name: api-new-resource
-description: 新しいAPIリソースのCRUD一式を Interface + Repository + Service + Controller + FormRequest + Resource + Policy + Model + Migration + Test まで scaffold する。引数例 "deck"。
+description: |
+  **必ず使用する条件**: backend/app/ に新しいドメインリソース (deck, card, note_seed, ai_card_candidate, domain_template 等) のテーブル + CRUD API を追加するすべてのタスク。ユーザーが「deck リソース作って」「card のAPI追加」「マイグレーションとコントローラ作って」等と指示した場合、作業開始前にこの skill を必ず起動すること。
+  やること: Interface + Repository + Service + Controller + FormRequest + Resource + Policy + Model + Migration + Factory + Feature Test + Unit Test を Repository パターン+DI で一括 scaffold し、RepositoryServiceProvider への bind 登録、ルート追加、throttle 設定、user_id スコープ、Policy 所有者チェックまで含める。
+  使わない場合: 既存リソースに単発のエンドポイント追加のみは api-new-service / 直接 Controller 追加。マイグレーションだけなら api-new-migration。
+  必ず docs/06_backend_design.md に従うこと。
 ---
 
 # API New Resource Skill

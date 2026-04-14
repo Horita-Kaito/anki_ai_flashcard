@@ -46,6 +46,12 @@
 /api-new-service <name>
 ```
 
+## skill 起動の判定
+
+タスクを受けたときの判定フローは [WHEN-TO-USE.md](./WHEN-TO-USE.md) を参照。
+
+**新規ファイル作成を伴うタスクは、skill 起動が必須**。CLAUDE.md にもこの原則が明記されている。
+
 ## Skill の更新ポリシー
 
 - 設計書 (`docs/05_frontend_design.md`, `docs/06_backend_design.md`) が正典

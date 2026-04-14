@@ -1,6 +1,10 @@
 ---
 name: api-review
-description: バックエンドコードを docs/06_backend_design.md の設計ルールに照らしてセルフレビューする。命名・レイヤー依存・Interface First・セキュリティ・テスト・パフォーマンスを観点別に評価。引数にファイルまたはディレクトリパス。
+description: |
+  **必ず使用する条件**: backend/app/ 配下のコード (Controller, Service, Repository, Model, Migration, Request, Resource, Policy 等) を新規作成または大規模修正した後、コミット/PR 前に必ずこの skill を起動してセルフレビューする。ユーザーが「レビューして」「チェックして」「コミット前に確認」等とバックエンドに対して指示した場合も起動する。
+  やること: 14 観点 (レイヤー依存、Interface First、命名、コード品質、バリデーション、認可、レスポンス、セキュリティ、例外処理、パフォーマンス、テスト、マイグレーション、AI 連携、収益化) で設計ルール違反を検出し、Critical/Recommended に分類して報告する。
+  使わない場合: フロントエンドコードのレビューは ui-review を使う。
+  必ず docs/06_backend_design.md に従うこと。
 ---
 
 # API Review Skill

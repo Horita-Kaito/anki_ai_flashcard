@@ -1,6 +1,10 @@
 ---
 name: ui-new-component
-description: feature 配下に新規コンポーネントを追加する。引数例: "deck deck-list"（feature名とコンポーネント名）。モバイル/PC 両対応、shadcn/ui の流儀、タップターゲット、キーボード操作などを標準で埋め込む。
+description: |
+  **必ず使用する条件**: frontend/src/features/<feature>/components/ や frontend/src/widgets/ や frontend/src/shared/ui/ 配下に新しい .tsx コンポーネントファイルを作成するすべてのタスク。ユーザーが「DeckList コンポーネント作って」「この画面にボタン追加して」等と指示し、新規ファイル作成が必要な場合、書き始める前にこの skill を必ず起動すること。
+  やること: 責務分類 (表示/コンテナ/フォーム/レイアウト) を判定し、モバイル/PC 両対応 (44px タップターゲット、focus-visible、hover、safe-area)、a11y、Props 型、状態管理方針を埋め込んだ雛形を作る。
+  使わない場合: 既存コンポーネントの小規模修正、文言変更、スタイル微調整のみの場合は skill 不要。
+  必ず docs/05_frontend_design.md に従うこと。
 ---
 
 # UI New Component Skill

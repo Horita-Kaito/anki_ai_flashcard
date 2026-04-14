@@ -1,6 +1,10 @@
 ---
 name: ui-new-page
-description: Next.js App Router に新しいページルートを追加する。引数例: "decks" or "decks/[id]"。route group, metadata, loading/error, 認証要否を判断する。
+description: |
+  **必ず使用する条件**: frontend/src/app/ 配下に新しい page.tsx / layout.tsx を作成するすべてのタスク。ユーザーが「/decks ページ作って」「ログイン後に /settings 追加して」等、新しいルートを追加する指示をした場合、この skill を必ず起動すること。
+  やること: route group 判定 ((public)/(auth)/(app))、metadata 設定、認証要否、middleware matcher 更新、ナビゲーション追加要否を判断し、Server/Client Component の選択を含めた雛形を作成する。
+  使わない場合: 既存 page.tsx の内容修正のみは skill 不要。
+  必ず docs/05_frontend_design.md に従うこと。
 ---
 
 # UI New Page Skill

@@ -1,6 +1,10 @@
 ---
 name: ui-new-feature
-description: Feature-Sliced 設計に従って新しい feature ディレクトリを scaffold する。機能名を引数に取り、api/components/hooks/schemas 等の標準構造を作成する。引数例: "deck", "card", "note-seed"。
+description: |
+  **必ず使用する条件**: frontend/src/features/<name>/ 配下に新しい feature ディレクトリを新規作成するすべてのタスク。ユーザーが「deck feature を作って」「card 機能のフロント追加」等と指示した場合、ファイルを書き始める前にこの skill を必ず起動すること。
+  やること: Feature-Sliced 構造 (api/components/hooks/schemas/types/constants/index) を一括 scaffold し、api-queries, endpoints, zod schema, barrel export の雛形まで作成する。
+  使わない場合: 既存 feature 内に component を追加するだけの場合は ui-new-component を使う。feature の一部ファイルを修正するだけなら skill 不要。
+  必ず docs/05_frontend_design.md に従うこと。
 ---
 
 # UI New Feature Skill

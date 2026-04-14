@@ -1,6 +1,10 @@
 ---
 name: api-new-migration
-description: 命名規則・インデックス規約・外部キー規約に沿ったマイグレーションを作成する。引数例 "create_decks_table" or "add_suspended_flag_to_cards"。
+description: |
+  **必ず使用する条件**: database/migrations/ に新しいマイグレーションファイルを作成するすべてのタスク。ユーザーが「users にカラム追加」「decks テーブル作って」「インデックス張って」等と指示した場合、この skill を必ず起動すること。
+  やること: Laravel 11+ の匿名クラス形式で、命名規則 (snake_case, 複数形)・外部キー規約 (foreignId+constrained+cascadeOnDelete)・複合インデックス (user_id 先頭)・ソフトデリート・JSON/Enum カラム・down() メソッドを全て備えたマイグレーションを生成し、Model の $fillable / casts / リレーション、Factory までセットで更新する。
+  使わない場合: 新リソース全体を作る場合は api-new-resource (マイグレーション含む)。既存マイグレーションの編集は skill 不要。
+  必ず docs/02_er_diagram.md と docs/06_backend_design.md に従うこと。
 ---
 
 # API New Migration Skill

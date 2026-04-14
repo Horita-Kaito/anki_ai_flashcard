@@ -85,21 +85,41 @@ docker compose exec backend ./vendor/bin/pint     # PHP Lint
 - `feature/phase{N}-{name}` ブランチ命名
 - main = 本番、develop = 開発統合
 
-## UI / API 作成ワークフロー
+## UI / API 作成ワークフロー (**必須**)
 
-### フロントエンド skills
-- `/ui-new-feature <name>` — Feature ディレクトリ scaffold
-- `/ui-new-component <feature> <name>` — コンポーネント追加
-- `/ui-new-page <path>` — ページ追加
-- `/ui-review <path>` — セルフレビュー
+**重要**: 以下の作業に該当する場合、**ファイルを書き始める前に対応する skill を必ず起動すること**。skill を起動せず直接ファイルを作成することは設計ルール違反とみなす。
 
-### バックエンド skills
-- `/api-new-resource <name>` — CRUD 一式 (Interface + Repository + Service + Controller + ...)
-- `/api-new-service <name>` — Service + Interface + DI バインディング
-- `/api-new-migration <description>` — マイグレーション
-- `/api-review <path>` — セルフレビュー
+### 判定フロー (新規作成タスクの場合)
 
-詳細は `.claude/skills/README.md`。
+| 作業内容 | 必須の skill |
+|----------|-------------|
+| `frontend/src/features/<new>/` を作る | `ui-new-feature` |
+| `.tsx` コンポーネントファイルを新規作成 | `ui-new-component` |
+| `frontend/src/app/<path>/page.tsx` を新規作成 | `ui-new-page` |
+| バックエンドに新リソース + CRUD を追加 | `api-new-resource` |
+| 新 Service クラスを作成 (特に差し替え可能なもの) | `api-new-service` |
+| マイグレーションを新規作成 | `api-new-migration` |
+
+### 判定フロー (レビュータスクの場合)
+
+| 作業内容 | 必須の skill |
+|----------|-------------|
+| フロントエンドコードをコミット/PR前にレビュー | `ui-review` |
+| バックエンドコードをコミット/PR前にレビュー | `api-review` |
+| ユーザーから「レビューして」「チェックして」と指示 | 対象に応じて `ui-review` / `api-review` |
+
+### skill を使わなくてよいケース
+- 既存ファイルの小規模修正 (文言変更、スタイル微調整、ロジック変更)
+- バグ修正 (ただし大規模リファクタは skill で行う)
+- ドキュメント更新
+- 設定ファイル (`.env`, `docker-compose.yml` 等) の変更
+
+### 迷った時の原則
+**「新規ファイルを作るなら skill を通す」** を基本方針とする。skill を起動するコストは低いが、ワークフローを無視したコードを後から直すコストは高い。
+
+### skill 一覧 (詳細は `.claude/skills/README.md`)
+- フロント: `ui-new-feature`, `ui-new-component`, `ui-new-page`, `ui-review`
+- バック: `api-new-resource`, `api-new-service`, `api-new-migration`, `api-review`
 
 ## 重要な原則
 - 設計書 (`docs/05_frontend_design.md`, `docs/06_backend_design.md`) が正典

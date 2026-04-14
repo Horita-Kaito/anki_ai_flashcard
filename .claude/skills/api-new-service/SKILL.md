@@ -1,6 +1,10 @@
 ---
 name: api-new-service
-description: 新しいビジネスロジック用 Service + Interface を追加する。既存 Service では表現できない複合的な処理や、差し替え可能な戦略 (AIプロバイダ、スケジューラ等) を想定。引数例 "card-generation" or "ai-provider"。
+description: |
+  **必ず使用する条件**: backend/app/Services/ に新しい Service クラスを作成するすべてのタスク、特に差し替え可能な戦略 (AI プロバイダ、スケジューラ、決済、通知等) を実装する場合。ユーザーが「CardGenerationService 作って」「スケジューラ実装して」「AI プロバイダ追加」等と指示した場合、この skill を必ず起動すること。
+  やること: Interface First 原則で Contracts/Services/ に Interface を配置、Services/ に final class 具象を配置、AppServiceProvider または RepositoryServiceProvider に DI バインディング登録 (単純 1対1 または設定駆動 match 切替)、テスト雛形、例外クラス、config ファイル (AI 系の場合) まで準備する。
+  使わない場合: CRUD リソース全体を作る場合は api-new-resource。既存 Service にメソッド追加のみなら skill 不要。
+  必ず docs/06_backend_design.md に従うこと。
 ---
 
 # API New Service Skill
