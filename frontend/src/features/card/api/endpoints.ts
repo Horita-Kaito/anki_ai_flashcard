@@ -6,17 +6,27 @@ import type {
   UpdateCardInput,
 } from "../schemas/card-schemas";
 
+export interface CardListFilters {
+  deck_id?: number;
+  tag_id?: number;
+  q?: string;
+}
+
 export async function fetchCardList(
   page = 1,
   perPage = 20,
-  deckId?: number
+  filters: CardListFilters = {}
 ): Promise<PaginatedResponse<Card>> {
+  const params: Record<string, string | number> = {
+    page,
+    per_page: perPage,
+  };
+  if (filters.deck_id) params.deck_id = filters.deck_id;
+  if (filters.tag_id) params.tag_id = filters.tag_id;
+  if (filters.q && filters.q.trim() !== "") params.q = filters.q;
+
   const res = await apiClient.get<PaginatedResponse<Card>>("/cards", {
-    params: {
-      page,
-      per_page: perPage,
-      ...(deckId ? { deck_id: deckId } : {}),
-    },
+    params,
   });
   return res.data;
 }

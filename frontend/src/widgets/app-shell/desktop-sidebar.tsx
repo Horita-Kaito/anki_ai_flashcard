@@ -9,15 +9,19 @@ import {
   GraduationCap,
   Settings,
   FileText,
+  Tag,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
 const items = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/decks", label: "デッキ", icon: Layers },
+  { href: "/cards", label: "カード", icon: BookOpen },
   { href: "/notes", label: "メモ", icon: NotebookPen },
   { href: "/review", label: "復習", icon: GraduationCap },
   { href: "/templates", label: "テンプレート", icon: FileText },
+  { href: "/tags", label: "タグ", icon: Tag },
   { href: "/settings", label: "設定", icon: Settings },
 ] as const;
 

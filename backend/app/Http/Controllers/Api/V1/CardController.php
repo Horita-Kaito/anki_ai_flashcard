@@ -22,12 +22,21 @@ final class CardController extends Controller
     {
         $perPage = (int) $request->query('per_page', '20');
         $perPage = max(1, min($perPage, 100));
-        $deckId = $request->query('deck_id');
-        $deckIdInt = $deckId === null ? null : (int) $deckId;
+
+        $filters = [];
+        if ($request->filled('deck_id')) {
+            $filters['deck_id'] = (int) $request->query('deck_id');
+        }
+        if ($request->filled('tag_id')) {
+            $filters['tag_id'] = (int) $request->query('tag_id');
+        }
+        if ($request->filled('q')) {
+            $filters['q'] = (string) $request->query('q');
+        }
 
         $cards = $this->cardService->paginateForUser(
             userId: $request->user()->id,
-            deckId: $deckIdInt,
+            filters: $filters,
             perPage: $perPage,
         );
 

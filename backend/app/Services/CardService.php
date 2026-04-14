@@ -34,13 +34,16 @@ final class CardService
         return $card;
     }
 
-    /** @return LengthAwarePaginator<int, Card> */
+    /**
+     * @param  array{deck_id?: int, tag_id?: int, q?: string}  $filters
+     * @return LengthAwarePaginator<int, Card>
+     */
     public function paginateForUser(
         int $userId,
-        ?int $deckId = null,
+        array $filters = [],
         int $perPage = 20,
     ): LengthAwarePaginator {
-        return $this->cardRepository->paginateForUser($userId, $deckId, $perPage);
+        return $this->cardRepository->paginateForUser($userId, $filters, $perPage);
     }
 
     /**

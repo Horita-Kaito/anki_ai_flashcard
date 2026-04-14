@@ -18,12 +18,29 @@ final class EloquentNoteSeedRepository implements NoteSeedRepositoryInterface
             ->first();
     }
 
-    public function paginateForUser(int $userId, int $perPage = 20): LengthAwarePaginator
+    public function paginateForUser(int $userId, array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
+        $templateId = $filters['domain_template_id'] ?? null;
+        $keyword = $filters['q'] ?? null;
+
         return NoteSeed::query()
             ->where('user_id', $userId)
+            ->when($templateId !== null, fn ($q) => $q->where('domain_template_id', $templateId))
+            ->when($keyword !== null && $keyword !== '', function ($q) use ($keyword) {
+                $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
+                $like = '%'.$escaped.'%';
+                $q->where(function ($sub) use ($like) {
+                    $sub->where('body', 'like', $like)
+                        ->orWhere('learning_goal', 'like', $like)
+                        ->orWhere('note_context', 'like', $like);
+                });
+            })
             ->orderByDesc('created_at')
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->appends(array_filter([
+                'domain_template_id' => $templateId,
+                'q' => $keyword,
+            ], fn ($v) => $v !== null && $v !== ''));
     }
 
     public function create(int $userId, array $attributes): NoteSeed

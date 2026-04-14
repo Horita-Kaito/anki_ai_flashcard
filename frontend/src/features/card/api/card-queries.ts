@@ -9,6 +9,7 @@ import {
   fetchCard,
   fetchCardList,
   updateCard,
+  type CardListFilters,
 } from "./endpoints";
 import type {
   CreateCardInput,
@@ -17,15 +18,15 @@ import type {
 
 export const cardKeys = {
   all: ["cards"] as const,
-  list: (page = 1, deckId?: number) =>
-    [...cardKeys.all, "list", page, deckId ?? null] as const,
+  list: (page = 1, filters: CardListFilters = {}) =>
+    [...cardKeys.all, "list", page, filters] as const,
   detail: (id: number) => [...cardKeys.all, "detail", id] as const,
 };
 
-export function useCardList(page = 1, deckId?: number) {
+export function useCardList(page = 1, filters: CardListFilters = {}) {
   return useQuery({
-    queryKey: cardKeys.list(page, deckId),
-    queryFn: () => fetchCardList(page, 20, deckId),
+    queryKey: cardKeys.list(page, filters),
+    queryFn: () => fetchCardList(page, 20, filters),
   });
 }
 

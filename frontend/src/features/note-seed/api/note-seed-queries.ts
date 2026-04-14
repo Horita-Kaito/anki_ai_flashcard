@@ -9,6 +9,7 @@ import {
   fetchNoteSeed,
   fetchNoteSeedList,
   updateNoteSeed,
+  type NoteSeedListFilters,
 } from "./endpoints";
 import type {
   CreateNoteSeedInput,
@@ -17,14 +18,15 @@ import type {
 
 export const noteSeedKeys = {
   all: ["note-seeds"] as const,
-  list: (page = 1) => [...noteSeedKeys.all, "list", page] as const,
+  list: (page = 1, filters: NoteSeedListFilters = {}) =>
+    [...noteSeedKeys.all, "list", page, filters] as const,
   detail: (id: number) => [...noteSeedKeys.all, "detail", id] as const,
 };
 
-export function useNoteSeedList(page = 1) {
+export function useNoteSeedList(page = 1, filters: NoteSeedListFilters = {}) {
   return useQuery({
-    queryKey: noteSeedKeys.list(page),
-    queryFn: () => fetchNoteSeedList(page),
+    queryKey: noteSeedKeys.list(page, filters),
+    queryFn: () => fetchNoteSeedList(page, 20, filters),
   });
 }
 

@@ -38,5 +38,7 @@ export const config = {
     "/notes",
     "/cards",
     "/settings",
+    "/tags",
+    "/tags/:path*",
   ],
 };

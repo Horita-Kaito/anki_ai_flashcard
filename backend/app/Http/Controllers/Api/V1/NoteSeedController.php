@@ -23,8 +23,17 @@ final class NoteSeedController extends Controller
         $perPage = (int) $request->query('per_page', '20');
         $perPage = max(1, min($perPage, 100));
 
+        $filters = [];
+        if ($request->filled('domain_template_id')) {
+            $filters['domain_template_id'] = (int) $request->query('domain_template_id');
+        }
+        if ($request->filled('q')) {
+            $filters['q'] = (string) $request->query('q');
+        }
+
         $notes = $this->noteSeedService->paginateForUser(
             userId: $request->user()->id,
+            filters: $filters,
             perPage: $perPage,
         );
 

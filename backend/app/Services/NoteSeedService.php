@@ -28,10 +28,16 @@ final class NoteSeedService
         return $noteSeed;
     }
 
-    /** @return LengthAwarePaginator<int, NoteSeed> */
-    public function paginateForUser(int $userId, int $perPage = 20): LengthAwarePaginator
-    {
-        return $this->noteSeedRepository->paginateForUser($userId, $perPage);
+    /**
+     * @param  array{domain_template_id?: int, q?: string}  $filters
+     * @return LengthAwarePaginator<int, NoteSeed>
+     */
+    public function paginateForUser(
+        int $userId,
+        array $filters = [],
+        int $perPage = 20,
+    ): LengthAwarePaginator {
+        return $this->noteSeedRepository->paginateForUser($userId, $filters, $perPage);
     }
 
     /**

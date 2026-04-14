@@ -19,14 +19,36 @@ final class EloquentCardRepository implements CardRepositoryInterface
             ->first();
     }
 
-    public function paginateForUser(int $userId, ?int $deckId, int $perPage = 20): LengthAwarePaginator
+    public function paginateForUser(int $userId, array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
+        $deckId = $filters['deck_id'] ?? null;
+        $tagId = $filters['tag_id'] ?? null;
+        $keyword = $filters['q'] ?? null;
+
         return Card::query()
             ->with(['schedule', 'tags'])
             ->where('user_id', $userId)
             ->when($deckId !== null, fn ($q) => $q->where('deck_id', $deckId))
+            ->when($tagId !== null, fn ($q) => $q->whereHas(
+                'tags',
+                fn ($tq) => $tq->where('tags.id', $tagId),
+            ))
+            ->when($keyword !== null && $keyword !== '', function ($q) use ($keyword) {
+                $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
+                $like = '%'.$escaped.'%';
+                $q->where(function ($sub) use ($like) {
+                    $sub->where('question', 'like', $like)
+                        ->orWhere('answer', 'like', $like)
+                        ->orWhere('explanation', 'like', $like);
+                });
+            })
             ->orderByDesc('updated_at')
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->appends(array_filter([
+                'deck_id' => $deckId,
+                'tag_id' => $tagId,
+                'q' => $keyword,
+            ], fn ($v) => $v !== null && $v !== ''));
     }
 
     public function create(int $userId, array $attributes): Card
