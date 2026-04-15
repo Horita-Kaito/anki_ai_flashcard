@@ -8,13 +8,21 @@ use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Models\Card;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
-final class EloquentCardRepository implements CardRepositoryInterface
+final class EloquentCardRepository extends AbstractUserScopedEloquentRepository implements CardRepositoryInterface
 {
+    /** @var array<int, string> */
+    private const EAGER_LOADS = ['schedule', 'tags'];
+
+    protected function modelClass(): string
+    {
+        return Card::class;
+    }
+
     public function findForUser(int $userId, int $cardId): ?Card
     {
-        return Card::query()
-            ->with(['schedule', 'tags'])
-            ->where('user_id', $userId)
+        /** @var Card|null */
+        return $this->userScopedQuery($userId)
+            ->with(self::EAGER_LOADS)
             ->where('id', $cardId)
             ->first();
     }
@@ -25,9 +33,8 @@ final class EloquentCardRepository implements CardRepositoryInterface
         $tagId = $filters['tag_id'] ?? null;
         $keyword = $filters['q'] ?? null;
 
-        return Card::query()
-            ->with(['schedule', 'tags'])
-            ->where('user_id', $userId)
+        return $this->userScopedQuery($userId)
+            ->with(self::EAGER_LOADS)
             ->when($deckId !== null, fn ($q) => $q->where('deck_id', $deckId))
             ->when($tagId !== null, fn ($q) => $q->whereHas(
                 'tags',
@@ -53,14 +60,15 @@ final class EloquentCardRepository implements CardRepositoryInterface
 
     public function create(int $userId, array $attributes): Card
     {
-        return Card::create([...$attributes, 'user_id' => $userId]);
+        /** @var Card */
+        return $this->createOwnedBy($userId, $attributes);
     }
 
     public function update(Card $card, array $attributes): Card
     {
         $card->update($attributes);
 
-        return $card->refresh()->load(['schedule', 'tags']);
+        return $card->refresh()->load(self::EAGER_LOADS);
     }
 
     public function delete(Card $card): void
@@ -75,13 +83,12 @@ final class EloquentCardRepository implements CardRepositoryInterface
 
     public function countForUser(int $userId): int
     {
-        return Card::query()->where('user_id', $userId)->count();
+        return $this->userScopedQuery($userId)->count();
     }
 
     public function recentForUser(int $userId, int $limit = 5): array
     {
-        return Card::query()
-            ->where('user_id', $userId)
+        return $this->userScopedQuery($userId)
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get()

@@ -6,13 +6,8 @@ namespace App\Exceptions\Domain;
 
 final class CardNotFoundException extends ResourceNotFoundException
 {
-    public static function make(int $cardId): self
+    protected function label(): string
     {
-        return new self("Card {$cardId} not found");
-    }
-
-    public function userMessage(): string
-    {
-        return 'カードが見つかりません';
+        return 'カード';
     }
 }

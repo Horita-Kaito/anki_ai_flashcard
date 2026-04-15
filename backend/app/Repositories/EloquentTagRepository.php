@@ -8,35 +8,37 @@ use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Models\Tag;
 use Illuminate\Database\Eloquent\Collection;
 
-final class EloquentTagRepository implements TagRepositoryInterface
+final class EloquentTagRepository extends AbstractUserScopedEloquentRepository implements TagRepositoryInterface
 {
+    protected function modelClass(): string
+    {
+        return Tag::class;
+    }
+
     public function findForUser(int $userId, int $tagId): ?Tag
     {
-        return Tag::query()
-            ->where('user_id', $userId)
-            ->where('id', $tagId)
-            ->first();
+        /** @var Tag|null */
+        return $this->userScopedQuery($userId)->where('id', $tagId)->first();
     }
 
     public function findByNameForUser(int $userId, string $name): ?Tag
     {
-        return Tag::query()
-            ->where('user_id', $userId)
-            ->where('name', $name)
-            ->first();
+        /** @var Tag|null */
+        return $this->userScopedQuery($userId)->where('name', $name)->first();
     }
 
     public function listForUser(int $userId): Collection
     {
-        return Tag::query()
-            ->where('user_id', $userId)
+        /** @var Collection<int, Tag> */
+        return $this->userScopedQuery($userId)
             ->orderBy('name')
             ->get();
     }
 
     public function create(int $userId, array $attributes): Tag
     {
-        return Tag::create([...$attributes, 'user_id' => $userId]);
+        /** @var Tag */
+        return $this->createOwnedBy($userId, $attributes);
     }
 
     public function delete(Tag $tag): void
@@ -50,8 +52,7 @@ final class EloquentTagRepository implements TagRepositoryInterface
             return true;
         }
 
-        return Tag::query()
-            ->where('user_id', $userId)
+        return $this->userScopedQuery($userId)
             ->whereIn('id', $tagIds)
             ->count() === count(array_unique($tagIds));
     }

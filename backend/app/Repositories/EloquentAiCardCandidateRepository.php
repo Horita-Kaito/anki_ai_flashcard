@@ -9,20 +9,23 @@ use App\Enums\CandidateStatus;
 use App\Models\AiCardCandidate;
 use Illuminate\Database\Eloquent\Collection;
 
-final class EloquentAiCardCandidateRepository implements AiCardCandidateRepositoryInterface
+final class EloquentAiCardCandidateRepository extends AbstractUserScopedEloquentRepository implements AiCardCandidateRepositoryInterface
 {
+    protected function modelClass(): string
+    {
+        return AiCardCandidate::class;
+    }
+
     public function findForUser(int $userId, int $candidateId): ?AiCardCandidate
     {
-        return AiCardCandidate::query()
-            ->where('user_id', $userId)
-            ->where('id', $candidateId)
-            ->first();
+        /** @var AiCardCandidate|null */
+        return $this->userScopedQuery($userId)->where('id', $candidateId)->first();
     }
 
     public function listForNoteSeed(int $userId, int $noteSeedId, ?string $status = null): Collection
     {
-        return AiCardCandidate::query()
-            ->where('user_id', $userId)
+        /** @var Collection<int, AiCardCandidate> */
+        return $this->userScopedQuery($userId)
             ->where('note_seed_id', $noteSeedId)
             ->when($status !== null, fn ($q) => $q->where('status', $status))
             ->orderByDesc('created_at')
@@ -31,14 +34,14 @@ final class EloquentAiCardCandidateRepository implements AiCardCandidateReposito
 
     public function create(int $userId, array $attributes): AiCardCandidate
     {
-        return AiCardCandidate::create([...$attributes, 'user_id' => $userId]);
+        /** @var AiCardCandidate */
+        return $this->createOwnedBy($userId, $attributes);
     }
 
     public function update(AiCardCandidate $candidate, array $attributes): AiCardCandidate
     {
-        $candidate->update($attributes);
-
-        return $candidate->refresh();
+        /** @var AiCardCandidate */
+        return $this->applyUpdate($candidate, $attributes);
     }
 
     public function delete(AiCardCandidate $candidate): void

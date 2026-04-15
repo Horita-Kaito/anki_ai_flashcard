@@ -6,13 +6,8 @@ namespace App\Exceptions\Domain;
 
 final class DeckNotFoundException extends ResourceNotFoundException
 {
-    public static function make(int $deckId): self
+    protected function label(): string
     {
-        return new self("Deck {$deckId} not found");
-    }
-
-    public function userMessage(): string
-    {
-        return 'デッキが見つかりません';
+        return 'デッキ';
     }
 }

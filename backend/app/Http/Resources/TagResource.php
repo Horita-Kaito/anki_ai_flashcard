@@ -6,12 +6,11 @@ namespace App\Http\Resources;
 
 use App\Models\Tag;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin Tag
  */
-final class TagResource extends JsonResource
+final class TagResource extends BaseJsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
@@ -19,7 +18,7 @@ final class TagResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'created_at' => $this->created_at?->toIso8601String(),
+            'created_at' => $this->toIso($this->created_at),
         ];
     }
 }

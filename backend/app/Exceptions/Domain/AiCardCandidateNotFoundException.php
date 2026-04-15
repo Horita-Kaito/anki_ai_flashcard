@@ -6,13 +6,8 @@ namespace App\Exceptions\Domain;
 
 final class AiCardCandidateNotFoundException extends ResourceNotFoundException
 {
-    public static function make(int $candidateId): self
+    protected function label(): string
     {
-        return new self("AiCardCandidate {$candidateId} not found");
-    }
-
-    public function userMessage(): string
-    {
-        return 'AI 候補が見つかりません';
+        return 'AI 候補';
     }
 }

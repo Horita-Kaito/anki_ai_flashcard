@@ -6,12 +6,11 @@ namespace App\Http\Resources;
 
 use App\Models\Card;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin Card
  */
-final class CardResource extends JsonResource
+final class CardResource extends BaseJsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
@@ -36,11 +35,10 @@ final class CardResource extends JsonResource
                 'repetitions' => $this->schedule->repetitions,
                 'interval_days' => $this->schedule->interval_days,
                 'ease_factor' => (float) $this->schedule->ease_factor,
-                'due_at' => $this->schedule->due_at?->toIso8601String(),
+                'due_at' => $this->toIso($this->schedule->due_at),
                 'lapse_count' => $this->schedule->lapse_count,
             ] : null),
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            ...$this->timestamps(),
         ];
     }
 }

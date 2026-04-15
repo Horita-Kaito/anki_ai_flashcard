@@ -6,12 +6,11 @@ namespace App\Http\Resources;
 
 use App\Models\AiCardCandidate;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * @mixin AiCardCandidate
  */
-final class AiCardCandidateResource extends JsonResource
+final class AiCardCandidateResource extends BaseJsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
@@ -29,8 +28,7 @@ final class AiCardCandidateResource extends JsonResource
             'rationale' => $this->rationale,
             'confidence' => $this->confidence,
             'status' => $this->status?->value,
-            'created_at' => $this->created_at?->toIso8601String(),
-            'updated_at' => $this->updated_at?->toIso8601String(),
+            ...$this->timestamps(),
         ];
     }
 }

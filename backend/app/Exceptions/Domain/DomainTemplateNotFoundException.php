@@ -6,13 +6,8 @@ namespace App\Exceptions\Domain;
 
 final class DomainTemplateNotFoundException extends ResourceNotFoundException
 {
-    public static function make(int $templateId): self
+    protected function label(): string
     {
-        return new self("DomainTemplate {$templateId} not found");
-    }
-
-    public function userMessage(): string
-    {
-        return '分野テンプレートが見つかりません';
+        return '分野テンプレート';
     }
 }
