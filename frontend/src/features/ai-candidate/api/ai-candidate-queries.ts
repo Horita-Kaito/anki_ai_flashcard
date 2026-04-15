@@ -5,12 +5,14 @@ import {
 } from "@tanstack/react-query";
 import {
   adoptCandidate,
+  batchAdoptCandidates,
   fetchCandidatesForNote,
   generateCandidates,
   regenerateCandidates,
   rejectCandidate,
   updateCandidate,
   type AdoptInput,
+  type BatchAdoptInput,
   type GenerateOptions,
 } from "./endpoints";
 import type { CandidateStatus } from "@/entities/ai-candidate/types";
@@ -86,6 +88,17 @@ export function useAdoptCandidate() {
   return useMutation({
     mutationFn: ({ id, input }: { id: number; input: AdoptInput }) =>
       adoptCandidate(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      qc.invalidateQueries({ queryKey: cardKeys.all });
+    },
+  });
+}
+
+export function useBatchAdoptCandidates() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BatchAdoptInput) => batchAdoptCandidates(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
       qc.invalidateQueries({ queryKey: cardKeys.all });

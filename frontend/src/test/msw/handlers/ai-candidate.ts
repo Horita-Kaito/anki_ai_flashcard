@@ -93,6 +93,31 @@ export const aiCandidateHandlers = [
   }),
 
   http.post(
+    `${API}/api/v1/ai-card-candidates/batch-adopt`,
+    async ({ request }) => {
+      const body = (await request.json()) as {
+        deck_id: number;
+        candidate_ids: number[];
+      };
+      for (const id of body.candidate_ids) {
+        const idx = mockCandidates.findIndex((c) => c.id === id);
+        if (idx !== -1) {
+          mockCandidates[idx] = { ...mockCandidates[idx], status: "adopted" };
+        }
+      }
+      return HttpResponse.json(
+        {
+          data: {
+            adopted_count: body.candidate_ids.length,
+            cards: [],
+          },
+        },
+        { status: 201 }
+      );
+    }
+  ),
+
+  http.post(
     `${API}/api/v1/ai-card-candidates/:id/adopt`,
     async ({ params }) => {
       const idx = mockCandidates.findIndex((c) => c.id === Number(params.id));

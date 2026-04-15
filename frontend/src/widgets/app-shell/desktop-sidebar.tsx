@@ -11,6 +11,7 @@ import {
   FileText,
   Tag,
   BookOpen,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 
@@ -22,6 +23,7 @@ const items = [
   { href: "/review", label: "復習", icon: GraduationCap },
   { href: "/templates", label: "テンプレート", icon: FileText },
   { href: "/tags", label: "タグ", icon: Tag },
+  { href: "/stats", label: "統計", icon: BarChart3 },
   { href: "/settings", label: "設定", icon: Settings },
 ] as const;
 

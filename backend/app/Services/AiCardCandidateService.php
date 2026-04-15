@@ -103,4 +103,32 @@ final class AiCardCandidateService
             return $card->refresh()->load(['schedule', 'tags']);
         });
     }
+
+    /**
+     * 複数候補を一括採用する。
+     *
+     * @param  array<int, int>  $candidateIds
+     * @param  array<int, int>  $tagIds
+     * @return array<int, Card>
+     */
+    public function batchAdoptForUser(
+        int $userId,
+        array $candidateIds,
+        int $deckId,
+        array $tagIds = [],
+    ): array {
+        $cards = [];
+        foreach ($candidateIds as $id) {
+            try {
+                $cards[] = $this->adoptForUser($userId, $id, [
+                    'deck_id' => $deckId,
+                    'tag_ids' => $tagIds,
+                ]);
+            } catch (AiCardCandidateNotFoundException) {
+                continue;
+            }
+        }
+
+        return $cards;
+    }
 }

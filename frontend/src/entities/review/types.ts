@@ -37,6 +37,14 @@ export interface AnswerResult {
   };
 }
 
+export interface DeckStats {
+  deck_id: number;
+  deck_name: string;
+  review_count: number;
+  again_count: number;
+  again_rate: number;
+}
+
 export interface ReviewStats {
   today: {
     completed_count: number;
@@ -45,7 +53,15 @@ export interface ReviewStats {
     good_count: number;
     easy_count: number;
   };
+  week: {
+    completed_count: number;
+    again_rate: number;
+  };
+  month: {
+    completed_count: number;
+  };
   overall: {
     total_reviews: number;
   };
+  by_deck: DeckStats[];
 }

@@ -47,4 +47,34 @@ final class EloquentCardReviewRepository implements CardReviewRepositoryInterfac
     {
         return CardReview::query()->where('user_id', $userId)->count();
     }
+
+    public function statsByDeckForUser(
+        int $userId,
+        ?\DateTimeInterface $from = null,
+        ?\DateTimeInterface $to = null,
+    ): array {
+        $query = CardReview::query()
+            ->join('cards', 'card_reviews.card_id', '=', 'cards.id')
+            ->join('decks', 'cards.deck_id', '=', 'decks.id')
+            ->where('card_reviews.user_id', $userId)
+            ->selectRaw('
+                decks.id as deck_id,
+                decks.name as deck_name,
+                COUNT(*) as review_count,
+                SUM(CASE WHEN card_reviews.rating = ? THEN 1 ELSE 0 END) as again_count
+            ', ['again'])
+            ->groupBy('decks.id', 'decks.name')
+            ->orderByDesc('review_count');
+
+        if ($from !== null && $to !== null) {
+            $query->whereBetween('card_reviews.reviewed_at', [$from, $to]);
+        }
+
+        return $query->get()->map(fn ($row) => [
+            'deck_id' => (int) $row->deck_id,
+            'deck_name' => (string) $row->deck_name,
+            'review_count' => (int) $row->review_count,
+            'again_count' => (int) $row->again_count,
+        ])->all();
+    }
 }

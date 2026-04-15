@@ -8,6 +8,7 @@ import {
   useGenerateCandidates,
   useRegenerateCandidates,
 } from "../api/ai-candidate-queries";
+import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
 import { useNoteSeed } from "@/features/note-seed";
 import { useDomainTemplateList } from "@/features/domain-template";
@@ -202,9 +203,14 @@ export function GenerateCandidatesView({
         <>
           {hasPending && (
             <section aria-labelledby="pending-section" className="space-y-3">
-              <h2 id="pending-section" className="font-medium">
-                未採用候補 ({pendingCandidates.length})
-              </h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 id="pending-section" className="font-medium">
+                  未採用候補 ({pendingCandidates.length})
+                </h2>
+                <BatchAdoptBar
+                  candidateIds={pendingCandidates.map((c) => c.id)}
+                />
+              </div>
               <div className="space-y-3">
                 {pendingCandidates.map((c) => (
                   <CandidateCard

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiCardCandidate\AdoptCandidateRequest;
+use App\Http\Requests\AiCardCandidate\BatchAdoptRequest;
 use App\Http\Requests\AiCardCandidate\GenerateCandidatesRequest;
 use App\Http\Requests\AiCardCandidate\UpdateCandidateRequest;
 use App\Http\Resources\AiCardCandidateResource;
@@ -25,10 +26,6 @@ final class AiCardCandidateController extends Controller
         private readonly NoteSeedService $noteSeedService,
     ) {}
 
-    /**
-     * 指定メモに対して AI 候補を生成する。
-     * regenerate フラグで既存 pending 候補を reject してから生成。
-     */
     public function generate(
         GenerateCandidatesRequest $request,
         int $noteSeedId,
@@ -54,9 +51,6 @@ final class AiCardCandidateController extends Controller
         return $this->generate($request, $noteSeedId, regenerate: true);
     }
 
-    /**
-     * 指定メモの候補一覧を取得する。
-     */
     public function indexForNoteSeed(Request $request, int $noteSeedId): JsonResponse
     {
         /** @var NoteSeed $note */
@@ -105,5 +99,24 @@ final class AiCardCandidateController extends Controller
         );
 
         return (new CardResource($card))->response()->setStatusCode(201);
+    }
+
+    public function batchAdopt(BatchAdoptRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+
+        $cards = $this->candidateService->batchAdoptForUser(
+            userId: $request->user()->id,
+            candidateIds: $validated['candidate_ids'],
+            deckId: (int) $validated['deck_id'],
+            tagIds: $validated['tag_ids'] ?? [],
+        );
+
+        return response()->json([
+            'data' => [
+                'adopted_count' => count($cards),
+                'cards' => CardResource::collection(collect($cards))->toArray($request),
+            ],
+        ], 201);
     }
 }

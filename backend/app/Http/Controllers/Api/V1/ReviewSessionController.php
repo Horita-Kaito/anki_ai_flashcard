@@ -104,10 +104,22 @@ final class ReviewSessionController extends Controller
     {
         $userId = $request->user()->id;
         $today = [now()->startOfDay(), now()->endOfDay()];
+        $week = [now()->startOfWeek(), now()->endOfWeek()];
+        $month = [now()->startOfMonth(), now()->endOfMonth()];
 
         $todayCount = $this->reviewRepository->countForUserInPeriod($userId, $today[0], $today[1]);
         $todayByRating = $this->reviewRepository->countByRatingForUserInPeriod($userId, $today[0], $today[1]);
+
+        $weekCount = $this->reviewRepository->countForUserInPeriod($userId, $week[0], $week[1]);
+        $weekByRating = $this->reviewRepository->countByRatingForUserInPeriod($userId, $week[0], $week[1]);
+
+        $monthCount = $this->reviewRepository->countForUserInPeriod($userId, $month[0], $month[1]);
+
         $totalReviews = $this->reviewRepository->totalCountForUser($userId);
+        $byDeck = $this->reviewRepository->statsByDeckForUser($userId);
+
+        $weekAgain = $weekByRating['again'] ?? 0;
+        $weekAgainRate = $weekCount > 0 ? round($weekAgain / $weekCount, 3) : 0.0;
 
         return response()->json([
             'data' => [
@@ -118,9 +130,25 @@ final class ReviewSessionController extends Controller
                     'good_count' => $todayByRating['good'] ?? 0,
                     'easy_count' => $todayByRating['easy'] ?? 0,
                 ],
+                'week' => [
+                    'completed_count' => $weekCount,
+                    'again_rate' => $weekAgainRate,
+                ],
+                'month' => [
+                    'completed_count' => $monthCount,
+                ],
                 'overall' => [
                     'total_reviews' => $totalReviews,
                 ],
+                'by_deck' => array_map(fn ($row) => [
+                    'deck_id' => $row['deck_id'],
+                    'deck_name' => $row['deck_name'],
+                    'review_count' => $row['review_count'],
+                    'again_count' => $row['again_count'],
+                    'again_rate' => $row['review_count'] > 0
+                        ? round($row['again_count'] / $row['review_count'], 3)
+                        : 0.0,
+                ], $byDeck),
             ],
         ]);
     }

@@ -30,4 +30,15 @@ interface CardReviewRepositoryInterface
     ): array;
 
     public function totalCountForUser(int $userId): int;
+
+    /**
+     * デッキ別レビュー件数
+     *
+     * @return array<int, array{deck_id: int, deck_name: string, review_count: int, again_count: int}>
+     */
+    public function statsByDeckForUser(
+        int $userId,
+        ?\DateTimeInterface $from = null,
+        ?\DateTimeInterface $to = null,
+    ): array;
 }

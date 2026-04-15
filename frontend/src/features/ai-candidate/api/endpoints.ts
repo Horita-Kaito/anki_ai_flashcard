@@ -84,3 +84,19 @@ export async function adoptCandidate(
   );
   return res.data.data;
 }
+
+export interface BatchAdoptInput {
+  deck_id: number;
+  candidate_ids: number[];
+  tag_ids?: number[];
+}
+
+export async function batchAdoptCandidates(
+  input: BatchAdoptInput
+): Promise<{ adopted_count: number; cards: Card[] }> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{
+    data: { adopted_count: number; cards: Card[] };
+  }>("/ai-card-candidates/batch-adopt", input);
+  return res.data.data;
+}

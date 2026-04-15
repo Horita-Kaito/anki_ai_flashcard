@@ -225,4 +225,53 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame(3, AiCardCandidate::where('status', 'rejected')->count());
         $this->assertSame(3, AiCardCandidate::where('status', 'pending')->count());
     }
+
+    public function test_複数候補を一括採用できる(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidates = AiCardCandidate::factory()->count(3)->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'status' => 'pending',
+        ])->create();
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/ai-card-candidates/batch-adopt', [
+                'deck_id' => $deck->id,
+                'candidate_ids' => $candidates->pluck('id')->all(),
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.adopted_count', 3);
+
+        foreach ($candidates as $c) {
+            $this->assertDatabaseHas('ai_card_candidates', [
+                'id' => $c->id,
+                'status' => 'adopted',
+            ]);
+        }
+        $this->assertDatabaseCount('cards', 3);
+    }
+
+    public function test_他ユーザーの候補idは一括採用で弾かれる(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $deck = Deck::factory()->for($me)->create();
+        $note = NoteSeed::factory()->for($other)->create();
+        $otherCandidate = AiCardCandidate::factory()->state([
+            'user_id' => $other->id,
+            'note_seed_id' => $note->id,
+        ])->create();
+
+        $this->actingAs($me)
+            ->postJson('/api/v1/ai-card-candidates/batch-adopt', [
+                'deck_id' => $deck->id,
+                'candidate_ids' => [$otherCandidate->id],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['candidate_ids.0']);
+    }
 }

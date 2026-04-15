@@ -40,5 +40,7 @@ export const config = {
     "/settings",
     "/tags",
     "/tags/:path*",
+    "/stats",
+    "/review",
   ],
 };

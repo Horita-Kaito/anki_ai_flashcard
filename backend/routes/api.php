@@ -60,6 +60,7 @@ Route::prefix('v1')->group(function () {
         Route::put('ai-card-candidates/{id}', [AiCardCandidateController::class, 'update']);
         Route::post('ai-card-candidates/{id}/reject', [AiCardCandidateController::class, 'reject']);
         Route::post('ai-card-candidates/{id}/adopt', [AiCardCandidateController::class, 'adopt']);
+        Route::post('ai-card-candidates/batch-adopt', [AiCardCandidateController::class, 'batchAdopt']);
 
         // 復習セッション
         Route::get('review-sessions/today', [ReviewSessionController::class, 'today']);

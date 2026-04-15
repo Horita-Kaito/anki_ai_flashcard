@@ -45,9 +45,17 @@ export const reviewHandlers = [
           good_count: 0,
           easy_count: 0,
         },
+        week: {
+          completed_count: 0,
+          again_rate: 0,
+        },
+        month: {
+          completed_count: 0,
+        },
         overall: {
           total_reviews: 0,
         },
+        by_deck: [],
       },
     })
   ),

@@ -6,4 +6,5 @@ export {
   useUpdateCandidate,
   useRejectCandidate,
   useAdoptCandidate,
+  useBatchAdoptCandidates,
 } from "./api/ai-candidate-queries";
