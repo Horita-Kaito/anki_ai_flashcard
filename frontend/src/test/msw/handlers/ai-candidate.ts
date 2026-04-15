@@ -92,6 +92,13 @@ export const aiCandidateHandlers = [
     return HttpResponse.json({ data: mockCandidates[idx] });
   }),
 
+  http.post(`${API}/api/v1/ai-card-candidates/:id/restore`, ({ params }) => {
+    const idx = mockCandidates.findIndex((c) => c.id === Number(params.id));
+    if (idx === -1) return new HttpResponse(null, { status: 404 });
+    mockCandidates[idx] = { ...mockCandidates[idx], status: "pending" };
+    return HttpResponse.json({ data: mockCandidates[idx] });
+  }),
+
   http.post(
     `${API}/api/v1/ai-card-candidates/batch-adopt`,
     async ({ request }) => {

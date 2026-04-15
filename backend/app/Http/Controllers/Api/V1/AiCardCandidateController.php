@@ -90,6 +90,19 @@ final class AiCardCandidateController extends Controller
         return (new AiCardCandidateResource($candidate))->response();
     }
 
+    /**
+     * 却下の取り消し (Undo)
+     */
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        $candidate = $this->candidateService->restoreForUser(
+            userId: $request->user()->id,
+            candidateId: $id,
+        );
+
+        return (new AiCardCandidateResource($candidate))->response();
+    }
+
     public function adopt(AdoptCandidateRequest $request, int $id): JsonResponse
     {
         $card = $this->candidateService->adoptForUser(

@@ -10,6 +10,7 @@ import {
   generateCandidates,
   regenerateCandidates,
   rejectCandidate,
+  restoreCandidate,
   updateCandidate,
   type AdoptInput,
   type BatchAdoptInput,
@@ -77,6 +78,16 @@ export function useRejectCandidate() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => rejectCandidate(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+    },
+  });
+}
+
+export function useRestoreCandidate() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => restoreCandidate(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
     },

@@ -128,3 +128,29 @@
     @apply font-sans;
   }
 }
+
+/* ========================================
+ * View Transitions API
+ * ページ遷移時のなめらかな fade アニメーション。
+ * 非対応ブラウザ (Firefox 等) では通常の瞬時切替にフォールバック。
+ * ======================================== */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: page-fade-out 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  ::view-transition-new(root) {
+    animation: page-fade-in 220ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+
+  @keyframes page-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+}

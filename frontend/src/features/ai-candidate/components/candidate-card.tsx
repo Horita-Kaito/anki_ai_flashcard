@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   useAdoptCandidate,
   useRejectCandidate,
+  useRestoreCandidate,
   useUpdateCandidate,
 } from "../api/ai-candidate-queries";
 import { CARD_TYPE_LABELS } from "@/entities/card/types";
@@ -27,6 +28,7 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
   const { data: decksPage } = useDeckList();
   const adoptMutation = useAdoptCandidate();
   const rejectMutation = useRejectCandidate();
+  const restoreMutation = useRestoreCandidate();
   const updateMutation = useUpdateCandidate();
 
   const isFinal = candidate.status !== "pending";
@@ -55,7 +57,21 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
   async function handleReject() {
     try {
       await rejectMutation.mutateAsync(candidate.id);
-      toast.success("候補を却下しました");
+      // Undo トースト (Gmail 風): 一定時間内なら取り消し可能
+      toast.success("候補を却下しました", {
+        duration: 5000,
+        action: {
+          label: "元に戻す",
+          onClick: async () => {
+            try {
+              await restoreMutation.mutateAsync(candidate.id);
+              toast.success("取り消しました");
+            } catch {
+              toast.error("取り消しに失敗しました");
+            }
+          },
+        },
+      });
     } catch {
       toast.error("却下に失敗しました");
     }

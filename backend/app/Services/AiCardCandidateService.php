@@ -68,6 +68,20 @@ final class AiCardCandidateService
     }
 
     /**
+     * 候補の却下を取り消す (rejected → pending)。Undo 用。
+     *
+     * @throws AiCardCandidateNotFoundException
+     */
+    public function restoreForUser(int $userId, int $candidateId): AiCardCandidate
+    {
+        $candidate = $this->getForUser($userId, $candidateId);
+
+        return $this->candidateRepository->update($candidate, [
+            'status' => CandidateStatus::Pending->value,
+        ]);
+    }
+
+    /**
      * 候補をカードとして採用する。
      *
      * @param  array{deck_id: int, question?: string, answer?: string, explanation?: ?string, tag_ids?: array<int, int>}  $overrides

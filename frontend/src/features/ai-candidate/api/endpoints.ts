@@ -65,6 +65,16 @@ export async function rejectCandidate(
   return res.data.data;
 }
 
+export async function restoreCandidate(
+  candidateId: number
+): Promise<AiCardCandidate> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: AiCardCandidate }>(
+    `/ai-card-candidates/${candidateId}/restore`
+  );
+  return res.data.data;
+}
+
 export interface AdoptInput {
   deck_id: number;
   question?: string;
