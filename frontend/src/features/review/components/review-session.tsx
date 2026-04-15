@@ -8,6 +8,7 @@ import {
   useAnswerReview,
   useTodaySession,
 } from "../api/review-queries";
+import { ReviewCardFlip } from "./review-card-flip";
 import {
   REVIEW_RATINGS,
   REVIEW_RATING_LABELS,
@@ -15,6 +16,7 @@ import {
   type ReviewRating,
 } from "@/entities/review/types";
 import { Button, buttonVariants } from "@/shared/ui/button";
+import { haptic } from "@/shared/lib/haptics";
 
 const RATING_CLASSES: Record<ReviewRating, string> = {
   again: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
@@ -49,11 +51,13 @@ export function ReviewSession() {
           rating,
           response_time_ms: Date.now() - startedAt,
         });
+        haptic("success");
         setCompleted((c) => c + 1);
         setIndex((i) => i + 1);
         setShowAnswer(false);
         setStartedAt(Date.now());
       } catch {
+        haptic("warning");
         toast.error("回答の保存に失敗しました");
       }
     },
@@ -63,7 +67,6 @@ export function ReviewSession() {
   // PC キーボードショートカット
   useEffect(() => {
     function handler(e: KeyboardEvent) {
-      // input/textarea フォーカス中は無視
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -190,46 +193,14 @@ export function ReviewSession() {
         />
       </div>
 
-      {/* カード */}
-      <article className="border rounded-xl p-6 md:p-8 bg-card min-h-[50vh] md:min-h-[40vh] flex flex-col">
-        <header className="flex items-center gap-2 mb-4">
-          {current.tags?.map((t) => (
-            <span
-              key={t.id}
-              className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-            >
-              {t.name}
-            </span>
-          ))}
-        </header>
-
-        <div className="flex-1 flex flex-col gap-6">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground mb-2">
-              問題
-            </p>
-            <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
-              {current.question}
-            </p>
-          </div>
-
-          {showAnswer && (
-            <div className="pt-4 border-t">
-              <p className="text-xs font-medium text-muted-foreground mb-2">
-                答え
-              </p>
-              <p className="text-base md:text-lg whitespace-pre-wrap break-words">
-                {current.answer}
-              </p>
-              {current.explanation && (
-                <p className="text-sm text-muted-foreground mt-3 whitespace-pre-wrap">
-                  {current.explanation}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      </article>
+      {/* カード (フリップ + スワイプ) */}
+      <ReviewCardFlip
+        card={current}
+        showAnswer={showAnswer}
+        onReveal={handleReveal}
+        onRate={handleRate}
+        disabled={answerMutation.isPending}
+      />
 
       {/* アクション */}
       {!showAnswer ? (
