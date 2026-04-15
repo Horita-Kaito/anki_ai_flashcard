@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <g transform="translate(96, 96)">
+    <rect x="0" y="0" width="240" height="320" rx="24" fill="#fafafa" stroke="#fafafa" stroke-width="8"/>
+    <rect x="80" y="0" width="240" height="320" rx="24" fill="#fafafa" stroke="#0a0a0a" stroke-width="8" opacity="0.95"/>
+    <text x="200" y="180" font-family="system-ui, -apple-system, sans-serif" font-size="120" font-weight="700" text-anchor="middle" fill="#0a0a0a">AI</text>
+  </g>
+</svg>
