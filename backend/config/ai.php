@@ -5,7 +5,7 @@ return [
     |--------------------------------------------------------------------------
     | Default AI Provider
     |--------------------------------------------------------------------------
-    | サポート値: openai | anthropic | google
+    | サポート値: openai | anthropic | google | fake (テスト用)
     */
     'default_provider' => env('DEFAULT_AI_PROVIDER', 'openai'),
 
@@ -15,6 +15,14 @@ return [
     |--------------------------------------------------------------------------
     */
     'default_model' => env('DEFAULT_AI_MODEL', 'gpt-4o-mini'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prompt Version
+    |--------------------------------------------------------------------------
+    | プロンプト仕様を変更する度にバンプする。生成ログに記録される。
+    */
+    'prompt_version' => env('AI_PROMPT_VERSION', 'v1.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -48,5 +56,43 @@ return [
         'default_candidate_count' => (int) env('AI_DEFAULT_CANDIDATE_COUNT', 3),
         'max_candidate_count' => (int) env('AI_MAX_CANDIDATE_COUNT', 10),
         'max_retries' => (int) env('AI_MAX_RETRIES', 2),
+        'temperature' => (float) env('AI_TEMPERATURE', 0.6),
+        'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 2000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pricing Table (USD / 1M tokens)
+    |--------------------------------------------------------------------------
+    | コスト計算に使用。モデル追加時はここに料金を追記。
+    | 未登録モデルは 0 として記録される (警告対象)。
+    */
+    'pricing' => [
+        'openai' => [
+            'gpt-4o-mini' => ['input' => 0.15, 'output' => 0.60],
+            'gpt-4o' => ['input' => 2.50, 'output' => 10.00],
+            'gpt-4.1-mini' => ['input' => 0.40, 'output' => 1.60],
+            'gpt-4.1' => ['input' => 2.00, 'output' => 8.00],
+        ],
+        'anthropic' => [
+            'claude-3-5-haiku-latest' => ['input' => 0.80, 'output' => 4.00],
+            'claude-3-5-sonnet-latest' => ['input' => 3.00, 'output' => 15.00],
+            'claude-sonnet-4-5' => ['input' => 3.00, 'output' => 15.00],
+            'claude-opus-4' => ['input' => 15.00, 'output' => 75.00],
+        ],
+        'google' => [
+            'gemini-2.0-flash' => ['input' => 0.10, 'output' => 0.40],
+            'gemini-1.5-flash' => ['input' => 0.075, 'output' => 0.30],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Usage Limits (per user, per day)
+    |--------------------------------------------------------------------------
+    | 将来の収益化で plan 別に拡張。現状は全ユーザー共通の安全側上限。
+    */
+    'limits' => [
+        'daily_generation_calls' => (int) env('AI_DAILY_GENERATION_LIMIT', 100),
     ],
 ];

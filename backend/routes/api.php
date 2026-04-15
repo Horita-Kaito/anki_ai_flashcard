@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AiCardCandidateController;
 use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeckController;
@@ -41,6 +42,23 @@ Route::prefix('v1')->group(function () {
 
         Route::get('settings', [UserSettingController::class, 'show']);
         Route::put('settings', [UserSettingController::class, 'update']);
+
+        // AI 候補 (生成系は rate limit を強めに)
+        Route::middleware('throttle:ai-generation')->group(function () {
+            Route::post('note-seeds/{id}/generate-candidates', [
+                AiCardCandidateController::class, 'generate',
+            ]);
+            Route::post('note-seeds/{id}/regenerate-candidates', [
+                AiCardCandidateController::class, 'regenerate',
+            ]);
+        });
+
+        Route::get('note-seeds/{id}/candidates', [
+            AiCardCandidateController::class, 'indexForNoteSeed',
+        ]);
+        Route::put('ai-card-candidates/{id}', [AiCardCandidateController::class, 'update']);
+        Route::post('ai-card-candidates/{id}/reject', [AiCardCandidateController::class, 'reject']);
+        Route::post('ai-card-candidates/{id}/adopt', [AiCardCandidateController::class, 'adopt']);
     });
 });
 

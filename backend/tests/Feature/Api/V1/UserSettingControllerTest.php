@@ -27,7 +27,7 @@ final class UserSettingControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.daily_new_limit', 20)
             ->assertJsonPath('data.daily_review_limit', 100)
-            ->assertJsonPath('data.default_ai_provider', 'openai');
+            ->assertJsonPath('data.default_ai_provider', config('ai.default_provider'));
 
         $this->assertDatabaseHas('user_settings', ['user_id' => $user->id]);
     }
