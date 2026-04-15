@@ -6,9 +6,15 @@ import { renderWithProviders } from "@/test/render";
 describe("DeckList", () => {
   it("MSW のデフォルトデータが表示される", async () => {
     renderWithProviders(<DeckList />);
-    const link = await screen.findByRole("link", {
-      name: /デッキ Web開発 を開く/,
+    const deckName = await screen.findByText("Web開発");
+    expect(deckName).toBeInTheDocument();
+  });
+
+  it("並び替え用のドラッグハンドルが表示される", async () => {
+    renderWithProviders(<DeckList />);
+    const handle = await screen.findByRole("button", {
+      name: /Web開発 を並び替え/,
     });
-    expect(link).toBeInTheDocument();
+    expect(handle).toBeInTheDocument();
   });
 });

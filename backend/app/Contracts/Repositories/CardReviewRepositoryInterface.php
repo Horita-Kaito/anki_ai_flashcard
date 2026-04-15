@@ -41,4 +41,11 @@ interface CardReviewRepositoryInterface
         ?\DateTimeInterface $from = null,
         ?\DateTimeInterface $to = null,
     ): array;
+
+    /**
+     * 過去 N 日間のうち、レビューを行った日 (ユニークな日付の昇順) を返す
+     *
+     * @return array<int, string>  YYYY-MM-DD 形式
+     */
+    public function reviewedDatesForUser(int $userId, int $lookbackDays = 60): array;
 }

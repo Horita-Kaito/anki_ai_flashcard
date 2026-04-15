@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { GraduationCap, NotebookPen, Layers, Sparkles } from "lucide-react";
 import { useDashboardSummary } from "../api/dashboard-queries";
+import { StreakRing } from "./streak-ring";
 
 function StatCard({
   label,
@@ -58,6 +59,7 @@ export function DashboardOverview() {
 
   return (
     <div className="space-y-6">
+      <StreakRing streak={data.streak} />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
         <StatCard
           label="今日の復習"

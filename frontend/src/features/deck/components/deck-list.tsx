@@ -1,20 +1,21 @@
 "use client";
 
 import { useDeckList } from "../api/deck-queries";
-import { DeckListItem } from "./deck-list-item";
 import { DeckListEmpty } from "./deck-list-empty";
+import { DeckSortableList } from "./deck-sortable-list";
 
 /**
  * デッキ一覧コンテナ。
- * Server 状態は TanStack Query、モバイルは1列、md+ は 2列、lg+ は 3列。
+ * 並び順は DnD で変更可能 (display_order を保存)。
+ * モバイル: 長押し(200ms)でドラッグ開始、PC: 6px ドラッグで開始。
  */
 export function DeckList() {
   const { data, isLoading, isError, refetch } = useDeckList();
 
   if (isLoading) {
     return (
-      <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <ul className="space-y-3">
+        {Array.from({ length: 4 }).map((_, i) => (
           <li
             key={i}
             className="h-16 border rounded-xl bg-muted/30 animate-pulse"
@@ -50,10 +51,11 @@ export function DeckList() {
   }
 
   return (
-    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-      {decks.map((deck) => (
-        <DeckListItem key={deck.id} deck={deck} />
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground hidden md:block">
+        💡 左の handle をドラッグして並び順を変更できます
+      </p>
+      <DeckSortableList decks={decks} />
+    </div>
   );
 }

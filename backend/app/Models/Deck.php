@@ -22,6 +22,7 @@ class Deck extends Model
         'default_domain_template_id',
         'new_cards_limit',
         'review_limit',
+        'display_order',
     ];
 
     /**
@@ -31,6 +32,7 @@ class Deck extends Model
         'new_cards_limit' => 'integer',
         'review_limit' => 'integer',
         'default_domain_template_id' => 'integer',
+        'display_order' => 'integer',
     ];
 
     /** @return BelongsTo<User, self> */

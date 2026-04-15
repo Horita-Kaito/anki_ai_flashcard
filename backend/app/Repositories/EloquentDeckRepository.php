@@ -22,6 +22,7 @@ final class EloquentDeckRepository implements DeckRepositoryInterface
     {
         return Deck::query()
             ->where('user_id', $userId)
+            ->orderBy('display_order')
             ->orderByDesc('updated_at')
             ->paginate($perPage);
     }
@@ -41,5 +42,20 @@ final class EloquentDeckRepository implements DeckRepositoryInterface
     public function delete(Deck $deck): void
     {
         $deck->delete();
+    }
+
+    /**
+     * 並び順を一括更新する。
+     *
+     * @param  array<int, int>  $orderedIds  先頭から順に並べた deck_id 配列
+     */
+    public function reorderForUser(int $userId, array $orderedIds): void
+    {
+        foreach ($orderedIds as $position => $deckId) {
+            Deck::query()
+                ->where('user_id', $userId)
+                ->where('id', $deckId)
+                ->update(['display_order' => $position]);
+        }
     }
 }

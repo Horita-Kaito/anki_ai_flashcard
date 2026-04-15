@@ -77,4 +77,19 @@ final class EloquentCardReviewRepository implements CardReviewRepositoryInterfac
             'again_count' => (int) $row->again_count,
         ])->all();
     }
+
+    public function reviewedDatesForUser(int $userId, int $lookbackDays = 60): array
+    {
+        $from = now()->subDays($lookbackDays)->startOfDay();
+
+        $rows = CardReview::query()
+            ->where('user_id', $userId)
+            ->where('reviewed_at', '>=', $from)
+            ->selectRaw('DATE(reviewed_at) as day')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        return $rows->map(fn ($row) => (string) $row->day)->all();
+    }
 }

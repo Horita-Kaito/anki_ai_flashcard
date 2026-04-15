@@ -39,3 +39,8 @@ export async function deleteDeck(id: number): Promise<void> {
   await fetchCsrfCookie();
   await apiClient.delete(`/decks/${id}`);
 }
+
+export async function reorderDecks(deckIds: number[]): Promise<void> {
+  await fetchCsrfCookie();
+  await apiClient.post("/decks/reorder", { deck_ids: deckIds });
+}

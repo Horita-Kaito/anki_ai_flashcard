@@ -39,6 +39,11 @@ final class DashboardController extends Controller
                     'month_calls' => $summary['ai_usage']['month_calls'],
                     'month_cost_usd' => round($summary['ai_usage']['month_cost_usd'], 6),
                 ],
+                'streak' => [
+                    'current' => $summary['streak']['current'],
+                    'longest' => $summary['streak']['longest'],
+                    'today_done' => $summary['streak']['today_done'],
+                ],
             ],
         ]);
     }

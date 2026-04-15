@@ -16,6 +16,12 @@ export interface AiUsage {
   month_cost_usd: number;
 }
 
+export interface StreakInfo {
+  current: number;
+  longest: number;
+  today_done: boolean;
+}
+
 export interface DashboardSummary {
   due_count_today: number;
   new_cards_count: number;
@@ -23,4 +29,5 @@ export interface DashboardSummary {
   recent_notes: RecentNote[];
   recent_cards: RecentCard[];
   ai_usage: AiUsage;
+  streak: StreakInfo;
 }

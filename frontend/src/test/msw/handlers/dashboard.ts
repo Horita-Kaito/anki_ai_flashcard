@@ -16,6 +16,11 @@ export const dashboardHandlers = [
           month_calls: 45,
           month_cost_usd: 0.014,
         },
+        streak: {
+          current: 5,
+          longest: 12,
+          today_done: true,
+        },
       },
     })
   ),

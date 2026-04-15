@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Deck\ReorderDecksRequest;
 use App\Http\Requests\Deck\StoreDeckRequest;
 use App\Http\Requests\Deck\UpdateDeckRequest;
 use App\Http\Resources\DeckResource;
@@ -67,6 +68,18 @@ final class DeckController extends Controller
         $this->deckService->deleteForUser(
             userId: $request->user()->id,
             deckId: $id,
+        );
+
+        return response()->json(null, 204);
+    }
+
+    public function reorder(ReorderDecksRequest $request): JsonResponse
+    {
+        /** @var array<int, int> $deckIds */
+        $deckIds = $request->validated('deck_ids');
+        $this->deckService->reorderForUser(
+            userId: $request->user()->id,
+            orderedIds: $deckIds,
         );
 
         return response()->json(null, 204);

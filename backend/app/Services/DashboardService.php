@@ -16,6 +16,7 @@ final class DashboardService
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
         private readonly NoteSeedRepositoryInterface $noteSeedRepository,
         private readonly AiGenerationLogRepositoryInterface $aiLogRepository,
+        private readonly StreakService $streakService,
     ) {}
 
     /**
@@ -30,6 +31,7 @@ final class DashboardService
      *     month_calls: int,
      *     month_cost_usd: float,
      *   },
+     *   streak: array{current: int, longest: int, today_done: bool},
      * }
      */
     public function summaryForUser(int $userId): array
@@ -50,6 +52,7 @@ final class DashboardService
                 'month_calls' => $this->aiLogRepository->countForUserInPeriod($userId, $monthStart, $monthEnd),
                 'month_cost_usd' => $this->aiLogRepository->totalCostForUserInPeriod($userId, $monthStart, $monthEnd),
             ],
+            'streak' => $this->streakService->summaryForUser($userId),
         ];
     }
 }

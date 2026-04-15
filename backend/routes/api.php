@@ -32,6 +32,7 @@ Route::prefix('v1')->group(function () {
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);
 
+        Route::post('decks/reorder', [DeckController::class, 'reorder']);
         Route::apiResource('decks', DeckController::class);
         Route::apiResource('domain-templates', DomainTemplateController::class);
         Route::apiResource('note-seeds', NoteSeedController::class);

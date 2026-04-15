@@ -8,6 +8,7 @@ import {
   deleteDeck,
   fetchDeck,
   fetchDeckList,
+  reorderDecks,
   updateDeck,
 } from "./endpoints";
 import type {
@@ -61,6 +62,16 @@ export function useDeleteDeck() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteDeck(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: deckKeys.all });
+    },
+  });
+}
+
+export function useReorderDecks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (deckIds: number[]) => reorderDecks(deckIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: deckKeys.all });
     },

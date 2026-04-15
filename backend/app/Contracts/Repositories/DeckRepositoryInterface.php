@@ -25,4 +25,9 @@ interface DeckRepositoryInterface
     public function update(Deck $deck, array $attributes): Deck;
 
     public function delete(Deck $deck): void;
+
+    /**
+     * @param  array<int, int>  $orderedIds  先頭から順に並べた deck_id 配列
+     */
+    public function reorderForUser(int $userId, array $orderedIds): void;
 }

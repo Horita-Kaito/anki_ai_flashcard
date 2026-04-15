@@ -62,4 +62,12 @@ final class DeckService
         $deck = $this->getForUser($userId, $deckId);
         $this->deckRepository->delete($deck);
     }
+
+    /**
+     * @param  array<int, int>  $orderedIds
+     */
+    public function reorderForUser(int $userId, array $orderedIds): void
+    {
+        $this->deckRepository->reorderForUser($userId, $orderedIds);
+    }
 }
