@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Api\V1\DomainTemplateController;
 use App\Http\Controllers\Api\V1\NoteSeedController;
+use App\Http\Controllers\Api\V1\ReviewSessionController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\UserSettingController;
 use App\Http\Controllers\Auth\AuthController;
@@ -59,6 +60,11 @@ Route::prefix('v1')->group(function () {
         Route::put('ai-card-candidates/{id}', [AiCardCandidateController::class, 'update']);
         Route::post('ai-card-candidates/{id}/reject', [AiCardCandidateController::class, 'reject']);
         Route::post('ai-card-candidates/{id}/adopt', [AiCardCandidateController::class, 'adopt']);
+
+        // 復習セッション
+        Route::get('review-sessions/today', [ReviewSessionController::class, 'today']);
+        Route::post('review-sessions/answer', [ReviewSessionController::class, 'answer']);
+        Route::get('review-stats', [ReviewSessionController::class, 'stats']);
     });
 });
 

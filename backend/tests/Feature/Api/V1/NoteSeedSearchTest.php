@@ -17,8 +17,16 @@ final class NoteSeedSearchTest extends TestCase
     public function test_qで本文を検索できる(): void
     {
         $user = User::factory()->create();
-        NoteSeed::factory()->for($user)->create(['body' => 'DIの基本']);
-        NoteSeed::factory()->for($user)->create(['body' => 'Reactの使い方']);
+        NoteSeed::factory()->for($user)->create([
+            'body' => 'DIの基本',
+            'learning_goal' => null,
+            'note_context' => null,
+        ]);
+        NoteSeed::factory()->for($user)->create([
+            'body' => 'Reactの使い方',
+            'learning_goal' => null,
+            'note_context' => null,
+        ]);
 
         $this->actingAs($user)
             ->getJson('/api/v1/note-seeds?q=DI')

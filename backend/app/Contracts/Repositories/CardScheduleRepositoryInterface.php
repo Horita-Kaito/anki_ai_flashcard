@@ -25,4 +25,18 @@ interface CardScheduleRepositoryInterface
      * state='new' のスケジュール件数
      */
     public function newCountForUser(int $userId): int;
+
+    /**
+     * 指定時刻までに due_at が到達しているスケジュール + カードを取得する (今日の復習対象)
+     *
+     * @return array<int, CardSchedule>
+     */
+    public function dueCardsForUser(int $userId, \DateTimeInterface $before, ?int $deckId, int $limit): array;
+
+    /**
+     * スケジュールを更新する (スケジューラの計算結果を反映)
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function update(CardSchedule $schedule, array $attributes): CardSchedule;
 }

@@ -32,8 +32,9 @@ final class RepositoryServiceProvider extends ServiceProvider
         \App\Contracts\Repositories\UserSettingRepositoryInterface::class => \App\Repositories\EloquentUserSettingRepository::class,
         \App\Contracts\Repositories\AiCardCandidateRepositoryInterface::class => \App\Repositories\EloquentAiCardCandidateRepository::class,
         \App\Contracts\Repositories\AiGenerationLogRepositoryInterface::class => \App\Repositories\EloquentAiGenerationLogRepository::class,
+        \App\Contracts\Repositories\CardReviewRepositoryInterface::class => \App\Repositories\EloquentCardReviewRepository::class,
 
         // Services (固定バインド)
-        // CardGenerationServiceInterface::class => CardGenerationService::class,
+        \App\Contracts\Services\Review\SchedulerInterface::class => \App\Services\Review\Sm2Scheduler::class,
     ];
 }

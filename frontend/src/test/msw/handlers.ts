@@ -5,6 +5,7 @@ import { dashboardHandlers } from "./handlers/dashboard";
 import { deckHandlers } from "./handlers/deck";
 import { domainTemplateHandlers } from "./handlers/domain-template";
 import { noteSeedHandlers } from "./handlers/note-seed";
+import { reviewHandlers } from "./handlers/review";
 import { userSettingHandlers } from "./handlers/user-setting";
 
 /**
@@ -20,4 +21,5 @@ export const handlers = [
   ...dashboardHandlers,
   ...userSettingHandlers,
   ...aiCandidateHandlers,
+  ...reviewHandlers,
 ];
