@@ -63,6 +63,28 @@ export default function NoteEditPage({
           <h1 className="text-2xl md:text-3xl font-bold">メモを編集</h1>
         </header>
 
+        <section
+          aria-labelledby="ai-action"
+          className="border rounded-xl p-4 md:p-5 space-y-2 bg-primary/5"
+        >
+          <h2
+            id="ai-action"
+            className="text-sm font-medium flex items-center gap-2"
+          >
+            AI でカード候補を生成
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            このメモから AI が複数のカード候補を提案します
+          </p>
+          <Button
+            onClick={() => router.push(`/notes/${note.id}/generate`)}
+            size="lg"
+            className="min-h-11"
+          >
+            候補を生成する
+          </Button>
+        </section>
+
         <NoteSeedForm note={note} />
 
         <section

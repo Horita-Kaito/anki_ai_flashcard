@@ -1,3 +1,4 @@
+import { aiCandidateHandlers } from "./handlers/ai-candidate";
 import { authHandlers } from "./handlers/auth";
 import { cardHandlers } from "./handlers/card";
 import { dashboardHandlers } from "./handlers/dashboard";
@@ -18,4 +19,5 @@ export const handlers = [
   ...cardHandlers,
   ...dashboardHandlers,
   ...userSettingHandlers,
+  ...aiCandidateHandlers,
 ];
