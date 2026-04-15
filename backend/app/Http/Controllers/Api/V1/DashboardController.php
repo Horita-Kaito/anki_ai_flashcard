@@ -34,6 +34,11 @@ final class DashboardController extends Controller
                     'question' => mb_substr($c->question, 0, 80),
                     'created_at' => $c->created_at?->toIso8601String(),
                 ], $summary['recent_cards']),
+                'ai_usage' => [
+                    'today_calls' => $summary['ai_usage']['today_calls'],
+                    'month_calls' => $summary['ai_usage']['month_calls'],
+                    'month_cost_usd' => round($summary['ai_usage']['month_cost_usd'], 6),
+                ],
             ],
         ]);
     }

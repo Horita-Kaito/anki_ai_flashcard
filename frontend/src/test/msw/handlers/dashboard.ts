@@ -11,6 +11,11 @@ export const dashboardHandlers = [
         total_cards: 42,
         recent_notes: [],
         recent_cards: [],
+        ai_usage: {
+          today_calls: 2,
+          month_calls: 45,
+          month_cost_usd: 0.014,
+        },
       },
     })
   ),

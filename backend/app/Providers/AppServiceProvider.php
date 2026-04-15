@@ -29,8 +29,8 @@ final class AppServiceProvider extends ServiceProvider
 
             return match ($provider) {
                 'fake' => $app->make(FakeAiProvider::class),
-                // TODO: Phase 2 後半で OpenAiProvider / AnthropicProvider を実装
-                'openai' => $app->make(FakeAiProvider::class),
+                'openai' => \App\Services\AI\OpenAiProvider::fromConfig(),
+                // TODO: AnthropicProvider / GoogleAiProvider の実装
                 'anthropic' => $app->make(FakeAiProvider::class),
                 'google' => $app->make(FakeAiProvider::class),
                 default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),

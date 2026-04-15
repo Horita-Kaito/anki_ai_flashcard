@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { GraduationCap, NotebookPen, Layers } from "lucide-react";
+import { GraduationCap, NotebookPen, Layers, Sparkles } from "lucide-react";
 import { useDashboardSummary } from "../api/dashboard-queries";
 
 function StatCard({
@@ -54,6 +54,8 @@ export function DashboardOverview() {
     );
   }
 
+  const monthCostJpyApprox = Math.round(data.ai_usage.month_cost_usd * 150);
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
@@ -76,6 +78,43 @@ export function DashboardOverview() {
           icon={<Layers className="size-5" />}
         />
       </div>
+
+      {/* AI 使用量 */}
+      <section
+        aria-labelledby="ai-usage"
+        className="border rounded-xl p-4 md:p-5 bg-card"
+      >
+        <h2
+          id="ai-usage"
+          className="text-sm font-medium flex items-center gap-2 mb-3"
+        >
+          <Sparkles className="size-4 text-primary" aria-hidden />
+          今月の AI 使用量
+        </h2>
+        <dl className="grid grid-cols-3 gap-3 md:gap-4">
+          <div>
+            <dt className="text-xs text-muted-foreground">今日の呼び出し</dt>
+            <dd className="text-xl font-bold mt-0.5">
+              {data.ai_usage.today_calls}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">今月の呼び出し</dt>
+            <dd className="text-xl font-bold mt-0.5">
+              {data.ai_usage.month_calls}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">今月のコスト</dt>
+            <dd className="text-xl font-bold mt-0.5">
+              ${data.ai_usage.month_cost_usd.toFixed(4)}
+            </dd>
+            <dd className="text-xs text-muted-foreground">
+              約 ¥{monthCostJpyApprox}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <section aria-labelledby="recent-notes" className="space-y-3">

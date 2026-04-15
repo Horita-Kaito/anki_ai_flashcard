@@ -10,10 +10,17 @@ export interface RecentCard {
   created_at: string | null;
 }
 
+export interface AiUsage {
+  today_calls: number;
+  month_calls: number;
+  month_cost_usd: number;
+}
+
 export interface DashboardSummary {
   due_count_today: number;
   new_cards_count: number;
   total_cards: number;
   recent_notes: RecentNote[];
   recent_cards: RecentCard[];
+  ai_usage: AiUsage;
 }
