@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Code,
@@ -73,14 +73,24 @@ export default function OnboardingPage() {
     );
   }
 
-  if (authError || !user) {
-    router.push("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!authLoading && (authError || !user)) {
+      router.push("/login");
+    }
+  }, [authLoading, authError, user, router]);
 
-  if (onboardingStatus?.completed) {
-    router.push("/dashboard");
-    return null;
+  useEffect(() => {
+    if (onboardingStatus?.completed) {
+      router.push("/dashboard");
+    }
+  }, [onboardingStatus, router]);
+
+  if (!user || onboardingStatus?.completed) {
+    return (
+      <main className="flex-1 flex items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </main>
+    );
   }
 
   function toggleGoal(id: string) {
