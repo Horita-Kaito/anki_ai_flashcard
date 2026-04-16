@@ -9,6 +9,7 @@ import { LoginForm } from "./login-form";
 const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, back: vi.fn(), replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 const API = "http://localhost:8000";
@@ -16,6 +17,13 @@ const API = "http://localhost:8000";
 describe("LoginForm", () => {
   beforeEach(() => {
     pushMock.mockClear();
+
+    // デフォルト: オンボーディング完了済み
+    server.use(
+      http.get(`${API}/api/v1/onboarding/status`, () =>
+        HttpResponse.json({ data: { completed: true } })
+      )
+    );
   });
 
   it("メールアドレスとパスワードの入力欄が表示される", () => {

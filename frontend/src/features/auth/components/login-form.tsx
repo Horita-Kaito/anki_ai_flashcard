@@ -2,14 +2,16 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isAxiosError } from "axios";
 import { useLogin } from "../api/auth-queries";
 import { loginSchema, type LoginInput } from "../schemas/auth-schemas";
+import { fetchOnboardingStatus } from "@/features/onboarding";
 import { Button } from "@/shared/ui/button";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const login = useLogin();
   const {
     register,
@@ -22,7 +24,22 @@ export function LoginForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await login.mutateAsync(values);
-      router.push("/dashboard");
+
+      // next パラメータがあればそちらへ遷移
+      const next = searchParams.get("next");
+      if (next) {
+        router.push(next);
+        return;
+      }
+
+      // オンボーディング未完了ならオンボーディングへ
+      try {
+        const status = await fetchOnboardingStatus();
+        router.push(status.completed ? "/dashboard" : "/onboarding");
+      } catch {
+        // ステータス取得に失敗してもダッシュボードへ (ダッシュボード側で再チェック)
+        router.push("/dashboard");
+      }
     } catch {
       // エラー表示は下部の login.error で行う
     }

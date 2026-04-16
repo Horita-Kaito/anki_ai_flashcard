@@ -101,7 +101,8 @@ final class OnboardingControllerTest extends TestCase
             'goals' => ['programming'],
         ]);
 
-        $response->assertStatus(409)
+        $response->assertStatus(200)
+            ->assertJsonPath('data.already_completed', true)
             ->assertJsonPath('message', 'オンボーディングは既に完了しています。');
     }
 

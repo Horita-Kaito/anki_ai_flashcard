@@ -10,7 +10,9 @@ import { useEffect } from "react";
 export default function DashboardPage() {
   const router = useRouter();
   const { data: user, isLoading, isError } = useCurrentUser();
-  const { data: onboardingStatus } = useOnboardingStatus();
+  const isAuthenticated = !!user && !isLoading && !isError;
+  const { data: onboardingStatus, isLoading: statusLoading } =
+    useOnboardingStatus(isAuthenticated);
   const logout = useLogout();
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function DashboardPage() {
     }
   }, [onboardingStatus, router]);
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && statusLoading)) {
     return (
       <main className="flex-1 flex items-center justify-center">
         <p className="text-muted-foreground">読み込み中...</p>
@@ -42,8 +44,17 @@ export default function DashboardPage() {
     );
   }
 
+  // オンボーディング未完了の場合はリダイレクト中 (useEffect) なので何も表示しない
+  if (onboardingStatus && !onboardingStatus.completed) {
+    return null;
+  }
+
   async function handleLogout() {
-    await logout.mutateAsync();
+    try {
+      await logout.mutateAsync();
+    } catch {
+      // ログアウト失敗でもクライアント側のセッションは破棄済み
+    }
     router.push("/");
   }
 

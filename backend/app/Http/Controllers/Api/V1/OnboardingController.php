@@ -22,8 +22,9 @@ final class OnboardingController extends Controller
 
         if ($user->onboarding_completed_at !== null) {
             return response()->json([
+                'data' => ['already_completed' => true],
                 'message' => 'オンボーディングは既に完了しています。',
-            ], 409);
+            ], 200);
         }
 
         $summary = $this->onboardingService->execute(
