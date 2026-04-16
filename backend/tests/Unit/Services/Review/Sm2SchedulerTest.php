@@ -190,11 +190,12 @@ final class Sm2SchedulerTest extends TestCase
         $this->assertEqualsWithDelta(2.5, $u->easeFactor, 0.001);
     }
 
-    public function test_due前_easy_はinterval伸ばす(): void
+    public function test_due前_easy_はinterval伸ばすがease据え置き(): void
     {
         $schedule = $this->buildSchedule('review', interval: 10, ease: 2.0, reps: 3, dueAt: '2026-04-20 12:00:00');
         $u = $this->scheduler->next($schedule, ReviewRating::Easy, $this->now);
         $this->assertGreaterThan(10, $u->intervalDays);
+        $this->assertEqualsWithDelta(2.0, $u->easeFactor, 0.001);
     }
 
     public function test_due前_again_はinterval反映(): void

@@ -108,8 +108,16 @@ final class Sm2Scheduler implements SchedulerInterface
                 lapseCount: $currentLapses,
                 state: ScheduleState::Review->value,
             ),
-            // Easy → 前倒し卒業を許可 (interval を伸ばす)
-            ReviewRating::Easy => $computed,
+            // Easy → interval は伸ばすが ease は据え置き (忘れる前なので簡単に感じるのは当然)
+            ReviewRating::Easy => new ScheduleUpdate(
+                repetitions: $computed->repetitions,
+                intervalDays: $computed->intervalDays,
+                easeFactor: $currentEase,
+                dueAt: $computed->dueAt,
+                lastReviewedAt: $computed->lastReviewedAt,
+                lapseCount: $computed->lapseCount,
+                state: $computed->state,
+            ),
         };
     }
 
