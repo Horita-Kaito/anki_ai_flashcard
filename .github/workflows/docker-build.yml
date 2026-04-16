@@ -108,10 +108,16 @@ jobs:
       matrix:
         image: [backend, frontend]
     steps:
+      - name: Lowercase image namespace
+        id: ns
+        run: echo "image_ns=${IMAGE_NAMESPACE,,}" >> "$GITHUB_OUTPUT"
+        env:
+          IMAGE_NAMESPACE: ${{ env.IMAGE_NAMESPACE }}
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.35.0
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}-${{ matrix.image }}:latest
+          image-ref: ${{ env.REGISTRY }}/${{ steps.ns.outputs.image_ns }}-${{ matrix.image }}:latest
           format: sarif
           output: trivy-${{ matrix.image }}.sarif
           severity: CRITICAL,HIGH
