@@ -12,6 +12,7 @@ import {
   Check,
   Loader2,
 } from "lucide-react";
+import { useCurrentUser } from "@/features/auth";
 import { useSubmitOnboarding } from "@/features/onboarding";
 import { Button } from "@/shared/ui/button";
 
@@ -56,8 +57,22 @@ const GOALS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { data: user, isLoading: authLoading, isError: authError } = useCurrentUser();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const submitMutation = useSubmitOnboarding();
+
+  if (authLoading) {
+    return (
+      <main className="flex-1 flex items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </main>
+    );
+  }
+
+  if (authError || !user) {
+    router.push("/login");
+    return null;
+  }
 
   function toggleGoal(id: string) {
     setSelected((prev) => {
