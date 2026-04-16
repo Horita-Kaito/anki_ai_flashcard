@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/features/auth";
 
 export const metadata: Metadata = {
-  title: "ログイン | Anki AI Flashcard",
+  title: "ログイン",
+  description: "Anki AI Flashcard にログインして、フラッシュカード学習を続けましょう。",
 };
 
 export default function LoginPage() {

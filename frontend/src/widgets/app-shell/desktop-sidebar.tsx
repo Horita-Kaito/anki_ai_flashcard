@@ -14,6 +14,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 
 const items = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
@@ -66,6 +67,9 @@ export function DesktopSidebar() {
           })}
         </ul>
       </nav>
+      <div className="mt-auto px-3 pb-2">
+        <ThemeToggle />
+      </div>
     </aside>
   );
 }

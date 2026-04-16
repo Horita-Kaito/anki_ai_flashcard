@@ -8,9 +8,28 @@ import {
 } from "lucide-react";
 import { buttonVariants } from "@/shared/ui/button";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "Anki AI Flashcard",
+  description:
+    "AI がメモからフラッシュカード候補を生成し、科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+  applicationCategory: "EducationalApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "JPY",
+  },
+};
+
 export default function HomePage() {
   return (
     <main className="flex-1">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* ヒーロー */}
       <section className="relative overflow-hidden">
         {/* 背景: 微細なグラデーション */}

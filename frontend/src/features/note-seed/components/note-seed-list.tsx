@@ -9,6 +9,8 @@ import { NoteSeedListSkeleton } from "./note-seed-list-skeleton";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
+import { VirtualList } from "@/shared/ui/virtual-list";
+import type { NoteSeed } from "@/entities/note-seed/types";
 
 export function NoteSeedList() {
   const [keyword, setKeyword] = useState("");
@@ -103,11 +105,13 @@ export function NoteSeedList() {
           <NoteSeedListEmpty />
         )
       ) : (
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          {data.data.map((note) => (
-            <NoteSeedListItem key={note.id} note={note} />
-          ))}
-        </ul>
+        <VirtualList<NoteSeed>
+          items={data.data}
+          estimateSize={120}
+          getItemKey={(note) => note.id}
+          renderItem={(note) => <NoteSeedListItem note={note} />}
+          listClassName="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+        />
       )}
     </div>
   );

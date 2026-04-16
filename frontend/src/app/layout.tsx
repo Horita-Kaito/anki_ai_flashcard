@@ -25,6 +25,8 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anki-ai-flashcard.example.com";
+
 export const metadata: Metadata = {
   title: {
     default: "Anki AI Flashcard",
@@ -32,8 +34,50 @@ export const metadata: Metadata = {
   },
   description:
     "AI策問補助付きフラッシュカードアプリ。メモから AI がカード候補を生成し、間隔反復で記憶定着を支援します。",
+  keywords: [
+    "フラッシュカード",
+    "AI",
+    "間隔反復",
+    "暗記",
+    "学習",
+    "SM-2",
+    "スペースドリピティション",
+    "Anki",
+    "flashcard",
+    "spaced repetition",
+  ],
   applicationName: "Anki AI Flashcard",
   manifest: "/manifest.json",
+  metadataBase: new URL(SITE_URL),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Anki AI Flashcard",
+    description:
+      "メモを書くだけで AI がフラッシュカード候補を生成。科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+    url: SITE_URL,
+    siteName: "Anki AI Flashcard",
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Anki AI Flashcard",
+    description:
+      "メモを書くだけで AI がフラッシュカード候補を生成。科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -67,8 +111,16 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
+      suppressHydrationWarning
       className={`${inter.variable} ${notoJp.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-dvh flex flex-col font-sans">
         <Providers>{children}</Providers>
       </body>

@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import { RegisterForm } from "@/features/auth";
 
 export const metadata: Metadata = {
-  title: "新規登録 | Anki AI Flashcard",
+  title: "新規登録",
+  description:
+    "無料アカウントを作成して、AI が生成するフラッシュカードで効率的に学習を始めましょう。",
 };
 
 export default function RegisterPage() {

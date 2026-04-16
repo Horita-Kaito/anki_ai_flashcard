@@ -10,6 +10,7 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
 
 const tabs = [
   { href: "/dashboard", label: "ホーム", icon: LayoutDashboard },
@@ -31,29 +32,34 @@ export function BottomTabBar() {
       aria-label="主要ナビゲーション"
       className="md:hidden sticky bottom-0 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
     >
-      <ul className="flex items-stretch">
-        {tabs.map((tab) => {
-          const active = pathname.startsWith(tab.href);
-          const Icon = tab.icon;
-          return (
-            <li key={tab.href} className="flex-1">
-              <Link
-                href={tab.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 min-h-14 text-xs",
-                  active
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Icon className="size-5" aria-hidden />
-                <span>{tab.label}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <div className="flex items-stretch">
+        <ul className="flex flex-1 items-stretch">
+          {tabs.map((tab) => {
+            const active = pathname.startsWith(tab.href);
+            const Icon = tab.icon;
+            return (
+              <li key={tab.href} className="flex-1">
+                <Link
+                  href={tab.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-0.5 py-2 min-h-14 text-xs",
+                    active
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
+                  <span>{tab.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex items-center pr-1">
+          <ThemeToggle className="min-h-10 min-w-10 p-1.5" />
+        </div>
+      </div>
     </nav>
   );
 }

@@ -10,6 +10,8 @@ import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { useTagList } from "@/entities/tag/api/tag-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
+import { VirtualList } from "@/shared/ui/virtual-list";
+import type { Card } from "@/entities/card/types";
 
 export function CardList() {
   const [keyword, setKeyword] = useState("");
@@ -121,11 +123,13 @@ export function CardList() {
           <CardListEmpty />
         )
       ) : (
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          {data.data.map((c) => (
-            <CardListItem key={c.id} card={c} />
-          ))}
-        </ul>
+        <VirtualList<Card>
+          items={data.data}
+          estimateSize={120}
+          getItemKey={(c) => c.id}
+          renderItem={(c) => <CardListItem card={c} />}
+          listClassName="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
+        />
       )}
     </div>
   );
