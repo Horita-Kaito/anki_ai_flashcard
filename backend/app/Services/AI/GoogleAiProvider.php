@@ -8,6 +8,7 @@ use App\Contracts\Services\AI\AiProviderInterface;
 use App\Exceptions\Domain\AiGenerationFailedException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 final class GoogleAiProvider implements AiProviderInterface
 {
@@ -35,6 +36,11 @@ final class GoogleAiProvider implements AiProviderInterface
         return 'google';
     }
 
+    private const FALLBACK_MODELS = [
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+    ];
+
     public function generate(AiGenerationRequest $request): AiGenerationResult
     {
         if ($this->apiKey === '') {
@@ -43,12 +49,32 @@ final class GoogleAiProvider implements AiProviderInterface
             );
         }
 
+        $models = [$request->model, ...array_diff(self::FALLBACK_MODELS, [$request->model])];
+
+        $lastException = null;
+        foreach ($models as $model) {
+            try {
+                return $this->callApi($request, $model);
+            } catch (AiGenerationFailedException $e) {
+                if (! str_contains($e->getMessage(), '503') && ! str_contains($e->getMessage(), '404')) {
+                    throw $e;
+                }
+                $lastException = $e;
+                Log::warning("Google AI model {$model} returned 503, trying fallback");
+            }
+        }
+
+        throw $lastException ?? AiGenerationFailedException::generic('Google AI: all models unavailable');
+    }
+
+    private function callApi(AiGenerationRequest $request, string $model): AiGenerationResult
+    {
         $startMs = (int) (microtime(true) * 1000);
 
         $url = sprintf(
             '%s/models/%s:generateContent?key=%s',
             rtrim($this->baseUri, '/'),
-            $request->model,
+            $model,
             $this->apiKey,
         );
 
@@ -102,10 +128,10 @@ final class GoogleAiProvider implements AiProviderInterface
         return new AiGenerationResult(
             rawContent: $content,
             provider: 'google',
-            model: $request->model,
+            model: $model,
             inputTokens: $inputTokens,
             outputTokens: $outputTokens,
-            costUsd: $this->pricing->calculate('google', $request->model, $inputTokens, $outputTokens),
+            costUsd: $this->pricing->calculate('google', $model, $inputTokens, $outputTokens),
             durationMs: $durationMs,
         );
     }
