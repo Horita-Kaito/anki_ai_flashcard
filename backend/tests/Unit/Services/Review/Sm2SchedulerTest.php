@@ -29,6 +29,7 @@ final class Sm2SchedulerTest extends TestCase
         float $ease = 2.5,
         int $reps = 0,
         int $lapses = 0,
+        ?string $dueAt = null,
     ): CardSchedule {
         $schedule = new CardSchedule;
         $schedule->state = ScheduleState::from($state);
@@ -36,6 +37,9 @@ final class Sm2SchedulerTest extends TestCase
         $schedule->ease_factor = $ease;
         $schedule->repetitions = $reps;
         $schedule->lapse_count = $lapses;
+        if ($dueAt !== null) {
+            $schedule->setRawAttributes(array_merge($schedule->getAttributes(), ['due_at' => $dueAt]));
+        }
 
         return $schedule;
     }
@@ -172,5 +176,47 @@ final class Sm2SchedulerTest extends TestCase
         );
         // 1 * 1.2 = 1.2 → ceil=2、前回+1=2、結果 max=2
         $this->assertGreaterThan(1, $u->intervalDays);
+    }
+
+    // ========================================
+    // due 前復習ポリシー
+    // ========================================
+
+    public function test_due前_good_はinterval据え置き(): void
+    {
+        $schedule = $this->buildSchedule('review', interval: 10, ease: 2.5, reps: 3, dueAt: '2026-04-20 12:00:00');
+        $u = $this->scheduler->next($schedule, ReviewRating::Good, $this->now);
+        $this->assertSame(10, $u->intervalDays);
+        $this->assertEqualsWithDelta(2.5, $u->easeFactor, 0.001);
+    }
+
+    public function test_due前_easy_はinterval伸ばす(): void
+    {
+        $schedule = $this->buildSchedule('review', interval: 10, ease: 2.0, reps: 3, dueAt: '2026-04-20 12:00:00');
+        $u = $this->scheduler->next($schedule, ReviewRating::Easy, $this->now);
+        $this->assertGreaterThan(10, $u->intervalDays);
+    }
+
+    public function test_due前_again_はinterval反映(): void
+    {
+        $schedule = $this->buildSchedule('review', interval: 10, ease: 2.5, reps: 3, dueAt: '2026-04-20 12:00:00');
+        $u = $this->scheduler->next($schedule, ReviewRating::Again, $this->now);
+        $this->assertSame(0, $u->intervalDays);
+        $this->assertSame(ScheduleState::Relearning->value, $u->state);
+    }
+
+    public function test_due前_hard_はinterval反映(): void
+    {
+        $schedule = $this->buildSchedule('review', interval: 10, ease: 2.0, reps: 3, dueAt: '2026-04-20 12:00:00');
+        $u = $this->scheduler->next($schedule, ReviewRating::Hard, $this->now);
+        $this->assertGreaterThan(10, $u->intervalDays);
+        $this->assertEqualsWithDelta(1.85, $u->easeFactor, 0.001);
+    }
+
+    public function test_due後_good_は通常通りinterval伸びる(): void
+    {
+        $schedule = $this->buildSchedule('review', interval: 10, ease: 2.5, reps: 3, dueAt: '2026-04-10 12:00:00');
+        $u = $this->scheduler->next($schedule, ReviewRating::Good, $this->now);
+        $this->assertGreaterThan(10, $u->intervalDays);
     }
 }

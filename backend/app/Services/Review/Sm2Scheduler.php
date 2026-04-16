@@ -49,7 +49,7 @@ final class Sm2Scheduler implements SchedulerInterface
         $currentReps = (int) $current->repetitions;
         $currentLapses = (int) $current->lapse_count;
 
-        return match ($state) {
+        $update = match ($state) {
             ScheduleState::New, ScheduleState::Learning, ScheduleState::Relearning => $this->processLearning(
                 $rating,
                 $currentEase,
@@ -66,6 +66,50 @@ final class Sm2Scheduler implements SchedulerInterface
                 $currentLapses,
                 $now,
             ),
+        };
+
+        if ($state === ScheduleState::Review && $this->isBeforeDue($current, $now)) {
+            $update = $this->applyEarlyReviewPolicy($rating, $update, $currentInterval, $currentEase, $currentReps, $currentLapses, $now);
+        }
+
+        return $update;
+    }
+
+    private function isBeforeDue(CardSchedule $schedule, \DateTimeInterface $now): bool
+    {
+        $raw = $schedule->getRawOriginal('due_at') ?? $schedule->getAttributes()['due_at'] ?? null;
+        if ($raw === null) {
+            return false;
+        }
+        $dueTs = $raw instanceof \DateTimeInterface ? $raw->getTimestamp() : strtotime((string) $raw);
+
+        return $dueTs !== false && $now->getTimestamp() < $dueTs;
+    }
+
+    private function applyEarlyReviewPolicy(
+        ReviewRating $rating,
+        ScheduleUpdate $computed,
+        int $currentInterval,
+        float $currentEase,
+        int $currentReps,
+        int $currentLapses,
+        \DateTimeInterface $now,
+    ): ScheduleUpdate {
+        return match ($rating) {
+            // Again/Hard → ネガティブ評価は常に反映 (忘れてた事実を記録)
+            ReviewRating::Again, ReviewRating::Hard => $computed,
+            // Good → due 前なので interval 据え置き
+            ReviewRating::Good => new ScheduleUpdate(
+                repetitions: $currentReps + 1,
+                intervalDays: $currentInterval,
+                easeFactor: $currentEase,
+                dueAt: $this->addDays($now, $currentInterval),
+                lastReviewedAt: $now,
+                lapseCount: $currentLapses,
+                state: ScheduleState::Review->value,
+            ),
+            // Easy → 前倒し卒業を許可 (interval を伸ばす)
+            ReviewRating::Easy => $computed,
         };
     }
 
