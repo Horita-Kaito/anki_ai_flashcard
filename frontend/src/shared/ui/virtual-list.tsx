@@ -47,7 +47,7 @@ export function VirtualList<T>({
     return (
       <ul className={cn(listClassName)}>
         {items.map((item, i) => (
-          <li key={getItemKey ? getItemKey(item, i) : i}>{renderItem(item, i)}</li>
+          <div key={getItemKey ? getItemKey(item, i) : i}>{renderItem(item, i)}</div>
         ))}
       </ul>
     );
@@ -110,7 +110,7 @@ function VirtualizedInner<T>({
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index];
           return (
-            <li
+            <div
               key={getItemKey ? getItemKey(item, virtualRow.index) : virtualRow.index}
               style={{
                 position: "absolute",
@@ -123,7 +123,7 @@ function VirtualizedInner<T>({
               ref={virtualizer.measureElement}
             >
               {renderItem(item, virtualRow.index)}
-            </li>
+            </div>
           );
         })}
       </ul>
