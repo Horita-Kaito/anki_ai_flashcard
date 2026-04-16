@@ -145,7 +145,7 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<string, DomainTemplate> $templates
+     * @param  array<string, DomainTemplate>  $templates
      * @return array<string, Deck>
      */
     private function createDecks(User $user, array $templates): array
@@ -199,7 +199,7 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<string, DomainTemplate> $templates
+     * @param  array<string, DomainTemplate>  $templates
      * @return array<int, NoteSeed>
      */
     private function createNoteSeeds(User $user, array $templates): array
@@ -232,8 +232,8 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<string, Deck> $decks
-     * @param array<string, Tag> $tags
+     * @param  array<string, Deck>  $decks
+     * @param  array<string, Tag>  $tags
      * @return array<int, Card>
      */
     private function createCards(User $user, array $decks, array $tags): array
@@ -282,7 +282,7 @@ final class DevelopmentSeeder extends Seeder
                 'is_suspended' => false,
             ]);
 
-            if (!empty($def['tags'])) {
+            if (! empty($def['tags'])) {
                 $tagIds = array_map(fn (string $key) => $tags[$key]->id, $def['tags']);
                 $card->tags()->attach($tagIds);
             }
@@ -294,7 +294,7 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<int, Card> $cards
+     * @param  array<int, Card>  $cards
      */
     private function createCardSchedules(User $user, array $cards): void
     {
@@ -330,7 +330,7 @@ final class DevelopmentSeeder extends Seeder
         ];
 
         foreach ($schedules as $s) {
-            if (!isset($cards[$s['index']])) {
+            if (! isset($cards[$s['index']])) {
                 continue;
             }
 
@@ -349,7 +349,7 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<int, Card> $cards
+     * @param  array<int, Card>  $cards
      */
     private function createCardReviews(User $user, array $cards): void
     {
@@ -403,7 +403,7 @@ final class DevelopmentSeeder extends Seeder
     }
 
     /**
-     * @param array<int, NoteSeed> $noteSeeds
+     * @param  array<int, NoteSeed>  $noteSeeds
      */
     private function createAiGenerationData(User $user, array $noteSeeds): void
     {

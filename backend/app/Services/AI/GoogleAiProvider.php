@@ -59,7 +59,7 @@ final class GoogleAiProvider implements AiProviderInterface
                         [
                             'role' => 'user',
                             'parts' => [
-                                ['text' => $request->systemPrompt . "\n\n" . $request->userPrompt],
+                                ['text' => $request->systemPrompt."\n\n".$request->userPrompt],
                             ],
                         ],
                     ],
@@ -79,7 +79,7 @@ final class GoogleAiProvider implements AiProviderInterface
 
         if (! $response->successful()) {
             throw AiGenerationFailedException::generic(
-                'Google AI API error: ' . $response->status()
+                'Google AI API error: '.$response->status()
             );
         }
 

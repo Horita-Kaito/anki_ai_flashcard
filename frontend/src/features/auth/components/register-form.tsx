@@ -23,7 +23,7 @@ export function RegisterForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       await registerMutation.mutateAsync(values);
-      router.push("/dashboard");
+      router.push("/onboarding");
     } catch (err) {
       if (
         isAxiosError(err) &&

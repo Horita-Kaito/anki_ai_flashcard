@@ -1,14 +1,23 @@
 "use client";
 
 import { useCurrentUser, useLogout } from "@/features/auth";
+import { useOnboardingStatus } from "@/features/onboarding";
 import { DashboardOverview } from "@/features/dashboard";
 import { Button } from "@/shared/ui/button";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { data: user, isLoading, isError } = useCurrentUser();
+  const { data: onboardingStatus } = useOnboardingStatus();
   const logout = useLogout();
+
+  useEffect(() => {
+    if (onboardingStatus && !onboardingStatus.completed) {
+      router.push("/onboarding");
+    }
+  }, [onboardingStatus, router]);
 
   if (isLoading) {
     return (

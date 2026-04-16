@@ -28,6 +28,24 @@ final class AuthControllerTest extends TestCase
         $this->assertDatabaseHas('users', ['email' => 'taro@example.com']);
     }
 
+    public function test_登録時にはテンプレートやユーザー設定は作成されない(): void
+    {
+        $response = $this->postJson('/api/v1/register', [
+            'name' => '太郎',
+            'email' => 'taro@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertStatus(201);
+
+        $userId = $response->json('data.id');
+
+        // オンボーディングに移行したため、登録時にはテンプレートは作成されない
+        $this->assertDatabaseCount('domain_templates', 0);
+        $this->assertDatabaseMissing('user_settings', ['user_id' => $userId]);
+    }
+
     public function test_メール重複で登録できない(): void
     {
         User::factory()->create(['email' => 'dup@example.com']);

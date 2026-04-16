@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Api\V1\DomainTemplateController;
 use App\Http\Controllers\Api\V1\NoteSeedController;
+use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\ReviewSessionController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\UserSettingController;
@@ -29,6 +30,9 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+
+        Route::post('/onboarding', [OnboardingController::class, 'store']);
+        Route::get('/onboarding/status', [OnboardingController::class, 'status']);
 
         Route::get('dashboard/summary', [DashboardController::class, 'summary']);
 
