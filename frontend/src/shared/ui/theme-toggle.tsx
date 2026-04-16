@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/shared/hooks/use-theme";
 import { cn } from "@/shared/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const [mounted, setMounted] = useState(() => typeof window !== "undefined");
 
   const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
   const label =
