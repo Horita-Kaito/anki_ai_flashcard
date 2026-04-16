@@ -73,13 +73,8 @@ export function ReviewSession() {
           response_time_ms: Date.now() - startedAt,
         });
         haptic("success");
-        if (extraMode) {
-          setExtraCompleted((c) => c + 1);
-          setExtraIndex((i) => i + 1);
-        } else {
-          setCompleted((c) => c + 1);
-          setIndex((i) => i + 1);
-        }
+        setCompleted((c) => c + 1);
+        setIndex((i) => i + 1);
         setShowAnswer(false);
         setStartedAt(Date.now());
       } catch {
@@ -87,8 +82,15 @@ export function ReviewSession() {
         toast.error("回答の保存に失敗しました");
       }
     },
-    [current, answerMutation, startedAt, extraMode]
+    [current, answerMutation, startedAt]
   );
+
+  const handleNextExtra = useCallback(() => {
+    haptic("light");
+    setExtraCompleted((c) => c + 1);
+    setExtraIndex((i) => i + 1);
+    setShowAnswer(false);
+  }, []);
 
   // PC キーボードショートカット
   useEffect(() => {
@@ -108,6 +110,14 @@ export function ReviewSession() {
       }
       if (!showAnswer) return;
 
+      if (extraMode) {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          handleNextExtra();
+        }
+        return;
+      }
+
       const rating = REVIEW_RATINGS.find(
         (r) => REVIEW_RATING_SHORTCUTS[r] === e.key
       );
@@ -118,7 +128,7 @@ export function ReviewSession() {
     }
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [showAnswer, handleReveal, handleRate]);
+  }, [showAnswer, handleReveal, handleRate, handleNextExtra, extraMode]);
 
   if (isLoading) {
     return (
@@ -260,7 +270,7 @@ export function ReviewSession() {
       {extraMode && (
         <div className="flex items-center justify-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400">
           <CalendarClock className="size-4" aria-hidden />
-          追加復習モード
+          閲覧モード — スケジュールには影響しません
         </div>
       )}
 
@@ -327,16 +337,14 @@ export function ReviewSession() {
         </Button>
       </div>
 
-      {/* カード (フリップ + スワイプ) */}
       <ReviewCardFlip
         card={current}
         showAnswer={showAnswer}
         onReveal={handleReveal}
-        onRate={handleRate}
+        onRate={extraMode ? undefined : handleRate}
         disabled={answerMutation.isPending}
       />
 
-      {/* アクション */}
       {!showAnswer ? (
         <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <Button
@@ -344,7 +352,20 @@ export function ReviewSession() {
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
             onClick={handleReveal}
           >
-            答えを見る{" "}
+            {extraMode ? "確認する" : "答えを見る"}{" "}
+            <span className="text-xs opacity-70 ml-2 hidden md:inline">
+              (Space / Enter)
+            </span>
+          </Button>
+        </div>
+      ) : extraMode ? (
+        <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+          <Button
+            size="lg"
+            className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
+            onClick={handleNextExtra}
+          >
+            次へ{" "}
             <span className="text-xs opacity-70 ml-2 hidden md:inline">
               (Space / Enter)
             </span>

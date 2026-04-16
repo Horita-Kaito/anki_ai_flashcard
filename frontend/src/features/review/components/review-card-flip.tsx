@@ -9,7 +9,7 @@ interface ReviewCardFlipProps {
   card: Card;
   showAnswer: boolean;
   onReveal: () => void;
-  onRate: (rating: ReviewRating) => void;
+  onRate?: (rating: ReviewRating) => void;
   disabled?: boolean;
 }
 
@@ -33,22 +33,22 @@ export function ReviewCardFlip({
 }: ReviewCardFlipProps) {
   const handlers = useSwipeable({
     onSwipedLeft: () => {
-      if (!showAnswer || disabled) return;
+      if (!showAnswer || disabled || !onRate) return;
       haptic("medium");
       onRate("again");
     },
     onSwipedRight: () => {
-      if (!showAnswer || disabled) return;
+      if (!showAnswer || disabled || !onRate) return;
       haptic("medium");
       onRate("good");
     },
     onSwipedDown: () => {
-      if (!showAnswer || disabled) return;
+      if (!showAnswer || disabled || !onRate) return;
       haptic("medium");
       onRate("hard");
     },
     onSwipedUp: () => {
-      if (!showAnswer || disabled) return;
+      if (!showAnswer || disabled || !onRate) return;
       haptic("medium");
       onRate("easy");
     },
