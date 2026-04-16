@@ -5,6 +5,11 @@ import type {
   CreateNoteSeedInput,
   UpdateNoteSeedInput,
 } from "../schemas/note-seed-schemas";
+import { noteSeedResponseSchema } from "@/entities/note-seed/schemas";
+import { paginatedResponseSchema } from "@/shared/types/pagination-schema";
+import { parseApiResponse } from "@/shared/api/parse-response";
+
+const paginatedNoteSeedSchema = paginatedResponseSchema(noteSeedResponseSchema);
 
 export interface NoteSeedListFilters {
   domain_template_id?: number;
@@ -22,10 +27,8 @@ export async function fetchNoteSeedList(
   }
   if (filters.q && filters.q.trim() !== "") params.q = filters.q;
 
-  const res = await apiClient.get<PaginatedResponse<NoteSeed>>("/note-seeds", {
-    params,
-  });
-  return res.data;
+  const res = await apiClient.get("/note-seeds", { params });
+  return parseApiResponse(paginatedNoteSeedSchema, res.data);
 }
 
 // fetchNoteSeed is in entities/note-seed/api/endpoints.ts

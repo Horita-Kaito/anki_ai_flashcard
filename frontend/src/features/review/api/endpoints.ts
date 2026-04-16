@@ -5,15 +5,20 @@ import type {
   ReviewStats,
   TodaySession,
 } from "@/entities/review/types";
+import {
+  todaySessionResponseSchema,
+  reviewStatsResponseSchema,
+} from "@/entities/review/schemas";
+import { parseApiDataResponse } from "@/shared/api/parse-response";
 
 export async function fetchTodaySession(
   deckId?: number
 ): Promise<TodaySession> {
-  const res = await apiClient.get<{ data: TodaySession }>(
+  const res = await apiClient.get(
     "/review-sessions/today",
     { params: deckId ? { deck_id: deckId } : {} }
   );
-  return res.data.data;
+  return parseApiDataResponse(todaySessionResponseSchema, res);
 }
 
 export async function answerReview(input: {
@@ -30,6 +35,6 @@ export async function answerReview(input: {
 }
 
 export async function fetchReviewStats(): Promise<ReviewStats> {
-  const res = await apiClient.get<{ data: ReviewStats }>("/review-stats");
-  return res.data.data;
+  const res = await apiClient.get("/review-stats");
+  return parseApiDataResponse(reviewStatsResponseSchema, res);
 }

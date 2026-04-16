@@ -1,6 +1,8 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { AiCardCandidate, CandidateStatus } from "@/entities/ai-candidate/types";
 import type { Card, CardType } from "@/entities/card/types";
+import { aiCardCandidateResponseSchema } from "@/entities/ai-candidate/schemas";
+import { parseApiListResponse } from "@/shared/api/parse-response";
 
 export interface GenerateOptions {
   count?: number;
@@ -36,11 +38,11 @@ export async function fetchCandidatesForNote(
   noteSeedId: number,
   status?: CandidateStatus
 ): Promise<AiCardCandidate[]> {
-  const res = await apiClient.get<{ data: AiCardCandidate[] }>(
+  const res = await apiClient.get(
     `/note-seeds/${noteSeedId}/candidates`,
     { params: status ? { status } : {} }
   );
-  return res.data.data;
+  return parseApiListResponse(aiCardCandidateResponseSchema, res);
 }
 
 export async function updateCandidate(

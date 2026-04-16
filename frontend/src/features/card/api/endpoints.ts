@@ -5,6 +5,11 @@ import type {
   CreateCardInput,
   UpdateCardInput,
 } from "../schemas/card-schemas";
+import { cardResponseSchema } from "@/entities/card/schemas";
+import { paginatedResponseSchema } from "@/shared/types/pagination-schema";
+import { parseApiResponse, parseApiDataResponse } from "@/shared/api/parse-response";
+
+const paginatedCardSchema = paginatedResponseSchema(cardResponseSchema);
 
 export interface CardListFilters {
   deck_id?: number;
@@ -25,15 +30,13 @@ export async function fetchCardList(
   if (filters.tag_id) params.tag_id = filters.tag_id;
   if (filters.q && filters.q.trim() !== "") params.q = filters.q;
 
-  const res = await apiClient.get<PaginatedResponse<Card>>("/cards", {
-    params,
-  });
-  return res.data;
+  const res = await apiClient.get("/cards", { params });
+  return parseApiResponse(paginatedCardSchema, res.data);
 }
 
 export async function fetchCard(id: number): Promise<Card> {
-  const res = await apiClient.get<{ data: Card }>(`/cards/${id}`);
-  return res.data.data;
+  const res = await apiClient.get(`/cards/${id}`);
+  return parseApiDataResponse(cardResponseSchema, res);
 }
 
 export async function createCard(input: CreateCardInput): Promise<Card> {

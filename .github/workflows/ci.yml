@@ -51,8 +51,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
-          extensions: mbstring, pdo_mysql, redis
+          php-version: "8.4"
+          extensions: mbstring, pdo_sqlite
           tools: composer:v2
 
       - name: Cache Composer dependencies
@@ -63,46 +63,10 @@ jobs:
           restore-keys: composer-${{ runner.os }}-
 
       - name: Install dependencies
-        run: |
-          if [ -f composer.json ]; then
-            composer install --no-interaction --prefer-dist --no-progress
-          else
-            echo "composer.json not found; skipping"
-            exit 0
-          fi
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Run Pint (lint check)
-        run: |
-          if [ -f vendor/bin/pint ]; then
-            ./vendor/bin/pint --test
-          else
-            echo "Pint not installed; skipping"
-          fi
-
-  backend-security:
-    name: Backend Security Audit
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.3"
-          tools: composer:v2
-
-      - name: Run composer audit
-        run: |
-          if [ -f composer.json ]; then
-            composer audit --no-interaction || true
-          else
-            echo "composer.json not found; skipping"
-          fi
+        run: ./vendor/bin/pint --test
 
   backend-test:
     name: Backend Test (PHPUnit)
@@ -112,49 +76,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testing
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     env:
       APP_ENV: testing
-      DB_CONNECTION: mysql
-      DB_HOST: 127.0.0.1
-      DB_PORT: 3306
-      DB_DATABASE: testing
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      REDIS_HOST: 127.0.0.1
-      REDIS_PORT: 6379
-      CACHE_DRIVER: redis
-      SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ":memory:"
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
-          extensions: mbstring, pdo_mysql, redis, bcmath
+          php-version: "8.4"
+          extensions: mbstring, pdo_sqlite, bcmath
           coverage: xdebug
           tools: composer:v2
 
@@ -166,39 +102,16 @@ jobs:
           restore-keys: composer-${{ runner.os }}-
 
       - name: Install dependencies
-        run: |
-          if [ -f composer.json ]; then
-            composer install --no-interaction --prefer-dist --no-progress
-          else
-            echo "composer.json not found; skipping"
-            exit 0
-          fi
+        run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Copy .env for testing
-        run: |
-          if [ -f .env.example ]; then
-            cp .env.example .env
-          fi
+        run: cp .env.example .env
 
       - name: Generate application key
-        run: |
-          if [ -f artisan ]; then
-            php artisan key:generate --env=testing
-          fi
-
-      - name: Run migrations
-        run: |
-          if [ -f artisan ]; then
-            php artisan migrate --env=testing --force
-          fi
+        run: php artisan key:generate
 
       - name: Run PHPUnit
-        run: |
-          if [ -f artisan ]; then
-            php artisan test --coverage --min=0
-          else
-            echo "artisan not found; skipping tests"
-          fi
+        run: php artisan test
 
   # ============================================
   # Frontend (Next.js)
@@ -222,51 +135,13 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            echo "package.json not found; skipping"
-            exit 0
-          fi
+        run: npm ci --legacy-peer-deps
 
       - name: Run ESLint
-        run: |
-          if [ -f package.json ] && npm run | grep -q "lint"; then
-            npm run lint
-          else
-            echo "lint script not found; skipping"
-          fi
+        run: npm run lint
 
       - name: TypeScript check
-        run: |
-          if [ -f tsconfig.json ]; then
-            npx tsc --noEmit
-          fi
-
-  frontend-security:
-    name: Frontend Security Audit
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Run npm audit
-        run: |
-          if [ -f package.json ]; then
-            npm audit --audit-level=high || true
-          else
-            echo "package.json not found; skipping"
-          fi
+        run: npx tsc --noEmit
 
   frontend-test:
     name: Frontend Test
@@ -287,20 +162,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            exit 0
-          fi
+        run: npm ci --legacy-peer-deps
 
       - name: Run Vitest
-        run: |
-          if [ -f package.json ] && npm run | grep -q "test:run"; then
-            npm run test:run
-          else
-            echo "test:run script not found; skipping"
-          fi
+        run: npm run test:run
 
   frontend-build:
     name: Frontend Build Check
@@ -321,20 +186,12 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-          else
-            exit 0
-          fi
+        run: npm ci --legacy-peer-deps
 
       - name: Build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
-        run: |
-          if [ -f package.json ] && npm run | grep -q "build"; then
-            npm run build
-          fi
+        run: npm run build
 
   # ============================================
   # Final gate
@@ -346,11 +203,9 @@ jobs:
     needs:
       - backend-lint
       - backend-test
-      - backend-security
       - frontend-lint
       - frontend-test
       - frontend-build
-      - frontend-security
     steps:
       - name: Check all jobs
         run: |
