@@ -16,10 +16,27 @@ import { useDomainTemplateList } from "@/entities/domain-template/api/domain-tem
 import { Button } from "@/shared/ui/button";
 
 const AI_PROVIDERS = [
+  { value: "google", label: "Google" },
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
-  { value: "google", label: "Google" },
 ] as const;
+
+const AI_MODELS: Record<string, { value: string; label: string }[]> = {
+  google: [
+    { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash (推奨・低コスト)" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (高精度)" },
+  ],
+  openai: [
+    { value: "gpt-4o-mini", label: "GPT-4o mini (低コスト)" },
+    { value: "gpt-4o", label: "GPT-4o (高精度)" },
+    { value: "gpt-4.1-mini", label: "GPT-4.1 mini" },
+    { value: "gpt-4.1", label: "GPT-4.1" },
+  ],
+  anthropic: [
+    { value: "claude-3-5-haiku-latest", label: "Claude 3.5 Haiku (低コスト)" },
+    { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (高精度)" },
+  ],
+};
 
 export function UserSettingForm() {
   const { data: setting, isLoading } = useUserSetting();
@@ -30,11 +47,15 @@ export function UserSettingForm() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdateUserSettingInput>({
     resolver: zodResolver(updateUserSettingSchema),
     defaultValues: {},
   });
+
+  const selectedProvider = watch("default_ai_provider");
 
   useEffect(() => {
     if (setting) {
@@ -133,7 +154,15 @@ export function UserSettingForm() {
           </label>
           <select
             id="default_ai_provider"
-            {...register("default_ai_provider")}
+            {...register("default_ai_provider", {
+              onChange: (e) => {
+                const provider = e.target.value;
+                const models = AI_MODELS[provider];
+                if (models?.[0]) {
+                  setValue("default_ai_model", models[0].value, { shouldDirty: true });
+                }
+              },
+            })}
             className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
           >
             {AI_PROVIDERS.map((p) => (
@@ -148,12 +177,17 @@ export function UserSettingForm() {
           <label htmlFor="default_ai_model" className="text-sm font-medium">
             既定のモデル
           </label>
-          <input
+          <select
             id="default_ai_model"
-            type="text"
             {...register("default_ai_model")}
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
-          />
+            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+          >
+            {(AI_MODELS[selectedProvider ?? "google"] ?? []).map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1.5">
