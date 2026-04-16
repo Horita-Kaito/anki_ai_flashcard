@@ -53,8 +53,8 @@ jobs:
             docker compose -f "$COMPOSE_FILE" run --rm --no-deps \
               backend composer install --no-dev --no-interaction --optimize-autoloader
 
-            # 起動
-            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans
+            # 起動 (--force-recreate で古いイメージのコンテナを確実に入れ替え)
+            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --force-recreate
 
             # マイグレーション & キャッシュ
             docker compose -f "$COMPOSE_FILE" exec -T backend php artisan migrate --force
