@@ -1,15 +1,15 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/shared/hooks/use-theme";
 import { cn } from "@/shared/lib/utils";
 
-/**
- * Theme toggle button: cycles light -> dark -> system.
- * Compact icon button suitable for header/sidebar placement.
- */
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
   const label =
@@ -22,20 +22,21 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      aria-label={label}
-      title={label}
+      aria-label={mounted ? label : "テーマ切替"}
+      title={mounted ? label : "テーマ切替"}
       onClick={() => setTheme(next)}
       className={cn(
         "inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground min-h-11 min-w-11",
         className
       )}
     >
-      {resolvedTheme === "dark" ? (
-        <Moon className="size-4" />
+      {!mounted ? (
+        <span className="size-4" />
+      ) : resolvedTheme === "dark" ? (
+        <Moon className="size-4" aria-hidden />
       ) : (
-        <Sun className="size-4" />
+        <Sun className="size-4" aria-hidden />
       )}
-      <span className="sr-only">{label}</span>
     </button>
   );
 }
