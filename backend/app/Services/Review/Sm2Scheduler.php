@@ -31,7 +31,9 @@ use App\Models\CardSchedule;
 final class Sm2Scheduler implements SchedulerInterface
 {
     private const MIN_EASE_FACTOR = 1.3;
+
     private const MAX_EASE_FACTOR = 2.5;
+
     private const INITIAL_EASE_FACTOR = 2.5;
 
     public function next(

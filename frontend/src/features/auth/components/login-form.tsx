@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 import { useLogin } from "../api/auth-queries";
 import { loginSchema, type LoginInput } from "../schemas/auth-schemas";
 import { Button } from "@/shared/ui/button";
@@ -34,7 +35,9 @@ export function LoginForm() {
           role="alert"
           className="text-sm text-red-600 bg-red-50 p-3 rounded-md"
         >
-          認証に失敗しました。メールアドレスとパスワードを確認してください。
+          {isAxiosError(login.error) && login.error.response?.data?.message
+            ? login.error.response.data.message
+            : "認証に失敗しました。メールアドレスとパスワードを確認してください。"}
         </div>
       )}
 

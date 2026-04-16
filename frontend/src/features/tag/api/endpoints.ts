@@ -1,10 +1,7 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { Tag } from "@/entities/tag/types";
 
-export async function fetchTagList(): Promise<Tag[]> {
-  const res = await apiClient.get<{ data: Tag[] }>("/tags");
-  return res.data.data;
-}
+// Read endpoint (fetchTagList) is in entities/tag/api/endpoints.ts
 
 export async function createTag(name: string): Promise<Tag> {
   await fetchCsrfCookie();

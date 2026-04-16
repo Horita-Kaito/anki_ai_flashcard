@@ -1,6 +1,6 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { NoteSeed } from "@/entities/note-seed/types";
-import type { PaginatedResponse } from "@/entities/deck/types";
+import type { PaginatedResponse } from "@/shared/types/pagination";
 import type {
   CreateNoteSeedInput,
   UpdateNoteSeedInput,
@@ -28,10 +28,7 @@ export async function fetchNoteSeedList(
   return res.data;
 }
 
-export async function fetchNoteSeed(id: number): Promise<NoteSeed> {
-  const res = await apiClient.get<{ data: NoteSeed }>(`/note-seeds/${id}`);
-  return res.data.data;
-}
+// fetchNoteSeed is in entities/note-seed/api/endpoints.ts
 
 export async function createNoteSeed(
   input: CreateNoteSeedInput

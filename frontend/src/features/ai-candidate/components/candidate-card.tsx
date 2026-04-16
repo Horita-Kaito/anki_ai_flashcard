@@ -12,7 +12,7 @@ import {
 import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 import { Button } from "@/shared/ui/button";
-import { useDeckList } from "@/features/deck";
+import { useDeckList } from "@/entities/deck/api/deck-queries";
 
 interface CandidateCardProps {
   candidate: AiCardCandidate;

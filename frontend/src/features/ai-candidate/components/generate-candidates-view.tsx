@@ -10,8 +10,8 @@ import {
 } from "../api/ai-candidate-queries";
 import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
-import { useNoteSeed } from "@/features/note-seed";
-import { useDomainTemplateList } from "@/features/domain-template";
+import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
+import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
 
 interface GenerateCandidatesViewProps {

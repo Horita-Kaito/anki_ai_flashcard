@@ -14,7 +14,7 @@ final class CandidateParserTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->parser = new CandidateParser();
+        $this->parser = new CandidateParser;
     }
 
     public function test_正常な_j_s_o_n配列をパースできる(): void

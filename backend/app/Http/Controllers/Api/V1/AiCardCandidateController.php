@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiCardCandidate\AdoptCandidateRequest;
 use App\Http\Requests\AiCardCandidate\BatchAdoptRequest;
@@ -62,8 +63,8 @@ final class AiCardCandidateController extends Controller
         $status = $request->query('status');
         $statusStr = is_string($status) && $status !== '' ? $status : null;
 
-        /** @var \App\Contracts\Repositories\AiCardCandidateRepositoryInterface $repo */
-        $repo = app(\App\Contracts\Repositories\AiCardCandidateRepositoryInterface::class);
+        /** @var AiCardCandidateRepositoryInterface $repo */
+        $repo = app(AiCardCandidateRepositoryInterface::class);
         $candidates = $repo->listForNoteSeed($note->user_id, $note->id, $statusStr);
 
         return AiCardCandidateResource::collection($candidates)->response();

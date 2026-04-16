@@ -2,6 +2,7 @@
 
 import { useDeckList } from "../api/deck-queries";
 import { DeckListEmpty } from "./deck-list-empty";
+import { DeckListSkeleton } from "./deck-list-skeleton";
 import { DeckSortableList } from "./deck-sortable-list";
 
 /**
@@ -13,17 +14,7 @@ export function DeckList() {
   const { data, isLoading, isError, refetch } = useDeckList();
 
   if (isLoading) {
-    return (
-      <ul className="space-y-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <li
-            key={i}
-            className="h-16 border rounded-xl bg-muted/30 animate-pulse"
-            aria-hidden
-          />
-        ))}
-      </ul>
-    );
+    return <DeckListSkeleton />;
   }
 
   if (isError) {

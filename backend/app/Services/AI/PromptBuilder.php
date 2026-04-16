@@ -29,7 +29,7 @@ final class PromptBuilder
 
     public function systemPrompt(?DomainTemplate $template): string
     {
-        $base = <<<PROMPT
+        $base = <<<'PROMPT'
 あなたは学習者向けのフラッシュカード生成アシスタントです。
 ユーザーの短い学習メモを読み、効果的なフラッシュカード候補を複数生成します。
 
@@ -75,7 +75,7 @@ PROMPT;
         $preferredTypes = $options['preferred_card_types'] ?? null;
 
         $parts = [
-            "【メモ本文】",
+            '【メモ本文】',
             $note->body,
         ];
 

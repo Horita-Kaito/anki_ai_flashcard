@@ -1,41 +1,13 @@
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {
-  createDeck,
-  deleteDeck,
-  fetchDeck,
-  fetchDeckList,
-  reorderDecks,
-  updateDeck,
-} from "./endpoints";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createDeck, deleteDeck, reorderDecks, updateDeck } from "./endpoints";
 import type {
   CreateDeckInput,
   UpdateDeckInput,
 } from "../schemas/deck-schemas";
+import { deckKeys } from "@/entities/deck/api/deck-queries";
 
-export const deckKeys = {
-  all: ["decks"] as const,
-  list: (page = 1) => [...deckKeys.all, "list", page] as const,
-  detail: (id: number) => [...deckKeys.all, "detail", id] as const,
-};
-
-export function useDeckList(page = 1) {
-  return useQuery({
-    queryKey: deckKeys.list(page),
-    queryFn: () => fetchDeckList(page),
-  });
-}
-
-export function useDeck(id: number) {
-  return useQuery({
-    queryKey: deckKeys.detail(id),
-    queryFn: () => fetchDeck(id),
-    enabled: Number.isFinite(id) && id > 0,
-  });
-}
+// Re-export entity-level read hooks for internal feature use
+export { useDeckList, useDeck, deckKeys } from "@/entities/deck/api/deck-queries";
 
 export function useCreateDeck() {
   const qc = useQueryClient();

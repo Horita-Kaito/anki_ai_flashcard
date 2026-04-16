@@ -12,7 +12,7 @@ import {
   updateUserSettingSchema,
   type UpdateUserSettingInput,
 } from "../schemas/user-setting-schemas";
-import { useDomainTemplateList } from "@/features/domain-template";
+import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
 
 const AI_PROVIDERS = [

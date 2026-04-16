@@ -65,7 +65,7 @@ final class NoteSeedControllerTest extends TestCase
             ->assertJsonValidationErrors(['body']);
     }
 
-    public function test_他ユーザーのテンプレートIDで422(): void
+    public function test_他ユーザーのテンプレート_i_dで422(): void
     {
         $me = User::factory()->create();
         $other = User::factory()->create();

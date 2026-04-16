@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useDeck, useDeleteDeck, DeckForm } from "@/features/deck";
 import { Button } from "@/shared/ui/button";
+import { BackHeader } from "@/shared/ui/back-header";
 
 export default function DeckEditPage({
   params,
@@ -51,7 +52,8 @@ export default function DeckEditPage({
   return (
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
+        <BackHeader title="デッキを編集" />
+        <header className="hidden md:block space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold">デッキを編集</h1>
           <p className="text-sm text-muted-foreground break-all">{deck.name}</p>
         </header>

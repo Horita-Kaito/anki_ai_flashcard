@@ -4,6 +4,28 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
+use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
+use App\Contracts\Repositories\CardRepositoryInterface;
+use App\Contracts\Repositories\CardReviewRepositoryInterface;
+use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Contracts\Repositories\DeckRepositoryInterface;
+use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
+use App\Contracts\Repositories\NoteSeedRepositoryInterface;
+use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Contracts\Repositories\UserSettingRepositoryInterface;
+use App\Contracts\Services\Review\SchedulerInterface;
+use App\Repositories\EloquentAiCardCandidateRepository;
+use App\Repositories\EloquentAiGenerationLogRepository;
+use App\Repositories\EloquentCardRepository;
+use App\Repositories\EloquentCardReviewRepository;
+use App\Repositories\EloquentCardScheduleRepository;
+use App\Repositories\EloquentDeckRepository;
+use App\Repositories\EloquentDomainTemplateRepository;
+use App\Repositories\EloquentNoteSeedRepository;
+use App\Repositories\EloquentTagRepository;
+use App\Repositories\EloquentUserSettingRepository;
+use App\Services\Review\Sm2Scheduler;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -23,18 +45,18 @@ final class RepositoryServiceProvider extends ServiceProvider
      */
     public array $bindings = [
         // Repositories
-        \App\Contracts\Repositories\DeckRepositoryInterface::class => \App\Repositories\EloquentDeckRepository::class,
-        \App\Contracts\Repositories\DomainTemplateRepositoryInterface::class => \App\Repositories\EloquentDomainTemplateRepository::class,
-        \App\Contracts\Repositories\NoteSeedRepositoryInterface::class => \App\Repositories\EloquentNoteSeedRepository::class,
-        \App\Contracts\Repositories\TagRepositoryInterface::class => \App\Repositories\EloquentTagRepository::class,
-        \App\Contracts\Repositories\CardRepositoryInterface::class => \App\Repositories\EloquentCardRepository::class,
-        \App\Contracts\Repositories\CardScheduleRepositoryInterface::class => \App\Repositories\EloquentCardScheduleRepository::class,
-        \App\Contracts\Repositories\UserSettingRepositoryInterface::class => \App\Repositories\EloquentUserSettingRepository::class,
-        \App\Contracts\Repositories\AiCardCandidateRepositoryInterface::class => \App\Repositories\EloquentAiCardCandidateRepository::class,
-        \App\Contracts\Repositories\AiGenerationLogRepositoryInterface::class => \App\Repositories\EloquentAiGenerationLogRepository::class,
-        \App\Contracts\Repositories\CardReviewRepositoryInterface::class => \App\Repositories\EloquentCardReviewRepository::class,
+        DeckRepositoryInterface::class => EloquentDeckRepository::class,
+        DomainTemplateRepositoryInterface::class => EloquentDomainTemplateRepository::class,
+        NoteSeedRepositoryInterface::class => EloquentNoteSeedRepository::class,
+        TagRepositoryInterface::class => EloquentTagRepository::class,
+        CardRepositoryInterface::class => EloquentCardRepository::class,
+        CardScheduleRepositoryInterface::class => EloquentCardScheduleRepository::class,
+        UserSettingRepositoryInterface::class => EloquentUserSettingRepository::class,
+        AiCardCandidateRepositoryInterface::class => EloquentAiCardCandidateRepository::class,
+        AiGenerationLogRepositoryInterface::class => EloquentAiGenerationLogRepository::class,
+        CardReviewRepositoryInterface::class => EloquentCardReviewRepository::class,
 
         // Services (固定バインド)
-        \App\Contracts\Services\Review\SchedulerInterface::class => \App\Services\Review\Sm2Scheduler::class,
+        SchedulerInterface::class => Sm2Scheduler::class,
     ];
 }

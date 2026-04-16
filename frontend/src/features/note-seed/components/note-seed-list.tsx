@@ -5,7 +5,8 @@ import { Search, X } from "lucide-react";
 import { useNoteSeedList } from "../api/note-seed-queries";
 import { NoteSeedListItem } from "./note-seed-list-item";
 import { NoteSeedListEmpty } from "./note-seed-list-empty";
-import { useDomainTemplateList } from "@/features/domain-template";
+import { NoteSeedListSkeleton } from "./note-seed-list-skeleton";
+import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
 
@@ -78,15 +79,7 @@ export function NoteSeedList() {
       </div>
 
       {isLoading ? (
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <li
-              key={i}
-              className="h-20 border rounded-xl bg-muted/30 animate-pulse"
-              aria-hidden
-            />
-          ))}
-        </ul>
+        <NoteSeedListSkeleton />
       ) : isError ? (
         <div
           role="alert"

@@ -1,9 +1,8 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { GenerateCandidatesView } from "@/features/ai-candidate";
+import { BackHeader } from "@/shared/ui/back-header";
 
 export default function GenerateCandidatesPage({
   params,
@@ -16,15 +15,9 @@ export default function GenerateCandidatesPage({
   return (
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-4">
-        <Link
-          href={`/notes/${noteSeedId}`}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-2 min-h-11"
-        >
-          <ArrowLeft className="size-4" aria-hidden />
-          メモに戻る
-        </Link>
+        <BackHeader title="AI 候補生成" />
 
-        <header>
+        <header className="hidden md:block">
           <h1 className="text-2xl md:text-3xl font-bold">AI 候補生成</h1>
           <p className="text-sm text-muted-foreground mt-1">
             メモからフラッシュカード候補を AI が提案します

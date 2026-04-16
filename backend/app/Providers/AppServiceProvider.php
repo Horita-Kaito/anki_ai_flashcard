@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Services\AI\CandidateParser;
 use App\Services\AI\FakeAiProvider;
+use App\Services\AI\OpenAiProvider;
 use App\Services\AI\PricingCalculator;
 use App\Services\AI\PromptBuilder;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -20,7 +21,7 @@ final class AppServiceProvider extends ServiceProvider
     {
         // PromptBuilder / CandidateParser / PricingCalculator は singleton
         $this->app->singleton(PromptBuilder::class, fn () => PromptBuilder::fromConfig());
-        $this->app->singleton(CandidateParser::class, fn () => new CandidateParser());
+        $this->app->singleton(CandidateParser::class, fn () => new CandidateParser);
         $this->app->singleton(PricingCalculator::class, fn () => PricingCalculator::fromConfig());
 
         // AiProviderInterface は config('ai.default_provider') で具象を選択
@@ -29,7 +30,7 @@ final class AppServiceProvider extends ServiceProvider
 
             return match ($provider) {
                 'fake' => $app->make(FakeAiProvider::class),
-                'openai' => \App\Services\AI\OpenAiProvider::fromConfig(),
+                'openai' => OpenAiProvider::fromConfig(),
                 // TODO: AnthropicProvider / GoogleAiProvider の実装
                 'anthropic' => $app->make(FakeAiProvider::class),
                 'google' => $app->make(FakeAiProvider::class),

@@ -2,7 +2,7 @@
 # 開発用 PHP (artisan serve)
 # 本番は Nginx + PHP-FPM 構成に変更予定 (docker/php/Dockerfile.prod)
 # ============================================
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y \
         git \

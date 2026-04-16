@@ -5,21 +5,8 @@ import type {
   UpdateDomainTemplateInput,
 } from "../schemas/domain-template-schemas";
 
-export async function fetchDomainTemplateList(): Promise<DomainTemplate[]> {
-  const res = await apiClient.get<{ data: DomainTemplate[] }>(
-    "/domain-templates"
-  );
-  return res.data.data;
-}
-
-export async function fetchDomainTemplate(
-  id: number
-): Promise<DomainTemplate> {
-  const res = await apiClient.get<{ data: DomainTemplate }>(
-    `/domain-templates/${id}`
-  );
-  return res.data.data;
-}
+// Read endpoints (fetchDomainTemplateList, fetchDomainTemplate) are in
+// entities/domain-template/api/endpoints.ts
 
 export async function createDomainTemplate(
   input: CreateDomainTemplateInput

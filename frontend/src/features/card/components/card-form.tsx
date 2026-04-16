@@ -13,7 +13,7 @@ import {
   type CreateCardInput,
 } from "../schemas/card-schemas";
 import { TagPicker } from "@/features/tag";
-import { useDeckList } from "@/features/deck";
+import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { CARD_TYPES, CARD_TYPE_LABELS } from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
 import type { Card } from "@/entities/card/types";

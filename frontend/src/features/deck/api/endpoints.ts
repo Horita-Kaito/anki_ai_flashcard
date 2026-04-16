@@ -1,24 +1,11 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
-import type { Deck, PaginatedResponse } from "@/entities/deck/types";
+import type { Deck } from "@/entities/deck/types";
 import type {
   CreateDeckInput,
   UpdateDeckInput,
 } from "../schemas/deck-schemas";
 
-export async function fetchDeckList(
-  page = 1,
-  perPage = 20
-): Promise<PaginatedResponse<Deck>> {
-  const res = await apiClient.get<PaginatedResponse<Deck>>("/decks", {
-    params: { page, per_page: perPage },
-  });
-  return res.data;
-}
-
-export async function fetchDeck(id: number): Promise<Deck> {
-  const res = await apiClient.get<{ data: Deck }>(`/decks/${id}`);
-  return res.data.data;
-}
+// Read endpoints (fetchDeckList, fetchDeck) are in entities/deck/api/endpoints.ts
 
 export async function createDeck(input: CreateDeckInput): Promise<Deck> {
   await fetchCsrfCookie();

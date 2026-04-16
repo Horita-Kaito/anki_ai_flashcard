@@ -5,8 +5,9 @@ import { Search, X } from "lucide-react";
 import { useCardList } from "../api/card-queries";
 import { CardListItem } from "./card-list-item";
 import { CardListEmpty } from "./card-list-empty";
-import { useDeckList } from "@/features/deck";
-import { useTagList } from "@/features/tag";
+import { CardListSkeleton } from "./card-list-skeleton";
+import { useDeckList } from "@/entities/deck/api/deck-queries";
+import { useTagList } from "@/entities/tag/api/tag-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
 
@@ -96,15 +97,7 @@ export function CardList() {
       </div>
 
       {isLoading ? (
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <li
-              key={i}
-              className="h-24 border rounded-xl bg-muted/30 animate-pulse"
-              aria-hidden
-            />
-          ))}
-        </ul>
+        <CardListSkeleton />
       ) : isError ? (
         <div
           role="alert"

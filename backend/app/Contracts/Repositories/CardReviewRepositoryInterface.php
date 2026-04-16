@@ -21,7 +21,7 @@ interface CardReviewRepositoryInterface
     /**
      * 指定期間の評価別レビュー件数
      *
-     * @return array<string, int>  rating => count
+     * @return array<string, int> rating => count
      */
     public function countByRatingForUserInPeriod(
         int $userId,
@@ -45,7 +45,7 @@ interface CardReviewRepositoryInterface
     /**
      * 過去 N 日間のうち、レビューを行った日 (ユニークな日付の昇順) を返す
      *
-     * @return array<int, string>  YYYY-MM-DD 形式
+     * @return array<int, string> YYYY-MM-DD 形式
      */
     public function reviewedDatesForUser(int $userId, int $lookbackDays = 60): array;
 }

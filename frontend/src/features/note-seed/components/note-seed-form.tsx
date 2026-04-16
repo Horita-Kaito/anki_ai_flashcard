@@ -14,7 +14,7 @@ import {
   createNoteSeedSchema,
   type CreateNoteSeedInput,
 } from "../schemas/note-seed-schemas";
-import { useDomainTemplateList } from "@/features/domain-template";
+import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
 import type { NoteSeed } from "@/entities/note-seed/types";
 

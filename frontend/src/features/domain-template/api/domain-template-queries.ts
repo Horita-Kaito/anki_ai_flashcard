@@ -1,40 +1,21 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createDomainTemplate,
   deleteDomainTemplate,
-  fetchDomainTemplate,
-  fetchDomainTemplateList,
   updateDomainTemplate,
 } from "./endpoints";
 import type {
   CreateDomainTemplateInput,
   UpdateDomainTemplateInput,
 } from "../schemas/domain-template-schemas";
+import { domainTemplateKeys } from "@/entities/domain-template/api/domain-template-queries";
 
-export const domainTemplateKeys = {
-  all: ["domain-templates"] as const,
-  list: () => [...domainTemplateKeys.all, "list"] as const,
-  detail: (id: number) => [...domainTemplateKeys.all, "detail", id] as const,
-};
-
-export function useDomainTemplateList() {
-  return useQuery({
-    queryKey: domainTemplateKeys.list(),
-    queryFn: fetchDomainTemplateList,
-  });
-}
-
-export function useDomainTemplate(id: number) {
-  return useQuery({
-    queryKey: domainTemplateKeys.detail(id),
-    queryFn: () => fetchDomainTemplate(id),
-    enabled: Number.isFinite(id) && id > 0,
-  });
-}
+// Re-export entity-level read hooks for internal feature use
+export {
+  useDomainTemplateList,
+  useDomainTemplate,
+  domainTemplateKeys,
+} from "@/entities/domain-template/api/domain-template-queries";
 
 export function useCreateDomainTemplate() {
   const qc = useQueryClient();

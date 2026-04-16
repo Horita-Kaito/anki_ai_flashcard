@@ -72,7 +72,7 @@ final class CardSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $c1->id);
     }
 
-    public function test_LIKEのワイルドカードがエスケープされる(): void
+    public function test_lik_eのワイルドカードがエスケープされる(): void
     {
         $user = User::factory()->create();
         $deck = Deck::factory()->for($user)->create();

@@ -31,7 +31,7 @@ final class ReviewSessionService
     ) {}
 
     /**
-     * @return array<int, CardSchedule>  card + tags が eager load 済み
+     * @return array<int, CardSchedule> card + tags が eager load 済み
      */
     public function dueCardsForUser(int $userId, ?int $deckId, int $limit = 50): array
     {

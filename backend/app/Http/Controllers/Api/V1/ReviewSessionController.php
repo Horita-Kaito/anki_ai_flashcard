@@ -9,6 +9,7 @@ use App\Enums\ReviewRating;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Review\AnswerReviewRequest;
 use App\Http\Resources\CardResource;
+use App\Models\CardSchedule;
 use App\Services\ReviewSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -76,7 +77,7 @@ final class ReviewSessionController extends Controller
                 : null,
         );
 
-        /** @var \App\Models\CardSchedule $schedule */
+        /** @var CardSchedule $schedule */
         $schedule = $result['schedule'];
 
         return response()->json([

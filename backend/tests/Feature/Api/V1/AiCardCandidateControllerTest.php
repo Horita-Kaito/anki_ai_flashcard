@@ -6,12 +6,10 @@ namespace Tests\Feature\Api\V1;
 
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Models\AiCardCandidate;
+use App\Models\AiGenerationLog;
 use App\Models\Deck;
-use App\Models\DomainTemplate;
 use App\Models\NoteSeed;
 use App\Models\User;
-use App\Services\AI\AiGenerationRequest;
-use App\Services\AI\AiGenerationResult;
 use App\Services\AI\FakeAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -67,7 +65,7 @@ final class AiCardCandidateControllerTest extends TestCase
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
             ->assertCreated();
 
-        $log = \App\Models\AiGenerationLog::first();
+        $log = AiGenerationLog::first();
         $this->assertNotNull($log);
         $this->assertGreaterThan(0, $log->input_tokens);
         $this->assertGreaterThan(0, $log->output_tokens);
@@ -87,7 +85,7 @@ final class AiCardCandidateControllerTest extends TestCase
             ->assertNotFound();
     }
 
-    public function test_AIが不正なJSONを返すと失敗ログのみ残る(): void
+    public function test_a_iが不正な_jso_nを返すと失敗ログのみ残る(): void
     {
         $this->app->bind(
             AiProviderInterface::class,

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useBatchAdoptCandidates } from "../api/ai-candidate-queries";
-import { useDeckList } from "@/features/deck";
+import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { Button } from "@/shared/ui/button";
 
 interface BatchAdoptBarProps {

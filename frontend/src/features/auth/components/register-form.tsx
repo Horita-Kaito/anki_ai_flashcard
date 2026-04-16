@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { isAxiosError } from "axios";
 import { useRegister } from "../api/auth-queries";
 import { registerSchema, type RegisterInput } from "../schemas/auth-schemas";
 import { Button } from "@/shared/ui/button";
@@ -13,6 +14,7 @@ export function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -22,8 +24,28 @@ export function RegisterForm() {
     try {
       await registerMutation.mutateAsync(values);
       router.push("/dashboard");
-    } catch {
-      // noop (error は下部で表示)
+    } catch (err) {
+      if (
+        isAxiosError(err) &&
+        err.response?.status === 422 &&
+        err.response.data?.errors
+      ) {
+        const fieldErrors = err.response.data.errors as Record<string, string[]>;
+        const validFields: (keyof RegisterInput)[] = [
+          "name",
+          "email",
+          "password",
+          "password_confirmation",
+        ];
+        for (const [field, messages] of Object.entries(fieldErrors)) {
+          if (validFields.includes(field as keyof RegisterInput)) {
+            setError(field as keyof RegisterInput, {
+              type: "server",
+              message: messages[0],
+            });
+          }
+        }
+      }
     }
   });
 
@@ -34,7 +56,10 @@ export function RegisterForm() {
           role="alert"
           className="text-sm text-red-600 bg-red-50 p-3 rounded-md"
         >
-          登録に失敗しました。入力内容を確認してください。
+          {isAxiosError(registerMutation.error) &&
+          registerMutation.error.response?.data?.message
+            ? registerMutation.error.response.data.message
+            : "登録に失敗しました。入力内容を確認してください。"}
         </div>
       )}
 

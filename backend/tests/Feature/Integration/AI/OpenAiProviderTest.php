@@ -57,7 +57,7 @@ final class OpenAiProviderTest extends TestCase
         $this->assertEqualsWithDelta(0.000315, $result->costUsd, 0.0000001);
     }
 
-    public function test_429でrateLimit例外(): void
+    public function test_429でrate_limit例外(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([], 429),

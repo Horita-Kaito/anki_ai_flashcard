@@ -9,6 +9,7 @@ import {
   useDeleteCard,
 } from "@/features/card";
 import { Button } from "@/shared/ui/button";
+import { BackHeader } from "@/shared/ui/back-header";
 
 export default function CardEditPage({
   params,
@@ -59,7 +60,8 @@ export default function CardEditPage({
   return (
     <main className="flex-1 p-4 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
+        <BackHeader title="カードを編集" />
+        <header className="hidden md:block space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold">カードを編集</h1>
           {card.schedule && (
             <p className="text-sm text-muted-foreground">

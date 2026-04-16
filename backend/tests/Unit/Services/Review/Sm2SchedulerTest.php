@@ -19,7 +19,7 @@ final class Sm2SchedulerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->scheduler = new Sm2Scheduler();
+        $this->scheduler = new Sm2Scheduler;
         $this->now = new \DateTimeImmutable('2026-04-15 12:00:00');
     }
 
@@ -30,7 +30,7 @@ final class Sm2SchedulerTest extends TestCase
         int $reps = 0,
         int $lapses = 0,
     ): CardSchedule {
-        $schedule = new CardSchedule();
+        $schedule = new CardSchedule;
         $schedule->state = ScheduleState::from($state);
         $schedule->interval_days = $interval;
         $schedule->ease_factor = $ease;

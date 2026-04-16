@@ -48,7 +48,7 @@ final class UserSettingControllerTest extends TestCase
             ->assertJsonPath('data.default_ai_provider', 'anthropic');
     }
 
-    public function test_無効なAIプロバイダで422(): void
+    public function test_無効な_a_iプロバイダで422(): void
     {
         $user = User::factory()->create();
 
@@ -58,7 +58,7 @@ final class UserSettingControllerTest extends TestCase
             ->assertJsonValidationErrors(['default_ai_provider']);
     }
 
-    public function test_他ユーザーのテンプレートIDで422(): void
+    public function test_他ユーザーのテンプレート_i_dで422(): void
     {
         $me = User::factory()->create();
         $other = User::factory()->create();

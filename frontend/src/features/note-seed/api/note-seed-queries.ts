@@ -1,12 +1,7 @@
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createNoteSeed,
   deleteNoteSeed,
-  fetchNoteSeed,
   fetchNoteSeedList,
   updateNoteSeed,
   type NoteSeedListFilters,
@@ -15,26 +10,21 @@ import type {
   CreateNoteSeedInput,
   UpdateNoteSeedInput,
 } from "../schemas/note-seed-schemas";
+import { noteSeedKeys as entityNoteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
+
+// Re-export entity-level read hook for cross-feature consumption
+export { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 
 export const noteSeedKeys = {
-  all: ["note-seeds"] as const,
+  ...entityNoteSeedKeys,
   list: (page = 1, filters: NoteSeedListFilters = {}) =>
-    [...noteSeedKeys.all, "list", page, filters] as const,
-  detail: (id: number) => [...noteSeedKeys.all, "detail", id] as const,
+    [...entityNoteSeedKeys.all, "list", page, filters] as const,
 };
 
 export function useNoteSeedList(page = 1, filters: NoteSeedListFilters = {}) {
   return useQuery({
     queryKey: noteSeedKeys.list(page, filters),
     queryFn: () => fetchNoteSeedList(page, 20, filters),
-  });
-}
-
-export function useNoteSeed(id: number) {
-  return useQuery({
-    queryKey: noteSeedKeys.detail(id),
-    queryFn: () => fetchNoteSeed(id),
-    enabled: Number.isFinite(id) && id > 0,
   });
 }
 

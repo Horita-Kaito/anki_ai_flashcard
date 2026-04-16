@@ -24,7 +24,7 @@ final class CardFactory extends Factory
         return [
             'user_id' => User::factory(),
             'deck_id' => Deck::factory(),
-            'question' => $this->faker->sentence() . '?',
+            'question' => $this->faker->sentence().'?',
             'answer' => $this->faker->sentence(),
             'card_type' => 'basic_qa',
             'is_suspended' => false,

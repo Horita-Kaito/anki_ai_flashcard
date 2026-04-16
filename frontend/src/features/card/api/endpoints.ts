@@ -1,6 +1,6 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { Card } from "@/entities/card/types";
-import type { PaginatedResponse } from "@/entities/deck/types";
+import type { PaginatedResponse } from "@/shared/types/pagination";
 import type {
   CreateCardInput,
   UpdateCardInput,

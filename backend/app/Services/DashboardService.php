@@ -8,6 +8,8 @@ use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
+use App\Models\Card;
+use App\Models\NoteSeed;
 
 final class DashboardService
 {
@@ -24,8 +26,8 @@ final class DashboardService
      *   due_count_today: int,
      *   new_cards_count: int,
      *   total_cards: int,
-     *   recent_notes: array<int, \App\Models\NoteSeed>,
-     *   recent_cards: array<int, \App\Models\Card>,
+     *   recent_notes: array<int, NoteSeed>,
+     *   recent_cards: array<int, Card>,
      *   ai_usage: array{
      *     today_calls: int,
      *     month_calls: int,
