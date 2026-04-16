@@ -1,55 +1,164 @@
-# ============================================
-# ステージング環境オーバーライド
-# docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
-# ============================================
+#
+# anki-ai-flashcard - ステージング環境 (Traefik 統合)
+#
+# 使用方法:
+#   cd ~/srv/apps/anki-ai-flashcard/repo
+#   docker compose -f docker-compose.staging.yml up -d
+#
+# 前提:
+#   - Traefik が起動済み (proxy ネットワーク作成済み)
+#   - ../data/.env に環境変数を配置
+#   - イメージは ghcr.io から pull (サーバー上でのビルド不要)
+#
+# ディレクトリ構成 (サーバー上):
+#   ~/srv/apps/anki-ai-flashcard/
+#   ├── repo/          <- このリポジトリ (このファイルの場所)
+#   └── data/
+#       ├── .env       <- ステージング環境変数
+#       ├── mysql/     <- DBデータ
+#       └── redis/     <- Redisデータ
+#
 
 services:
+  # ----------------------------------------
+  # Frontend - Next.js (pre-built image from ghcr.io)
+  # ----------------------------------------
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
-    ports:
-      - "3000:3000"
+    image: ghcr.io/horita-kaito/anki_ai_flashcard-frontend:develop
+    container_name: anki-frontend
+    restart: unless-stopped
+    expose:
+      - "3000"
     environment:
-      - NEXT_PUBLIC_API_URL=${STAGING_API_URL:-https://staging-api.example.com}
       - NODE_ENV=production
-    restart: unless-stopped
-
-  backend:
-    ports:
-      - "8000:8000"
-    environment:
-      - APP_ENV=staging
-      - APP_DEBUG=true
-      - APP_URL=${STAGING_API_URL:-https://staging-api.example.com}
-      - SANCTUM_STATEFUL_DOMAINS=${STAGING_FRONTEND_DOMAIN:-staging.example.com}
-      - SESSION_DOMAIN=${STAGING_SESSION_DOMAIN:-.example.com}
-      - CORS_ALLOWED_ORIGINS=${STAGING_FRONTEND_URL:-https://staging.example.com}
-    command: php artisan serve --host=0.0.0.0 --port=8000
-    restart: unless-stopped
-
-  queue:
-    environment:
-      - APP_ENV=staging
-    command: php artisan queue:work --tries=3 --timeout=120 --sleep=3
-    restart: unless-stopped
-
-  mysql:
-    # ステージングではポート公開しない
-    restart: unless-stopped
-
-  redis:
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:1.25-alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./docker/nginx/staging.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
-      - frontend
       - backend
+    networks:
+      - proxy
+      - default
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.anki-frontend.rule=Host(`anki.takohorita.com`)
+      - traefik.http.routers.anki-frontend.entrypoints=websecure
+      - traefik.http.routers.anki-frontend.tls.certresolver=letsencrypt
+      - traefik.http.routers.anki-frontend.priority=1
+      - traefik.http.services.anki-frontend.loadbalancer.server.port=3000
+
+  # ----------------------------------------
+  # Backend - Laravel (pre-built image, code volume-mounted)
+  # ----------------------------------------
+  backend:
+    image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
+    container_name: anki-backend
     restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ../data/.env
+    environment:
+      APP_ENV: staging
+      APP_DEBUG: "true"
+      APP_URL: https://anki.takohorita.com
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SANCTUM_STATEFUL_DOMAINS: anki.takohorita.com
+      SESSION_DOMAIN: anki.takohorita.com
+      CORS_ALLOWED_ORIGINS: https://anki.takohorita.com
+      TZ: Asia/Tokyo
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    networks:
+      - proxy
+      - default
+    labels:
+      - traefik.enable=true
+      - "traefik.http.routers.anki-api.rule=Host(`anki.takohorita.com`) && (PathPrefix(`/api`) || PathPrefix(`/sanctum`))"
+      - traefik.http.routers.anki-api.entrypoints=websecure
+      - traefik.http.routers.anki-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.anki-api.priority=10
+      - traefik.http.services.anki-api.loadbalancer.server.port=8000
+
+  # ----------------------------------------
+  # Queue Worker
+  # ----------------------------------------
+  queue:
+    image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
+    container_name: anki-queue
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
+    env_file:
+      - ../data/.env
+    environment:
+      APP_ENV: staging
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      QUEUE_CONNECTION: redis
+      TZ: Asia/Tokyo
+    depends_on:
+      - backend
+    command: php artisan queue:work --tries=3 --timeout=120 --sleep=3
+    networks:
+      - default
+
+  # ----------------------------------------
+  # MySQL
+  # ----------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: anki-mysql
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3308:3306"
+    env_file:
+      - ../data/.env
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-anki_ai_flashcard}
+      MYSQL_USER: ${DB_USERNAME:-anki_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+      TZ: Asia/Tokyo
+    volumes:
+      - ../data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
+  # ----------------------------------------
+  # Redis
+  # ----------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: anki-redis
+    restart: unless-stopped
+    volumes:
+      - ../data/redis:/data
+    networks:
+      - default
+
+# ----------------------------------------
+# Networks
+# ----------------------------------------
+networks:
+  proxy:
+    external: true
+  default:
+    driver: bridge

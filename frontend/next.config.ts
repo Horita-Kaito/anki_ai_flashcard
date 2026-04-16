@@ -14,7 +14,7 @@ const withPWA = withPWAInit({
 });
 
 const nextConfig: NextConfig = {
-  // View Transitions API を有効化 (Chrome/Edge/Safari 対応、Firefox は degradation)
+  output: "standalone",
   experimental: {
     viewTransition: true,
   },
