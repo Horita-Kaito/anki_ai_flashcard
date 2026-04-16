@@ -5,7 +5,7 @@ import { useOnboardingStatus } from "@/features/onboarding";
 import { DashboardOverview } from "@/features/dashboard";
 import { Button } from "@/shared/ui/button";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -15,8 +15,12 @@ export default function DashboardPage() {
     useOnboardingStatus(isAuthenticated);
   const logout = useLogout();
 
+  const redirected = useRef(false);
+
   useEffect(() => {
+    if (redirected.current) return;
     if (onboardingStatus && !onboardingStatus.completed) {
+      redirected.current = true;
       router.push("/onboarding");
     }
   }, [onboardingStatus, router]);

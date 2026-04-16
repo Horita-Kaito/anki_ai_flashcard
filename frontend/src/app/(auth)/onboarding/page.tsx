@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Code,
@@ -63,15 +63,20 @@ export default function OnboardingPage() {
     useOnboardingStatus(isAuthenticated);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const submitMutation = useSubmitOnboarding();
+  const redirected = useRef(false);
 
   useEffect(() => {
+    if (redirected.current) return;
     if (!authLoading && (authError || !user)) {
+      redirected.current = true;
       router.push("/login");
     }
   }, [authLoading, authError, user, router]);
 
   useEffect(() => {
+    if (redirected.current) return;
     if (onboardingStatus?.completed) {
+      redirected.current = true;
       router.push("/dashboard");
     }
   }, [onboardingStatus, router]);
