@@ -346,7 +346,7 @@ export function ReviewSession() {
       />
 
       {!showAnswer ? (
-        <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="fixed inset-x-0 bottom-14 border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -359,7 +359,7 @@ export function ReviewSession() {
           </Button>
         </div>
       ) : extraMode ? (
-        <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="fixed inset-x-0 bottom-14 border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -372,7 +372,7 @@ export function ReviewSession() {
           </Button>
         </div>
       ) : (
-        <div className="fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="fixed inset-x-0 bottom-14 border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {REVIEW_RATINGS.map((rating) => (
               <button

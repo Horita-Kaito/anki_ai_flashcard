@@ -87,7 +87,7 @@ export function NoteSeedForm({
     <form
       onSubmit={onSubmit}
       onKeyDown={handleKeyDown}
-      className="space-y-5 pb-24 md:pb-0"
+      className="space-y-5 pb-36 md:pb-0"
       noValidate
       aria-label={isEdit ? "メモ編集フォーム" : "メモ作成フォーム"}
     >
@@ -192,8 +192,8 @@ export function NoteSeedForm({
       {/* モバイル: sticky 下部バー / PC: インライン */}
       <div
         className="
-          fixed inset-x-0 bottom-0 border-t bg-background/95 backdrop-blur
-          p-3 flex gap-2 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]
+          fixed inset-x-0 bottom-14 border-t bg-background/95 backdrop-blur z-30
+          p-3 flex gap-2
           md:static md:border-0 md:bg-transparent md:backdrop-blur-0
           md:p-0 md:pb-0 md:justify-end md:flex-row-reverse
         "
