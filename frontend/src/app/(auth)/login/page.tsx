@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LoginForm } from "@/features/auth";
@@ -18,7 +19,9 @@ export default function LoginPage() {
           </p>
         </header>
 
-        <LoginForm />
+        <Suspense>
+          <LoginForm />
+        </Suspense>
 
         <p className="text-sm text-center text-muted-foreground">
           アカウント未作成の方は{" "}
