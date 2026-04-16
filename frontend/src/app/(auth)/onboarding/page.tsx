@@ -87,8 +87,12 @@ export default function OnboardingPage() {
   }
 
   async function handleSubmit() {
-    await submitMutation.mutateAsync([...selected]);
-    router.push("/dashboard");
+    try {
+      await submitMutation.mutateAsync([...selected]);
+      router.push("/dashboard");
+    } catch {
+      // error state is handled by submitMutation.isError
+    }
   }
 
   return (
