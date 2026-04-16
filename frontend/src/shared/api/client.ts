@@ -1,11 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { env } from "@/shared/config/env";
 
-/**
- * Sanctum SPA認証 用の axios インスタンス
- * - withCredentials: Cookie の送受信を有効化
- * - withXSRFToken: XSRF-TOKEN Cookie を自動で X-XSRF-TOKEN ヘッダに付与
- */
 export const apiClient: AxiosInstance = axios.create({
   baseURL: `${env.apiUrl}/api/v1`,
   withCredentials: true,
@@ -15,6 +10,23 @@ export const apiClient: AxiosInstance = axios.create({
     "X-Requested-With": "XMLHttpRequest",
   },
 });
+
+const AUTH_ENDPOINTS = ["/login", "/register", "/me"];
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response?.status === 401 &&
+      !AUTH_ENDPOINTS.some((ep) => error.config?.url?.endsWith(ep)) &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/login")
+    ) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+    }
+    return Promise.reject(error);
+  },
+);
 
 /**
  * Sanctum の CSRF Cookie を取得
