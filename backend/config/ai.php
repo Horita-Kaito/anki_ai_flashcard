@@ -84,6 +84,7 @@ return [
             'gemini-2.5-flash' => ['input' => 0.15, 'output' => 0.60],
             'gemini-2.5-pro' => ['input' => 1.25, 'output' => 10.00],
             'gemini-2.0-flash' => ['input' => 0.10, 'output' => 0.40],
+            'gemini-2.5-flash-lite' => ['input' => 0.075, 'output' => 0.30],
             'gemini-2.0-flash-lite' => ['input' => 0.075, 'output' => 0.30],
         ],
     ],

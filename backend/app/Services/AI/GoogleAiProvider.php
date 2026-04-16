@@ -37,8 +37,8 @@ final class GoogleAiProvider implements AiProviderInterface
     }
 
     private const FALLBACK_MODELS = [
-        'gemini-2.0-flash',
-        'gemini-2.0-flash-lite',
+        'gemini-2.5-flash-lite',
+        'gemini-2.5-pro',
     ];
 
     public function generate(AiGenerationRequest $request): AiGenerationResult
