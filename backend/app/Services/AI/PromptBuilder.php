@@ -27,7 +27,10 @@ final class PromptBuilder
         return $this->promptVersion;
     }
 
-    public function systemPrompt(?DomainTemplate $template): string
+    /**
+     * @param  array<int, array{id: int, name: string}>  $decks
+     */
+    public function systemPrompt(?DomainTemplate $template, array $decks = []): string
     {
         $base = <<<'PROMPT'
 あなたは学習者向けのフラッシュカード生成アシスタントです。
@@ -39,6 +42,7 @@ final class PromptBuilder
 - 回答は短く、曖昧さを避ける
 - メモに無い情報を過剰に補完しない
 - 学習目的に沿った切り口を優先
+- 各候補にメモの内容に最も合うデッキを suggested_deck_id で提案する
 
 【出力形式】
 必ず以下の JSON 配列のみを返すこと。前後の説明文は禁止。
@@ -51,12 +55,21 @@ final class PromptBuilder
       "card_type": "basic_qa" | "comparison" | "practical_case" | "cloze_like",
       "focus_type": "definition" | "purpose" | "comparison" | "practical_caution" | "cause_effect" | "example" | "misconception",
       "rationale": "この問いを選んだ理由 (50文字以内)",
-      "confidence": 0.0〜1.0
+      "confidence": 0.0〜1.0,
+      "suggested_deck_id": <デッキIDの数値 or null>
     }
   ]
 }
 ```
 PROMPT;
+
+        if ($decks !== []) {
+            $base .= "\n\n【ユーザーのデッキ一覧】\n";
+            foreach ($decks as $deck) {
+                $base .= "- ID:{$deck['id']} 「{$deck['name']}」\n";
+            }
+            $base .= "上記のデッキ ID から最適なものを suggested_deck_id に設定してください。該当なしなら null。\n";
+        }
 
         if ($template !== null) {
             $base .= "\n\n【分野ポリシー: {$template->name}】\n";

@@ -23,7 +23,9 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
   const [editing, setEditing] = useState(false);
   const [question, setQuestion] = useState(candidate.question);
   const [answer, setAnswer] = useState(candidate.answer);
-  const [deckId, setDeckId] = useState<number | "">(defaultDeckId ?? "");
+  const [deckId, setDeckId] = useState<number | "">(
+    candidate.suggested_deck_id ?? defaultDeckId ?? ""
+  );
 
   const { data: decksPage } = useDeckList();
   const adoptMutation = useAdoptCandidate();

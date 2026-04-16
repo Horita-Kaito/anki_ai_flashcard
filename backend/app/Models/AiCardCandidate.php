@@ -28,6 +28,7 @@ class AiCardCandidate extends Model
         'rationale',
         'confidence',
         'status',
+        'suggested_deck_id',
         'raw_response',
     ];
 

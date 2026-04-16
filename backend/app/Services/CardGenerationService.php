@@ -13,6 +13,7 @@ use App\Exceptions\Domain\AiGenerationFailedException;
 use App\Exceptions\Domain\AiUsageLimitExceededException;
 use App\Models\AiCardCandidate;
 use App\Models\AiGenerationLog;
+use App\Models\Deck;
 use App\Models\NoteSeed;
 use App\Services\AI\AiGenerationRequest;
 use App\Services\AI\AiGenerationResult;
@@ -59,8 +60,15 @@ final class CardGenerationService
         $promptVersion = $this->promptBuilder->promptVersion();
         $regenerate = (bool) ($options['regenerate'] ?? false);
 
+        $decks = Deck::where('user_id', $note->user_id)
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Deck $d) => ['id' => $d->id, 'name' => $d->name])
+            ->toArray();
+
         $request = new AiGenerationRequest(
-            systemPrompt: $this->promptBuilder->systemPrompt($template),
+            systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, [
                 'count' => $count,
                 'preferred_card_types' => $options['preferred_card_types'] ?? null,
@@ -98,7 +106,9 @@ final class CardGenerationService
             );
         }
 
-        $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate) {
+        $deckIds = array_column($decks, 'id');
+
+        $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds) {
             if ($regenerate) {
                 $this->candidateRepository->rejectPendingForNoteSeed($note->id);
             }
@@ -116,6 +126,9 @@ final class CardGenerationService
                     'focus_type' => $data['focus_type'],
                     'rationale' => $data['rationale'],
                     'confidence' => $data['confidence'],
+                    'suggested_deck_id' => in_array($data['suggested_deck_id'] ?? null, $deckIds, true)
+                        ? $data['suggested_deck_id']
+                        : null,
                     'status' => CandidateStatus::Pending->value,
                     'raw_response' => $data,
                 ]);

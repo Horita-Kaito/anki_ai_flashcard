@@ -15,6 +15,7 @@ export interface AiCardCandidate {
   focus_type: string | null;
   rationale: string | null;
   confidence: number | null;
+  suggested_deck_id: number | null;
   status: CandidateStatus;
   created_at: string | null;
   updated_at: string | null;

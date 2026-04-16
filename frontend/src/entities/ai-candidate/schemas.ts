@@ -15,6 +15,7 @@ export const aiCardCandidateResponseSchema = z
     focus_type: z.string().nullable(),
     rationale: z.string().nullable(),
     confidence: z.number().nullable(),
+    suggested_deck_id: z.number().nullable(),
     status: z.enum(CANDIDATE_STATUSES),
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),

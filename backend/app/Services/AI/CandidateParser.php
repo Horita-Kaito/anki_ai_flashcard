@@ -20,6 +20,7 @@ final class CandidateParser
      *   focus_type: ?string,
      *   rationale: ?string,
      *   confidence: ?float,
+     *   suggested_deck_id: ?int,
      * }>
      */
     public function parse(string $rawContent): array
@@ -60,6 +61,11 @@ final class CandidateParser
                 $confidence = max(0.0, min(1.0, (float) $confidence));
             }
 
+            $suggestedDeckId = $item['suggested_deck_id'] ?? null;
+            if ($suggestedDeckId !== null) {
+                $suggestedDeckId = is_numeric($suggestedDeckId) ? (int) $suggestedDeckId : null;
+            }
+
             $out[] = [
                 'question' => mb_substr($question, 0, 2000),
                 'answer' => mb_substr($answer, 0, 2000),
@@ -67,6 +73,7 @@ final class CandidateParser
                 'focus_type' => $this->strOrNull($item, 'focus_type'),
                 'rationale' => $this->strOrNull($item, 'rationale'),
                 'confidence' => $confidence,
+                'suggested_deck_id' => $suggestedDeckId,
             ];
         }
 
