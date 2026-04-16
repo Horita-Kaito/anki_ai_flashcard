@@ -58,20 +58,11 @@ const GOALS = [
 export default function OnboardingPage() {
   const router = useRouter();
   const { data: user, isLoading: authLoading, isError: authError } = useCurrentUser();
-  // 認証が確認できるまでオンボーディングステータスの取得を遅延させる
   const isAuthenticated = !!user && !authLoading && !authError;
   const { data: onboardingStatus, isLoading: statusLoading } =
     useOnboardingStatus(isAuthenticated);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const submitMutation = useSubmitOnboarding();
-
-  if (authLoading || (isAuthenticated && statusLoading)) {
-    return (
-      <main className="flex-1 flex items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
 
   useEffect(() => {
     if (!authLoading && (authError || !user)) {
@@ -84,6 +75,14 @@ export default function OnboardingPage() {
       router.push("/dashboard");
     }
   }, [onboardingStatus, router]);
+
+  if (authLoading || (isAuthenticated && statusLoading)) {
+    return (
+      <main className="flex-1 flex items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </main>
+    );
+  }
 
   if (!user || onboardingStatus?.completed) {
     return (
