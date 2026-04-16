@@ -40,11 +40,12 @@ final class AiCardCandidateController extends Controller
         $options = $request->validated();
         $options['regenerate'] = $regenerate;
 
-        $candidates = $this->generationService->generate($note, $options);
+        $result = $this->generationService->generate($note, $options);
 
-        return AiCardCandidateResource::collection($candidates)
-            ->response()
-            ->setStatusCode(201);
+        return response()->json([
+            'data' => AiCardCandidateResource::collection($result['candidates']),
+            'meta' => $result['meta'],
+        ], 201);
     }
 
     public function regenerate(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse

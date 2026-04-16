@@ -98,7 +98,7 @@ final class CardGenerationService
             );
         }
 
-        return DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate) {
+        $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate) {
             if ($regenerate) {
                 $this->candidateRepository->rejectPendingForNoteSeed($note->id);
             }
@@ -123,6 +123,18 @@ final class CardGenerationService
 
             return $candidates;
         });
+
+        return [
+            'candidates' => $candidates,
+            'meta' => [
+                'model' => $result->model,
+                'provider' => $result->provider,
+                'input_tokens' => $result->inputTokens,
+                'output_tokens' => $result->outputTokens,
+                'cost_usd' => $result->costUsd,
+                'duration_ms' => $result->durationMs,
+            ],
+        ];
     }
 
     private function assertDailyLimit(int $userId): void

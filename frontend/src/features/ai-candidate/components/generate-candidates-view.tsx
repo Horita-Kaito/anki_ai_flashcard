@@ -45,11 +45,14 @@ export function GenerateCandidatesView({
 
   async function handleGenerate() {
     try {
-      await generateMutation.mutateAsync({
+      const result = await generateMutation.mutateAsync({
         count,
         domain_template_id: templateId,
       });
-      toast.success("候補を生成しました");
+      const m = result.meta;
+      toast.success(
+        `${m.model} で ${result.candidates.length} 件生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
+      );
     } catch (err: unknown) {
       const status =
         (err as { response?: { status?: number } }).response?.status;
@@ -72,11 +75,14 @@ export function GenerateCandidatesView({
       return;
     }
     try {
-      await regenerateMutation.mutateAsync({
+      const result = await regenerateMutation.mutateAsync({
         count,
         domain_template_id: templateId,
       });
-      toast.success("再生成しました");
+      const m = result.meta;
+      toast.success(
+        `${m.model} で ${result.candidates.length} 件再生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
+      );
     } catch {
       toast.error("再生成に失敗しました");
     }

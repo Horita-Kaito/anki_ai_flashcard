@@ -10,28 +10,42 @@ export interface GenerateOptions {
   preferred_card_types?: CardType[];
 }
 
+export interface GenerationMeta {
+  model: string;
+  provider: string;
+  input_tokens: number;
+  output_tokens: number;
+  cost_usd: number;
+  duration_ms: number;
+}
+
+export interface GenerationResult {
+  candidates: AiCardCandidate[];
+  meta: GenerationMeta;
+}
+
 export async function generateCandidates(
   noteSeedId: number,
   options: GenerateOptions = {}
-): Promise<AiCardCandidate[]> {
+): Promise<GenerationResult> {
   await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: AiCardCandidate[] }>(
+  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
     `/note-seeds/${noteSeedId}/generate-candidates`,
     options
   );
-  return res.data.data;
+  return { candidates: res.data.data, meta: res.data.meta };
 }
 
 export async function regenerateCandidates(
   noteSeedId: number,
   options: GenerateOptions = {}
-): Promise<AiCardCandidate[]> {
+): Promise<GenerationResult> {
   await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: AiCardCandidate[] }>(
+  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
     `/note-seeds/${noteSeedId}/regenerate-candidates`,
     options
   );
-  return res.data.data;
+  return { candidates: res.data.data, meta: res.data.meta };
 }
 
 export async function fetchCandidatesForNote(
