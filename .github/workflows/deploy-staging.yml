@@ -45,6 +45,9 @@ jobs:
             git fetch origin develop
             git reset --hard origin/develop
 
+            # .env symlink (data/.env を compose の変数展開用に)
+            ln -sf ../data/.env .env
+
             # ghcr.io ログイン & イメージ pull
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose -f "$COMPOSE_FILE" pull
