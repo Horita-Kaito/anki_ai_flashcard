@@ -7,6 +7,7 @@ namespace App\Providers;
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Services\AI\CandidateParser;
 use App\Services\AI\FakeAiProvider;
+use App\Services\AI\GoogleAiProvider;
 use App\Services\AI\OpenAiProvider;
 use App\Services\AI\PricingCalculator;
 use App\Services\AI\PromptBuilder;
@@ -31,9 +32,8 @@ final class AppServiceProvider extends ServiceProvider
             return match ($provider) {
                 'fake' => $app->make(FakeAiProvider::class),
                 'openai' => OpenAiProvider::fromConfig(),
-                // TODO: AnthropicProvider / GoogleAiProvider の実装
                 'anthropic' => $app->make(FakeAiProvider::class),
-                'google' => $app->make(FakeAiProvider::class),
+                'google' => GoogleAiProvider::fromConfig(),
                 default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
             };
         });
