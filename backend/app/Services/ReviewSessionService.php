@@ -88,6 +88,38 @@ final class ReviewSessionService
     }
 
     /**
+     * まだ due でないカードを取得する (追加復習用)。
+     *
+     * @return array{cards: array<int, array{card: Card, days_until_due: int}>, total: int}
+     */
+    public function extraSession(int $userId): array
+    {
+        $schedules = $this->scheduleRepository->extraCardsForUser($userId, 10);
+
+        $now = now();
+        $items = [];
+        foreach ($schedules as $schedule) {
+            if ($schedule->card === null) {
+                continue;
+            }
+            $dueAt = $schedule->due_at instanceof Carbon
+                ? $schedule->due_at
+                : Carbon::parse($schedule->due_at);
+            $daysUntilDue = max(0, (int) $now->diffInDays($dueAt, false));
+
+            $items[] = [
+                'card' => $schedule->card,
+                'days_until_due' => $daysUntilDue,
+            ];
+        }
+
+        return [
+            'cards' => $items,
+            'total' => count($items),
+        ];
+    }
+
+    /**
      * 回答を記録し、スケジュールを更新する。
      *
      * @return array{card: Card, schedule: CardSchedule, review: CardReview}

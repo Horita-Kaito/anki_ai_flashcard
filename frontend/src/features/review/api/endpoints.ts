@@ -1,11 +1,13 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type {
   AnswerResult,
+  ExtraSession,
   ReviewRating,
   ReviewStats,
   TodaySession,
 } from "@/entities/review/types";
 import {
+  extraSessionResponseSchema,
   todaySessionResponseSchema,
   reviewStatsResponseSchema,
 } from "@/entities/review/schemas";
@@ -37,6 +39,11 @@ export async function answerReview(input: {
 export async function fetchReviewStats(): Promise<ReviewStats> {
   const res = await apiClient.get("/review-stats");
   return parseApiDataResponse(reviewStatsResponseSchema, res);
+}
+
+export async function fetchExtraSession(): Promise<ExtraSession> {
+  const res = await apiClient.get("/review-sessions/extra");
+  return parseApiDataResponse(extraSessionResponseSchema, res);
 }
 
 export async function archiveCardFromReview(cardId: number): Promise<void> {

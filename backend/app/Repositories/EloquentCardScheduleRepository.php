@@ -109,4 +109,18 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
             ->where('card_id', $cardId)
             ->first();
     }
+
+    public function extraCardsForUser(int $userId, int $limit = 10): array
+    {
+        return CardSchedule::query()
+            ->with(['card.tags'])
+            ->where('user_id', $userId)
+            ->where('due_at', '>', now())
+            ->whereNull('archived_at')
+            ->whereHas('card', fn ($cq) => $cq->where('is_suspended', false))
+            ->orderBy('due_at')
+            ->limit($limit)
+            ->get()
+            ->all();
+    }
 }

@@ -72,6 +72,7 @@ Route::prefix('v1')->group(function () {
 
         // 復習セッション
         Route::get('review-sessions/today', [ReviewSessionController::class, 'today']);
+        Route::get('review-sessions/extra', [ReviewSessionController::class, 'extra']);
         Route::post('review-sessions/answer', [ReviewSessionController::class, 'answer']);
         Route::get('review-stats', [ReviewSessionController::class, 'stats']);
     });

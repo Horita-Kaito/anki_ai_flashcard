@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Archive, Check, RotateCcw, Sparkles } from "lucide-react";
+import { Archive, CalendarClock, Check, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAnswerReview,
   useArchiveFromReview,
+  useExtraSession,
   useTodaySession,
 } from "../api/review-queries";
 import { ReviewCardFlip } from "./review-card-flip";
@@ -16,6 +17,7 @@ import {
   REVIEW_RATING_SHORTCUTS,
   type ReviewRating,
 } from "@/entities/review/types";
+import type { ExtraCard } from "@/entities/review/types";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { haptic } from "@/shared/lib/haptics";
 
@@ -36,9 +38,26 @@ export function ReviewSession() {
   const [completed, setCompleted] = useState(0);
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
 
+  const [extraMode, setExtraMode] = useState(false);
+  const [extraIndex, setExtraIndex] = useState(0);
+  const [extraCompleted, setExtraCompleted] = useState(0);
+
+  const {
+    data: extraData,
+    isLoading: extraLoading,
+  } = useExtraSession(extraMode);
+
   const cards = data?.cards ?? [];
-  const current = cards[index];
-  const isDone = !isLoading && cards.length > 0 && index >= cards.length;
+  const extraCards: ExtraCard[] = extraData?.cards ?? [];
+
+  const activeCards = extraMode ? extraCards : cards;
+  const activeIndex = extraMode ? extraIndex : index;
+  const activeCompleted = extraMode ? extraCompleted : completed;
+
+  const current = activeCards[activeIndex];
+  const currentExtraCard = extraMode ? (current as ExtraCard | undefined) : undefined;
+  const isDone = !isLoading && cards.length > 0 && index >= cards.length && !extraMode;
+  const isExtraDone = extraMode && !extraLoading && extraCards.length > 0 && extraIndex >= extraCards.length;
 
   const handleReveal = useCallback(() => {
     setShowAnswer(true);
@@ -54,8 +73,13 @@ export function ReviewSession() {
           response_time_ms: Date.now() - startedAt,
         });
         haptic("success");
-        setCompleted((c) => c + 1);
-        setIndex((i) => i + 1);
+        if (extraMode) {
+          setExtraCompleted((c) => c + 1);
+          setExtraIndex((i) => i + 1);
+        } else {
+          setCompleted((c) => c + 1);
+          setIndex((i) => i + 1);
+        }
         setShowAnswer(false);
         setStartedAt(Date.now());
       } catch {
@@ -63,7 +87,7 @@ export function ReviewSession() {
         toast.error("回答の保存に失敗しました");
       }
     },
-    [current, answerMutation, startedAt]
+    [current, answerMutation, startedAt, extraMode]
   );
 
   // PC キーボードショートカット
@@ -133,6 +157,26 @@ export function ReviewSession() {
     );
   }
 
+  if (isExtraDone) {
+    return (
+      <div className="flex flex-col items-center gap-4 border rounded-xl p-8 text-center bg-primary/5">
+        <Sparkles className="size-10 text-primary" aria-hidden />
+        <div className="space-y-1">
+          <p className="text-xl font-semibold">すべてのカードを復習しました！</p>
+          <p className="text-sm text-muted-foreground">
+            {completed + extraCompleted} 枚のカードを復習しました（追加 {extraCompleted} 枚）
+          </p>
+        </div>
+        <Link
+          href="/dashboard"
+          className={`${buttonVariants({ size: "lg" })} min-h-11`}
+        >
+          ダッシュボードへ
+        </Link>
+      </div>
+    );
+  }
+
   if (isDone) {
     return (
       <div className="flex flex-col items-center gap-4 border rounded-xl p-8 text-center bg-primary/5">
@@ -155,6 +199,20 @@ export function ReviewSession() {
             size="lg"
             className="min-h-11"
             onClick={() => {
+              setExtraMode(true);
+              setExtraIndex(0);
+              setExtraCompleted(0);
+              setShowAnswer(false);
+            }}
+          >
+            <CalendarClock className="size-4" aria-hidden />
+            もっと続ける
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="min-h-11"
+            onClick={() => {
               setIndex(0);
               setCompleted(0);
               setShowAnswer(false);
@@ -169,31 +227,71 @@ export function ReviewSession() {
     );
   }
 
+  if (extraMode && extraLoading) {
+    return (
+      <p className="text-center text-muted-foreground py-20">読み込み中...</p>
+    );
+  }
+
+  if (extraMode && extraCards.length === 0 && !extraLoading) {
+    return (
+      <div className="flex flex-col items-center gap-4 border rounded-xl p-8 text-center bg-primary/5">
+        <Sparkles className="size-10 text-primary" aria-hidden />
+        <div className="space-y-1">
+          <p className="text-xl font-semibold">すべてのカードを復習しました！</p>
+          <p className="text-sm text-muted-foreground">
+            追加で復習できるカードはありません
+          </p>
+        </div>
+        <Link
+          href="/dashboard"
+          className={`${buttonVariants({ size: "lg" })} min-h-11`}
+        >
+          ダッシュボードへ
+        </Link>
+      </div>
+    );
+  }
+
   if (!current) return null;
 
   return (
     <div className="space-y-6">
-      {/* 進捗 */}
+      {extraMode && (
+        <div className="flex items-center justify-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+          <CalendarClock className="size-4" aria-hidden />
+          追加復習モード
+        </div>
+      )}
+
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">
-          {completed} / {cards.length} 完了
+          {activeCompleted} / {activeCards.length} 完了
         </span>
         <span className="text-muted-foreground">
-          残り {cards.length - index} 枚
+          残り {activeCards.length - activeIndex} 枚
         </span>
       </div>
       <div
         className="h-1 bg-muted rounded-full overflow-hidden"
         role="progressbar"
-        aria-valuenow={completed}
+        aria-valuenow={activeCompleted}
         aria-valuemin={0}
-        aria-valuemax={cards.length}
+        aria-valuemax={activeCards.length}
       >
         <div
           className="h-full bg-primary transition-all"
-          style={{ width: `${(completed / cards.length) * 100}%` }}
+          style={{ width: `${activeCards.length > 0 ? (activeCompleted / activeCards.length) * 100 : 0}%` }}
         />
       </div>
+
+      {currentExtraCard && (
+        <div className="flex justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+            📅 {currentExtraCard.days_until_due}日後に出題予定
+          </span>
+        </div>
+      )}
 
       {/* アーカイブボタン */}
       <div className="flex justify-end">
@@ -207,8 +305,13 @@ export function ReviewSession() {
               onSuccess: () => {
                 haptic("success");
                 toast.success("カードをアーカイブしました");
-                setCompleted((c) => c + 1);
-                setIndex((i) => i + 1);
+                if (extraMode) {
+                  setExtraCompleted((c) => c + 1);
+                  setExtraIndex((i) => i + 1);
+                } else {
+                  setCompleted((c) => c + 1);
+                  setIndex((i) => i + 1);
+                }
                 setShowAnswer(false);
                 setStartedAt(Date.now());
               },

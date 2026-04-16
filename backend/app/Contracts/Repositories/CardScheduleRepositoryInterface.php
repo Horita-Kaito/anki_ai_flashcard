@@ -61,4 +61,11 @@ interface CardScheduleRepositoryInterface
      * カードIDでスケジュールを取得する (user_id スコープ付き)
      */
     public function findByCardForUser(int $userId, int $cardId): ?CardSchedule;
+
+    /**
+     * まだ due でないカードを due_at 昇順で取得する (追加復習用)
+     *
+     * @return array<int, CardSchedule>
+     */
+    public function extraCardsForUser(int $userId, int $limit = 10): array;
 }

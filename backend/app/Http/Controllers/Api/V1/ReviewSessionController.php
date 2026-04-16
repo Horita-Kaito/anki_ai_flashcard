@@ -62,6 +62,30 @@ final class ReviewSessionController extends Controller
     }
 
     /**
+     * 追加復習用カード一覧 (due_at が未来のカード)。
+     */
+    public function extra(Request $request): JsonResponse
+    {
+        $result = $this->sessionService->extraSession(
+            userId: $request->user()->id,
+        );
+
+        $cards = [];
+        foreach ($result['cards'] as $item) {
+            $cardData = CardResource::make($item['card'])->toArray($request);
+            $cardData['days_until_due'] = $item['days_until_due'];
+            $cards[] = $cardData;
+        }
+
+        return response()->json([
+            'data' => [
+                'total' => $result['total'],
+                'cards' => $cards,
+            ],
+        ]);
+    }
+
+    /**
      * 回答を記録し、スケジュールを更新する。
      */
     public function answer(AnswerReviewRequest $request): JsonResponse

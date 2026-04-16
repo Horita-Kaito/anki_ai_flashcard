@@ -37,6 +37,15 @@ export interface AnswerResult {
   };
 }
 
+export interface ExtraCard extends Card {
+  days_until_due: number;
+}
+
+export interface ExtraSession {
+  total: number;
+  cards: ExtraCard[];
+}
+
 export interface DeckStats {
   deck_id: number;
   deck_name: string;

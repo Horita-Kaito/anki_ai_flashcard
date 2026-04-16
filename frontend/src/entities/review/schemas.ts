@@ -13,6 +13,19 @@ export const todaySessionResponseSchema = z
 
 export type TodaySessionResponse = z.infer<typeof todaySessionResponseSchema>;
 
+export const extraCardSchema = cardResponseSchema.extend({
+  days_until_due: z.number(),
+});
+
+export const extraSessionResponseSchema = z
+  .object({
+    total: z.number(),
+    cards: z.array(extraCardSchema),
+  })
+  .passthrough();
+
+export type ExtraSessionResponse = z.infer<typeof extraSessionResponseSchema>;
+
 const updatedScheduleSchema = z
   .object({
     state: z.string(),

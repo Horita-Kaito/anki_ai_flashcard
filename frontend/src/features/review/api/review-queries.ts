@@ -6,6 +6,7 @@ import {
 import {
   answerReview,
   archiveCardFromReview,
+  fetchExtraSession,
   fetchReviewStats,
   fetchTodaySession,
 } from "./endpoints";
@@ -13,6 +14,7 @@ import type { ReviewRating } from "@/entities/review/types";
 
 export const reviewKeys = {
   today: (deckId?: number) => ["review", "today", deckId ?? null] as const,
+  extra: ["review", "extra"] as const,
   stats: ["review", "stats"] as const,
 };
 
@@ -20,6 +22,15 @@ export function useTodaySession(deckId?: number) {
   return useQuery({
     queryKey: reviewKeys.today(deckId),
     queryFn: () => fetchTodaySession(deckId),
+    staleTime: 0,
+  });
+}
+
+export function useExtraSession(enabled: boolean) {
+  return useQuery({
+    queryKey: reviewKeys.extra,
+    queryFn: fetchExtraSession,
+    enabled,
     staleTime: 0,
   });
 }
