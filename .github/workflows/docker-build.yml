@@ -8,6 +8,8 @@ on:
       - "backend/**"
       - "docker/**"
       - ".github/workflows/docker-build.yml"
+      - ".github/workflows/deploy-staging.yml"
+      - "docker-compose.staging.yml"
   workflow_dispatch:
 
 env:
@@ -130,3 +132,11 @@ jobs:
         with:
           sarif_file: trivy-${{ matrix.image }}.sarif
           category: trivy-${{ matrix.image }}
+
+  # イメージ push 完了後にステージングデプロイ
+  deploy-staging:
+    name: Deploy Staging
+    needs: [build-backend, build-frontend]
+    if: github.ref == 'refs/heads/develop'
+    uses: ./.github/workflows/deploy-staging.yml
+    secrets: inherit
