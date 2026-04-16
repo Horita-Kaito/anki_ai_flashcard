@@ -69,8 +69,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertNotNull($log);
         $this->assertGreaterThan(0, $log->input_tokens);
         $this->assertGreaterThan(0, $log->output_tokens);
-        // 900 input + 300 output @ gpt-4o-mini ($0.15 / $0.60 per 1M)
-        // = 0.000135 + 0.000180 = 0.000315
+        // FakeAiProvider: 900 input + 300 output @ $0.15/$0.60 per 1M = $0.000315
         $this->assertEqualsWithDelta(0.000315, (float) $log->cost_usd, 0.0000001);
     }
 

@@ -61,12 +61,10 @@ final class FakeAiProvider implements AiProviderInterface
         }
 
         $raw = $this->forceRawContent ?? $this->buildDefaultJson();
-        $cost = $this->pricing->calculate(
-            'openai',
-            $request->model,
-            $this->inputTokens,
-            $this->outputTokens,
-        );
+        $inputRate = 0.15;
+        $outputRate = 0.60;
+        $cost = ($this->inputTokens * $inputRate / 1_000_000)
+              + ($this->outputTokens * $outputRate / 1_000_000);
 
         return new AiGenerationResult(
             rawContent: $raw,
