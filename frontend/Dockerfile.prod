@@ -8,7 +8,9 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 ARG NEXT_PUBLIC_API_URL=https://anki.takohorita.com
+ARG NEXT_PUBLIC_SESSION_COOKIE_NAME=ankiaiflashcard-session
 ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_SESSION_COOKIE_NAME=${NEXT_PUBLIC_SESSION_COOKIE_NAME}
 
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
