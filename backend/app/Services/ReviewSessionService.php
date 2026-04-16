@@ -13,6 +13,7 @@ use App\Exceptions\Domain\CardNotFoundException;
 use App\Models\Card;
 use App\Models\CardReview;
 use App\Models\CardSchedule;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,12 +36,55 @@ final class ReviewSessionService
      */
     public function dueCardsForUser(int $userId, ?int $deckId, int $limit = 50): array
     {
+        $this->applyOverdueDecay($userId);
+
         return $this->scheduleRepository->dueCardsForUser(
             $userId,
             now(),
             $deckId,
             $limit,
         );
+    }
+
+    /**
+     * 期限切れカードの interval を減衰させる (On-demand interval decay)。
+     *
+     * overdue_days <= 1: 変更なし
+     * overdue_days <= 7: interval *= 0.8
+     * overdue_days <= 14: interval *= 0.5
+     * overdue_days > 14: interval = 1 (リセット)
+     */
+    private function applyOverdueDecay(int $userId): void
+    {
+        $now = now();
+        $overdueSchedules = $this->scheduleRepository->overdueCardsForUser($userId, $now);
+
+        foreach ($overdueSchedules as $schedule) {
+            $dueAt = $schedule->due_at instanceof Carbon
+                ? $schedule->due_at
+                : Carbon::parse($schedule->due_at);
+
+            $overdueDays = (int) $dueAt->diffInDays($now, false);
+            if ($overdueDays <= 1) {
+                continue;
+            }
+
+            $currentInterval = (int) $schedule->interval_days;
+
+            if ($overdueDays <= 7) {
+                $newInterval = max(1, (int) floor($currentInterval * 0.8));
+            } elseif ($overdueDays <= 14) {
+                $newInterval = max(1, (int) floor($currentInterval * 0.5));
+            } else {
+                $newInterval = 1;
+            }
+
+            if ($newInterval !== $currentInterval) {
+                $this->scheduleRepository->update($schedule, [
+                    'interval_days' => $newInterval,
+                ]);
+            }
+        }
     }
 
     /**
@@ -92,6 +136,12 @@ final class ReviewSessionService
             $previousSnapshot,
         ) {
             $updatedSchedule = $this->scheduleRepository->update($schedule, $update->toArray());
+
+            // Auto-archive: interval が閾値以上なら自動アーカイブ
+            $archiveThreshold = (int) config('ai.review.archive_interval_days', 180);
+            if ($update->intervalDays >= $archiveThreshold) {
+                $updatedSchedule = $this->scheduleRepository->archive($updatedSchedule);
+            }
 
             $review = $this->reviewRepository->create([
                 'user_id' => $userId,

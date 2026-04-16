@@ -13,33 +13,67 @@ import { Button } from "@/shared/ui/button";
 import { VirtualList } from "@/shared/ui/virtual-list";
 import type { Card } from "@/entities/card/types";
 
+type ArchiveFilter = "active" | "archived";
+
 export function CardList() {
   const [keyword, setKeyword] = useState("");
   const [deckId, setDeckId] = useState<number | "">("");
   const [tagId, setTagId] = useState<number | "">("");
+  const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
   const debouncedKeyword = useDebouncedValue(keyword, 300);
 
   const filters = {
     q: debouncedKeyword || undefined,
     deck_id: deckId === "" ? undefined : Number(deckId),
     tag_id: tagId === "" ? undefined : Number(tagId),
+    archived: archiveFilter === "archived" ? true : false,
   };
 
   const { data, isLoading, isError, refetch } = useCardList(1, filters);
   const { data: decks } = useDeckList();
   const { data: tags } = useTagList();
 
-  const hasActiveFilter = keyword !== "" || deckId !== "" || tagId !== "";
+  const hasActiveFilter = keyword !== "" || deckId !== "" || tagId !== "" || archiveFilter !== "active";
 
   function resetFilters() {
     setKeyword("");
     setDeckId("");
     setTagId("");
+    setArchiveFilter("active");
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-3">
+        <div className="flex gap-1 rounded-lg bg-muted p-1" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={archiveFilter === "active"}
+            onClick={() => setArchiveFilter("active")}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
+              archiveFilter === "active"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            学習中
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={archiveFilter === "archived"}
+            onClick={() => setArchiveFilter("archived")}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
+              archiveFilter === "archived"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            アーカイブ済み
+          </button>
+        </div>
+
         <div className="relative">
           <Search
             aria-hidden

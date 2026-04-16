@@ -48,6 +48,7 @@ export const cardHandlers = [
         ease_factor: 2.5,
         due_at: new Date().toISOString(),
         lapse_count: 0,
+        archived_at: null,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

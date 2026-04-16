@@ -15,6 +15,7 @@ export interface CardListFilters {
   deck_id?: number;
   tag_id?: number;
   q?: string;
+  archived?: boolean;
 }
 
 export async function fetchCardList(
@@ -29,6 +30,7 @@ export async function fetchCardList(
   if (filters.deck_id) params.deck_id = filters.deck_id;
   if (filters.tag_id) params.tag_id = filters.tag_id;
   if (filters.q && filters.q.trim() !== "") params.q = filters.q;
+  if (filters.archived !== undefined) params.archived = filters.archived ? "true" : "false";
 
   const res = await apiClient.get("/cards", { params });
   return parseApiResponse(paginatedCardSchema, res.data);
@@ -57,4 +59,16 @@ export async function updateCard(
 export async function deleteCard(id: number): Promise<void> {
   await fetchCsrfCookie();
   await apiClient.delete(`/cards/${id}`);
+}
+
+export async function archiveCard(id: number): Promise<Card> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: Card }>(`/cards/${id}/archive`);
+  return res.data.data;
+}
+
+export async function unarchiveCard(id: number): Promise<Card> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: Card }>(`/cards/${id}/unarchive`);
+  return res.data.data;
 }

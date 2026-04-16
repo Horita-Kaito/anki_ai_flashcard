@@ -16,6 +16,7 @@ const cardScheduleSchema = z
     ease_factor: z.number(),
     due_at: z.string().nullable(),
     lapse_count: z.number(),
+    archived_at: z.string().nullable().default(null),
   })
   .passthrough();
 
@@ -31,6 +32,7 @@ export const cardResponseSchema = z
     explanation: z.string().nullable(),
     card_type: z.enum(CARD_TYPES),
     is_suspended: z.boolean(),
+    is_archived: z.boolean().optional(),
     tags: z.array(cardTagSummarySchema).optional(),
     schedule: cardScheduleSchema.nullable().optional(),
     created_at: z.string().nullable(),

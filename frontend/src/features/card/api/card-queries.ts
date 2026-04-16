@@ -4,10 +4,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  archiveCard,
   createCard,
   deleteCard,
   fetchCard,
   fetchCardList,
+  unarchiveCard,
   updateCard,
   type CardListFilters,
 } from "./endpoints";
@@ -62,5 +64,27 @@ export function useDeleteCard() {
   return useMutation({
     mutationFn: (id: number) => deleteCard(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: cardKeys.all }),
+  });
+}
+
+export function useArchiveCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => archiveCard(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: cardKeys.all });
+      qc.invalidateQueries({ queryKey: ["review"] });
+    },
+  });
+}
+
+export function useUnarchiveCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => unarchiveCard(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: cardKeys.all });
+      qc.invalidateQueries({ queryKey: ["review"] });
+    },
   });
 }

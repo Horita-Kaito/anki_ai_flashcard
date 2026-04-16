@@ -24,6 +24,7 @@ class CardSchedule extends Model
         'last_reviewed_at',
         'lapse_count',
         'state',
+        'archived_at',
     ];
 
     /** @var array<string, string> */
@@ -35,6 +36,7 @@ class CardSchedule extends Model
         'last_reviewed_at' => 'datetime',
         'lapse_count' => 'integer',
         'state' => ScheduleState::class,
+        'archived_at' => 'datetime',
     ];
 
     /** @return BelongsTo<Card, self> */

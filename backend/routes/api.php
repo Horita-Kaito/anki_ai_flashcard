@@ -41,6 +41,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('domain-templates', DomainTemplateController::class);
         Route::apiResource('note-seeds', NoteSeedController::class);
         Route::apiResource('cards', CardController::class);
+        Route::post('cards/{id}/archive', [CardController::class, 'archive']);
+        Route::post('cards/{id}/unarchive', [CardController::class, 'unarchive']);
 
         Route::get('tags', [TagController::class, 'index']);
         Route::post('tags', [TagController::class, 'store']);

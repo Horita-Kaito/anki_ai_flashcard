@@ -39,4 +39,26 @@ interface CardScheduleRepositoryInterface
      * @param  array<string, mixed>  $attributes
      */
     public function update(CardSchedule $schedule, array $attributes): CardSchedule;
+
+    /**
+     * 期限切れカード (overdue) のスケジュールを取得する (decay 適用対象)
+     *
+     * @return array<int, CardSchedule>
+     */
+    public function overdueCardsForUser(int $userId, \DateTimeInterface $before): array;
+
+    /**
+     * カードをアーカイブする
+     */
+    public function archive(CardSchedule $schedule): CardSchedule;
+
+    /**
+     * カードのアーカイブを解除する
+     */
+    public function unarchive(CardSchedule $schedule, int $resetIntervalDays): CardSchedule;
+
+    /**
+     * カードIDでスケジュールを取得する (user_id スコープ付き)
+     */
+    public function findByCardForUser(int $userId, int $cardId): ?CardSchedule;
 }

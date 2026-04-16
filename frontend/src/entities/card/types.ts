@@ -27,6 +27,7 @@ export interface CardSchedule {
   ease_factor: number;
   due_at: string | null;
   lapse_count: number;
+  archived_at: string | null;
 }
 
 export interface CardTagSummary {
@@ -45,6 +46,7 @@ export interface Card {
   explanation: string | null;
   card_type: CardType;
   is_suspended: boolean;
+  is_archived?: boolean;
   tags?: CardTagSummary[];
   schedule?: CardSchedule | null;
   created_at: string | null;

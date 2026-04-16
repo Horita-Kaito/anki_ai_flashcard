@@ -38,3 +38,8 @@ export async function fetchReviewStats(): Promise<ReviewStats> {
   const res = await apiClient.get("/review-stats");
   return parseApiDataResponse(reviewStatsResponseSchema, res);
 }
+
+export async function archiveCardFromReview(cardId: number): Promise<void> {
+  await fetchCsrfCookie();
+  await apiClient.post(`/cards/${cardId}/archive`);
+}

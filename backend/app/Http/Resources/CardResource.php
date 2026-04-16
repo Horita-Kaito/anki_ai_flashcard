@@ -30,6 +30,7 @@ final class CardResource extends BaseJsonResource
                 'id' => $t->id,
                 'name' => $t->name,
             ])->values()),
+            'is_archived' => $this->whenLoaded('schedule', fn () => $this->schedule?->archived_at !== null, false),
             'schedule' => $this->whenLoaded('schedule', fn () => $this->schedule ? [
                 'state' => $this->schedule->state?->value,
                 'repetitions' => $this->schedule->repetitions,
@@ -37,6 +38,7 @@ final class CardResource extends BaseJsonResource
                 'ease_factor' => (float) $this->schedule->ease_factor,
                 'due_at' => $this->toIso($this->schedule->due_at),
                 'lapse_count' => $this->schedule->lapse_count,
+                'archived_at' => $this->toIso($this->schedule->archived_at),
             ] : null),
             ...$this->timestamps(),
         ];

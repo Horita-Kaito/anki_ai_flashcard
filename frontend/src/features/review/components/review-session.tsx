@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Check, RotateCcw, Sparkles } from "lucide-react";
+import { Archive, Check, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAnswerReview,
+  useArchiveFromReview,
   useTodaySession,
 } from "../api/review-queries";
 import { ReviewCardFlip } from "./review-card-flip";
@@ -28,6 +29,7 @@ const RATING_CLASSES: Record<ReviewRating, string> = {
 export function ReviewSession() {
   const { data, isLoading, isError, refetch } = useTodaySession();
   const answerMutation = useAnswerReview();
+  const archiveMutation = useArchiveFromReview();
 
   const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -191,6 +193,35 @@ export function ReviewSession() {
           className="h-full bg-primary transition-all"
           style={{ width: `${(completed / cards.length) * 100}%` }}
         />
+      </div>
+
+      {/* アーカイブボタン */}
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="min-h-11 text-muted-foreground"
+          disabled={archiveMutation.isPending || answerMutation.isPending}
+          onClick={() => {
+            archiveMutation.mutate(current.id, {
+              onSuccess: () => {
+                haptic("success");
+                toast.success("カードをアーカイブしました");
+                setCompleted((c) => c + 1);
+                setIndex((i) => i + 1);
+                setShowAnswer(false);
+                setStartedAt(Date.now());
+              },
+              onError: () => {
+                haptic("warning");
+                toast.error("アーカイブに失敗しました");
+              },
+            });
+          }}
+        >
+          <Archive className="size-4 mr-1" aria-hidden />
+          アーカイブ
+        </Button>
       </div>
 
       {/* カード (フリップ + スワイプ) */}

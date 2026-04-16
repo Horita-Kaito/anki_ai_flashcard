@@ -35,6 +35,7 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         return CardSchedule::query()
             ->where('user_id', $userId)
             ->where('due_at', '<=', $before)
+            ->whereNull('archived_at')
             ->count();
     }
 
@@ -43,6 +44,7 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         return CardSchedule::query()
             ->where('user_id', $userId)
             ->where('state', ScheduleState::New->value)
+            ->whereNull('archived_at')
             ->count();
     }
 
@@ -52,6 +54,7 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
             ->with(['card.tags'])
             ->where('user_id', $userId)
             ->where('due_at', '<=', $before)
+            ->whereNull('archived_at')
             ->when($deckId !== null, fn ($q) => $q->whereHas(
                 'card',
                 fn ($cq) => $cq->where('deck_id', $deckId),
@@ -68,5 +71,42 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         $schedule->update($attributes);
 
         return $schedule->refresh();
+    }
+
+    public function overdueCardsForUser(int $userId, \DateTimeInterface $before): array
+    {
+        return CardSchedule::query()
+            ->where('user_id', $userId)
+            ->where('due_at', '<=', $before)
+            ->whereNull('archived_at')
+            ->where('interval_days', '>', 0)
+            ->get()
+            ->all();
+    }
+
+    public function archive(CardSchedule $schedule): CardSchedule
+    {
+        $schedule->update(['archived_at' => now()]);
+
+        return $schedule->refresh();
+    }
+
+    public function unarchive(CardSchedule $schedule, int $resetIntervalDays): CardSchedule
+    {
+        $schedule->update([
+            'archived_at' => null,
+            'interval_days' => $resetIntervalDays,
+            'due_at' => now(),
+        ]);
+
+        return $schedule->refresh();
+    }
+
+    public function findByCardForUser(int $userId, int $cardId): ?CardSchedule
+    {
+        return CardSchedule::query()
+            ->where('user_id', $userId)
+            ->where('card_id', $cardId)
+            ->first();
     }
 }

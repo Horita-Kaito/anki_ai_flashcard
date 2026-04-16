@@ -32,6 +32,7 @@ final class EloquentCardRepository extends AbstractUserScopedEloquentRepository 
         $deckId = $filters['deck_id'] ?? null;
         $tagId = $filters['tag_id'] ?? null;
         $keyword = $filters['q'] ?? null;
+        $archived = $filters['archived'] ?? null;
 
         return $this->userScopedQuery($userId)
             ->with(self::EAGER_LOADS)
@@ -49,12 +50,23 @@ final class EloquentCardRepository extends AbstractUserScopedEloquentRepository 
                         ->orWhere('explanation', 'like', $like);
                 });
             })
+            ->when($archived !== null, function ($q) use ($archived) {
+                if ($archived) {
+                    $q->whereHas('schedule', fn ($sq) => $sq->whereNotNull('archived_at'));
+                } else {
+                    $q->where(function ($sub) {
+                        $sub->whereDoesntHave('schedule')
+                            ->orWhereHas('schedule', fn ($sq) => $sq->whereNull('archived_at'));
+                    });
+                }
+            })
             ->orderByDesc('updated_at')
             ->paginate($perPage)
             ->appends(array_filter([
                 'deck_id' => $deckId,
                 'tag_id' => $tagId,
                 'q' => $keyword,
+                'archived' => $archived !== null ? ($archived ? 'true' : 'false') : null,
             ], fn ($v) => $v !== null && $v !== ''));
     }
 

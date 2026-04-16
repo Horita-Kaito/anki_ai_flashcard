@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-query";
 import {
   answerReview,
+  archiveCardFromReview,
   fetchReviewStats,
   fetchTodaySession,
 } from "./endpoints";
@@ -43,5 +44,17 @@ export function useReviewStats() {
     queryKey: reviewKeys.stats,
     queryFn: fetchReviewStats,
     staleTime: 60 * 1000,
+  });
+}
+
+export function useArchiveFromReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (cardId: number) => archiveCardFromReview(cardId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["review"] });
+      qc.invalidateQueries({ queryKey: ["cards"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }

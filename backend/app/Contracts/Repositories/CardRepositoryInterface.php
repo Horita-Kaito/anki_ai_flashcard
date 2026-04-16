@@ -12,7 +12,7 @@ interface CardRepositoryInterface
     public function findForUser(int $userId, int $cardId): ?Card;
 
     /**
-     * @param  array{deck_id?: int, tag_id?: int, q?: string}  $filters
+     * @param  array{deck_id?: int, tag_id?: int, q?: string, archived?: bool}  $filters
      * @return LengthAwarePaginator<int, Card>
      */
     public function paginateForUser(int $userId, array $filters = [], int $perPage = 20): LengthAwarePaginator;

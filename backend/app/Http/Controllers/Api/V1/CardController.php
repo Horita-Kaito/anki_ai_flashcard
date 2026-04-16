@@ -33,6 +33,9 @@ final class CardController extends Controller
         if ($request->filled('q')) {
             $filters['q'] = (string) $request->query('q');
         }
+        if ($request->filled('archived')) {
+            $filters['archived'] = filter_var($request->query('archived'), FILTER_VALIDATE_BOOLEAN);
+        }
 
         $cards = $this->cardService->paginateForUser(
             userId: $request->user()->id,
@@ -82,5 +85,25 @@ final class CardController extends Controller
         );
 
         return response()->json(null, 204);
+    }
+
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        $card = $this->cardService->archiveForUser(
+            userId: $request->user()->id,
+            cardId: $id,
+        );
+
+        return (new CardResource($card))->response();
+    }
+
+    public function unarchive(Request $request, int $id): JsonResponse
+    {
+        $card = $this->cardService->unarchiveForUser(
+            userId: $request->user()->id,
+            cardId: $id,
+        );
+
+        return (new CardResource($card))->response();
     }
 }

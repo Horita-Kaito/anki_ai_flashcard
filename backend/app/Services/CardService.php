@@ -107,6 +107,42 @@ final class CardService
     }
 
     /**
+     * カードをアーカイブする。
+     *
+     * @throws CardNotFoundException
+     */
+    public function archiveForUser(int $userId, int $cardId): Card
+    {
+        $card = $this->getForUser($userId, $cardId);
+        $schedule = $this->scheduleRepository->findByCard($cardId);
+        if ($schedule === null) {
+            throw CardNotFoundException::make($cardId);
+        }
+
+        $this->scheduleRepository->archive($schedule);
+
+        return $card->refresh()->load(['schedule', 'tags']);
+    }
+
+    /**
+     * カードのアーカイブを解除する。interval を 1 にリセット。
+     *
+     * @throws CardNotFoundException
+     */
+    public function unarchiveForUser(int $userId, int $cardId): Card
+    {
+        $card = $this->getForUser($userId, $cardId);
+        $schedule = $this->scheduleRepository->findByCard($cardId);
+        if ($schedule === null) {
+            throw CardNotFoundException::make($cardId);
+        }
+
+        $this->scheduleRepository->unarchive($schedule, 1);
+
+        return $card->refresh()->load(['schedule', 'tags']);
+    }
+
+    /**
      * @param  array<int, int>  $tagIds
      */
     private function assertTagsOwnedByUser(int $userId, array $tagIds): void
