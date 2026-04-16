@@ -10,5 +10,6 @@ export function useTagList() {
   return useQuery({
     queryKey: tagKeys.list(),
     queryFn: fetchTagList,
+    staleTime: 5 * 60 * 1000,
   });
 }

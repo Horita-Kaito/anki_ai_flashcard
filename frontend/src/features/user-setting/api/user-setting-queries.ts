@@ -14,6 +14,7 @@ export function useUserSetting() {
   return useQuery({
     queryKey: userSettingKeys.current,
     queryFn: fetchUserSetting,
+    staleTime: Infinity,
   });
 }
 

@@ -14,6 +14,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: authKeys.me,
     queryFn: fetchCurrentUser,
+    staleTime: Infinity,
     retry: false,
   });
 }

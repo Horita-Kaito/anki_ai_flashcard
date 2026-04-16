@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
 import { Toaster } from "sonner";
+import { ErrorBoundary } from "@/shared/ui/error-boundary";
 import { ShortcutHelpDialog } from "@/shared/ui/shortcut-help-dialog";
 import { CommandPalette } from "@/shared/ui/command-palette";
 
@@ -12,7 +13,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            staleTime: 30 * 1000,
+            gcTime: 10 * 60 * 1000,
             retry: 1,
           },
         },
@@ -21,10 +23,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-center" richColors />
-      <CommandPalette />
-      <ShortcutHelpDialog />
+      <ErrorBoundary>
+        {children}
+        <Toaster position="top-center" richColors />
+        <CommandPalette />
+        <ShortcutHelpDialog />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

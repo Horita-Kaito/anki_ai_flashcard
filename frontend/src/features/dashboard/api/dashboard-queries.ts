@@ -9,5 +9,6 @@ export function useDashboardSummary() {
   return useQuery({
     queryKey: dashboardKeys.summary,
     queryFn: fetchDashboardSummary,
+    staleTime: 60 * 1000,
   });
 }

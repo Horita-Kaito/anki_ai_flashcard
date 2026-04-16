@@ -12,7 +12,8 @@ import {
   createCardSchema,
   type CreateCardInput,
 } from "../schemas/card-schemas";
-import { TagPicker } from "@/features/tag";
+import { TagPicker } from "@/entities/tag/ui/tag-picker";
+import { useCreateTag } from "@/features/tag";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { CARD_TYPES, CARD_TYPE_LABELS } from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
@@ -32,6 +33,7 @@ export function CardForm({
   const router = useRouter();
   const createMutation = useCreateCard();
   const updateMutation = useUpdateCard(card?.id ?? 0);
+  const createTag = useCreateTag();
   const { data: decksPage } = useDeckList();
   const isEdit = !!card;
 
@@ -178,6 +180,8 @@ export function CardForm({
           <TagPicker
             value={field.value ?? []}
             onChange={field.onChange}
+            onCreateTag={(name) => createTag.mutateAsync(name)}
+            isCreating={createTag.isPending}
           />
         )}
       />

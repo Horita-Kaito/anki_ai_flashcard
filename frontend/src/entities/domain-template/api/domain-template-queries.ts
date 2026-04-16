@@ -14,6 +14,7 @@ export function useDomainTemplateList() {
   return useQuery({
     queryKey: domainTemplateKeys.list(),
     queryFn: fetchDomainTemplateList,
+    staleTime: 10 * 60 * 1000,
   });
 }
 
@@ -21,6 +22,7 @@ export function useDomainTemplate(id: number) {
   return useQuery({
     queryKey: domainTemplateKeys.detail(id),
     queryFn: () => fetchDomainTemplate(id),
+    staleTime: 10 * 60 * 1000,
     enabled: Number.isFinite(id) && id > 0,
   });
 }

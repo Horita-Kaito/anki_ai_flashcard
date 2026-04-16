@@ -19,6 +19,7 @@ export function useTodaySession(deckId?: number) {
   return useQuery({
     queryKey: reviewKeys.today(deckId),
     queryFn: () => fetchTodaySession(deckId),
+    staleTime: 0,
   });
 }
 
@@ -41,5 +42,6 @@ export function useReviewStats() {
   return useQuery({
     queryKey: reviewKeys.stats,
     queryFn: fetchReviewStats,
+    staleTime: 60 * 1000,
   });
 }
