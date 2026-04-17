@@ -64,3 +64,16 @@ docker compose exec -T backend php artisan test
 - cross-feature import 禁止 (entities/ 経由で共有)
 - API レスポンスの型は entities/*/schemas.ts に zod schema を定義
 - セキュリティ: 全クエリに user_id スコープ
+
+## モバイル z-index 階層 (fixed/sticky 要素追加時に必須確認)
+
+| z-index | 要素 |
+|---------|------|
+| z-[70] | その他メニュー Popover |
+| z-[60] | その他メニュー Backdrop |
+| z-50 | ボトムタブバー / モーダル |
+| z-40 | FAB |
+| z-30 | フォーム固定ボタンバー |
+
+- fixed ボタンバーの bottom: `bottom-[calc(3.5rem+env(safe-area-inset-bottom))]` (`bottom-14` 禁止)
+- FAB はフォーム画面・復習・設定で非表示 (fab.tsx `hiddenPatterns` に追加)
