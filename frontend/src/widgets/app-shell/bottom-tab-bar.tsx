@@ -87,8 +87,8 @@ export function BottomTabBar() {
               <span>その他</span>
             </Popover.Trigger>
             <Popover.Portal>
-              <Popover.Backdrop className="fixed inset-0 z-40" />
-              <Popover.Positioner side="top" align="end" sideOffset={8} className="z-50">
+              <Popover.Backdrop className="fixed inset-0 z-[60]" />
+              <Popover.Positioner side="top" align="end" sideOffset={8} className="z-[70]">
                 <Popover.Popup className="min-w-48 rounded-lg border bg-background p-1 shadow-lg">
                   <ul>
                     {moreItems.map((item) => {
