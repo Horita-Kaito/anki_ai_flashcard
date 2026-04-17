@@ -11,10 +11,10 @@ interface ReviewCardFlipProps {
 }
 
 /**
- * 復習カード (フリップ対応)。
+ * 復習カード。
  *
- * - タップで答え表示
- * - 評価は下部の固定ボタンバーで行う (スワイプ誤操作防止)
+ * - 問題のみ表示 → タップで答えを問題の下に展開表示
+ * - 評価は下部の固定ボタンバーで行う
  */
 export function ReviewCardFlip({
   card,
@@ -42,75 +42,62 @@ export function ReviewCardFlip({
       tabIndex={0}
       aria-label={showAnswer ? "答え表示中" : "タップして答えを表示"}
       className={`
-        relative [perspective:1200px] min-h-[50vh] md:min-h-[40vh]
+        border rounded-xl p-6 md:p-8 bg-card
         cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
-        focus-visible:ring-ring rounded-xl
+        focus-visible:ring-ring
+        ${!showAnswer ? "min-h-[50vh] md:min-h-[40vh] flex flex-col" : ""}
       `}
     >
-      <div
-        className={`
-          relative w-full h-full min-h-[50vh] md:min-h-[40vh]
-          transition-transform duration-500 [transform-style:preserve-3d]
-          ${showAnswer ? "[transform:rotateY(180deg)]" : ""}
-        `}
-      >
-        {/* 表面: 問題 */}
-        <div className="absolute inset-0 [backface-visibility:hidden] border rounded-xl p-6 md:p-8 bg-card flex flex-col">
-          <header className="flex items-center gap-2 mb-4">
-            {card.tags?.map((t) => (
-              <span
-                key={t.id}
-                className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-              >
-                {t.name}
-              </span>
-            ))}
-          </header>
-          <div className="flex-1 flex items-center justify-center text-center">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">
-                問題
-              </p>
-              <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
-                {card.question}
-              </p>
-            </div>
-          </div>
-          <p className="text-xs text-muted-foreground text-center mt-4 md:hidden">
-            タップで答え表示
-          </p>
-        </div>
+      <header className="flex items-center gap-2 mb-4">
+        {card.tags?.map((t) => (
+          <span
+            key={t.id}
+            className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+          >
+            {t.name}
+          </span>
+        ))}
+      </header>
 
-        {/* 裏面: 答え */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)] border rounded-xl p-6 md:p-8 bg-card flex flex-col">
-          <header className="flex items-center gap-2 mb-4">
-            {card.tags?.map((t) => (
-              <span
-                key={t.id}
-                className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
-              >
-                {t.name}
-              </span>
-            ))}
-          </header>
-          <div className="flex-1 flex flex-col justify-center gap-4">
-            <div className="text-xs font-medium text-muted-foreground">
-              答え
-            </div>
-            <p className="text-base md:text-lg whitespace-pre-wrap break-words">
-              {card.answer}
-            </p>
-            {card.explanation && (
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap border-t pt-3">
-                {card.explanation}
-              </p>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground text-center mt-4 md:hidden">
-            下のボタンで評価
+      {/* 問題 */}
+      <div
+        className={
+          showAnswer
+            ? "pb-4"
+            : "flex-1 flex items-center justify-center text-center"
+        }
+      >
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2">
+            問題
+          </p>
+          <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
+            {card.question}
           </p>
         </div>
       </div>
+
+      {/* 答え (展開) */}
+      {showAnswer ? (
+        <div className="border-t pt-4 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground">答え</p>
+          <p className="text-base md:text-lg whitespace-pre-wrap break-words">
+            {card.answer}
+          </p>
+          {card.explanation && (
+            <p className="text-sm text-muted-foreground whitespace-pre-wrap border-t pt-3">
+              {card.explanation}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground text-center pt-2 md:hidden">
+            下のボタンで評価
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground text-center mt-4 md:hidden">
+          タップで答え表示
+        </p>
+      )}
     </div>
   );
 }

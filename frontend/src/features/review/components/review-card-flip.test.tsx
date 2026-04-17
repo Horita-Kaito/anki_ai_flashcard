@@ -35,7 +35,7 @@ describe("ReviewCardFlip", () => {
       screen.getByText("HTTPステータスコード 404 の意味は？")
     ).toBeInTheDocument();
     expect(screen.getByText("問題")).toBeInTheDocument();
-    expect(screen.getAllByText("HTTP")).toHaveLength(2);
+    expect(screen.getByText("HTTP")).toBeInTheDocument();
   });
 
   it("クリックで onReveal が呼ばれる", async () => {
