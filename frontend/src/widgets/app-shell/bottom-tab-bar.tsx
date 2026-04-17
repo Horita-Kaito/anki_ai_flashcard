@@ -47,7 +47,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="主要ナビゲーション"
-      className="md:hidden sticky bottom-0 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+      className="md:hidden sticky bottom-0 z-50 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="flex items-stretch">
         {tabs.map((tab) => {
@@ -87,8 +87,9 @@ export function BottomTabBar() {
               <span>その他</span>
             </Popover.Trigger>
             <Popover.Portal>
-              <Popover.Positioner side="top" align="end" sideOffset={8}>
-                <Popover.Popup className="z-50 min-w-48 rounded-lg border bg-background p-1 shadow-lg">
+              <Popover.Backdrop className="fixed inset-0 z-40" />
+              <Popover.Positioner side="top" align="end" sideOffset={8} className="z-50">
+                <Popover.Popup className="min-w-48 rounded-lg border bg-background p-1 shadow-lg">
                   <ul>
                     {moreItems.map((item) => {
                       const active = pathname.startsWith(item.href);
