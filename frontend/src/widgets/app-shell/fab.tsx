@@ -4,18 +4,20 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-/**
- * モバイル専用の Floating Action Button。
- * 現在のコンテキストに応じて主要な作成アクションにワンタップで到達する。
- *
- * 例:
- *   /notes* → 新規メモ
- *   /decks* → 新規デッキ
- *   /cards* → 新規カード
- *   それ以外 → 新規メモ (最頻アクション)
- */
+/** FAB を非表示にするパス (フォームや固定ボタンバーと重なるため) */
+const hiddenPatterns = [
+  /^\/\w+\/new$/,       // /notes/new, /decks/new, /cards/new, /templates/new
+  /^\/\w+\/\d+$/,       // /notes/123, /cards/123 (編集画面)
+  /^\/review$/,          // 復習セッション
+  /^\/settings$/,        // 設定
+];
+
 export function Fab() {
   const pathname = usePathname();
+
+  if (hiddenPatterns.some((p) => p.test(pathname))) {
+    return null;
+  }
 
   const { href, label } = resolveAction(pathname);
 
