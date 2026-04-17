@@ -29,7 +29,6 @@ describe("ReviewCardFlip", () => {
         card={mockCard}
         showAnswer={false}
         onReveal={vi.fn()}
-        onRate={vi.fn()}
       />
     );
     expect(
@@ -47,7 +46,6 @@ describe("ReviewCardFlip", () => {
         card={mockCard}
         showAnswer={false}
         onReveal={onReveal}
-        onRate={vi.fn()}
       />
     );
 
@@ -65,7 +63,6 @@ describe("ReviewCardFlip", () => {
         card={mockCard}
         showAnswer={false}
         onReveal={onReveal}
-        onRate={vi.fn()}
       />
     );
 
@@ -81,7 +78,6 @@ describe("ReviewCardFlip", () => {
         card={mockCard}
         showAnswer={true}
         onReveal={vi.fn()}
-        onRate={vi.fn()}
       />
     );
     expect(
@@ -103,7 +99,6 @@ describe("ReviewCardFlip", () => {
         card={mockCard}
         showAnswer={false}
         onReveal={onReveal}
-        onRate={vi.fn()}
         disabled
       />
     );

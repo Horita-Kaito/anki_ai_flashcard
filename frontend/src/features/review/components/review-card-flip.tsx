@@ -1,62 +1,27 @@
 "use client";
 
-import { useSwipeable } from "react-swipeable";
 import type { Card } from "@/entities/card/types";
-import type { ReviewRating } from "@/entities/review/types";
 import { haptic } from "@/shared/lib/haptics";
 
 interface ReviewCardFlipProps {
   card: Card;
   showAnswer: boolean;
   onReveal: () => void;
-  onRate?: (rating: ReviewRating) => void;
   disabled?: boolean;
 }
 
 /**
- * 復習カード (フリップ + スワイプ対応)。
+ * 復習カード (フリップ対応)。
  *
- * モバイルジェスチャ:
- * - 問題表示中: タップで答え表示
- * - 答え表示中: 左スワイプ = Again, 右 = Good, 下 = Hard, 上 = Easy
- *
- * アニメーション:
- * - 3D transform で flip (rotateY 180deg)
- * - スワイプ中は少しカードが回転 (フィードバック)
+ * - タップで答え表示
+ * - 評価は下部の固定ボタンバーで行う (スワイプ誤操作防止)
  */
 export function ReviewCardFlip({
   card,
   showAnswer,
   onReveal,
-  onRate,
   disabled,
 }: ReviewCardFlipProps) {
-  const handlers = useSwipeable({
-    onSwipedLeft: () => {
-      if (!showAnswer || disabled || !onRate) return;
-      haptic("medium");
-      onRate("again");
-    },
-    onSwipedRight: () => {
-      if (!showAnswer || disabled || !onRate) return;
-      haptic("medium");
-      onRate("good");
-    },
-    onSwipedDown: () => {
-      if (!showAnswer || disabled || !onRate) return;
-      haptic("medium");
-      onRate("hard");
-    },
-    onSwipedUp: () => {
-      if (!showAnswer || disabled || !onRate) return;
-      haptic("medium");
-      onRate("easy");
-    },
-    trackMouse: false,
-    preventScrollOnSwipe: true,
-    swipeDuration: 500,
-  });
-
   function handleTap() {
     if (!showAnswer && !disabled) {
       haptic("light");
@@ -66,7 +31,6 @@ export function ReviewCardFlip({
 
   return (
     <div
-      {...handlers}
       onClick={handleTap}
       onKeyDown={(e) => {
         if (!showAnswer && (e.key === "Enter" || e.key === " ")) {
@@ -82,7 +46,6 @@ export function ReviewCardFlip({
         cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
         focus-visible:ring-ring rounded-xl
       `}
-      style={{ touchAction: "pan-y" }}
     >
       <div
         className={`
@@ -144,7 +107,7 @@ export function ReviewCardFlip({
             )}
           </div>
           <p className="text-xs text-muted-foreground text-center mt-4 md:hidden">
-            ← Again / → Good / ↓ Hard / ↑ Easy
+            下のボタンで評価
           </p>
         </div>
       </div>

@@ -341,7 +341,6 @@ export function ReviewSession() {
         card={current}
         showAnswer={showAnswer}
         onReveal={handleReveal}
-        onRate={extraMode ? undefined : handleRate}
         disabled={answerMutation.isPending}
       />
 
