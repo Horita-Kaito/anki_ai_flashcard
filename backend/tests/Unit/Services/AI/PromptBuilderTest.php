@@ -72,6 +72,15 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('光合成', $prompt);
     }
 
+    public function test_システムプロンプトに問題文への答え混入禁止ルールが含まれる(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('問題文 (question) に答え (answer) の用語そのものを登場させない', $prompt);
+        $this->assertStringContainsString('コンテンツマーケティング', $prompt);
+        $this->assertStringContainsString('セルフチェック', $prompt);
+    }
+
     public function test_システムプロンプトに列挙問題を禁止する悪例が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
