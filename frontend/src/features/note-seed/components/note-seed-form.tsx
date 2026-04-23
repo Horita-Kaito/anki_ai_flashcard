@@ -21,6 +21,10 @@ import type { NoteSeed } from "@/entities/note-seed/types";
 interface NoteSeedFormProps {
   note?: NoteSeed;
   redirectTo?: string;
+  /** 保存成功時のコールバック。指定時は redirectTo へのリダイレクトをスキップする。 */
+  onSuccess?: () => void;
+  /** キャンセルボタンのハンドラ。指定時は router.back() の代わりに呼ばれる。 */
+  onCancel?: () => void;
 }
 
 /**
@@ -31,6 +35,8 @@ interface NoteSeedFormProps {
 export function NoteSeedForm({
   note,
   redirectTo = "/notes",
+  onSuccess,
+  onCancel,
 }: NoteSeedFormProps) {
   const router = useRouter();
   const createMutation = useCreateNoteSeed();
@@ -69,7 +75,11 @@ export function NoteSeedForm({
         await createMutation.mutateAsync(payload);
         toast.success("メモを保存しました");
       }
-      router.push(redirectTo);
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        router.push(redirectTo);
+      }
     } catch {
       toast.error("保存に失敗しました");
     }
@@ -211,7 +221,7 @@ export function NoteSeedForm({
           variant="outline"
           size="lg"
           className="min-h-11"
-          onClick={() => router.back()}
+          onClick={() => (onCancel ? onCancel() : router.back())}
           disabled={isSubmitting}
         >
           キャンセル

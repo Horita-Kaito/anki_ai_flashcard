@@ -1,17 +1,19 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ChevronDown, Pencil } from "lucide-react";
 import {
   NoteSeedForm,
   useNoteSeed,
   useDeleteNoteSeed,
 } from "@/features/note-seed";
+import { GenerateCandidatesView } from "@/features/ai-candidate";
 import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
 
-export default function NoteEditPage({
+export default function NoteDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -21,10 +23,12 @@ export default function NoteEditPage({
   const noteId = Number(id);
   const { data: note, isLoading, isError } = useNoteSeed(noteId);
   const deleteMutation = useDeleteNoteSeed();
+  const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   async function handleDelete() {
     if (!note) return;
-    if (!confirm("このメモを削除しますか？")) return;
+    if (!confirm("このメモを削除しますか?")) return;
     try {
       await deleteMutation.mutateAsync(note.id);
       toast.success("メモを削除しました");
@@ -57,62 +61,135 @@ export default function NoteEditPage({
     );
   }
 
+  const hasDetails =
+    !!note.subdomain || !!note.learning_goal || !!note.note_context;
+
   return (
     <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <BackHeader title="メモを編集" />
-        <header className="hidden md:block space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">メモを編集</h1>
-        </header>
+      <div className="max-w-3xl mx-auto space-y-6 pb-8">
+        <BackHeader title="メモと AI 候補" />
 
+        {/* メモセクション */}
         <section
-          aria-labelledby="ai-action"
-          className="border rounded-xl p-4 md:p-5 space-y-2 bg-primary/5"
+          aria-labelledby="memo-section"
+          className="border rounded-xl p-4 md:p-5 space-y-3 bg-muted/20"
         >
-          <h2
-            id="ai-action"
-            className="text-sm font-medium flex items-center gap-2"
-          >
-            AI でカード候補を生成
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            このメモから AI が複数のカード候補を提案します
-          </p>
-          <Button
-            onClick={() => router.push(`/notes/${note.id}/generate`)}
-            size="lg"
-            className="min-h-11"
-          >
-            候補を生成する
-          </Button>
+          {editing ? (
+            <>
+              <h2 id="memo-section" className="text-sm font-medium">
+                メモを編集
+              </h2>
+              <NoteSeedForm
+                note={note}
+                onSuccess={() => {
+                  setEditing(false);
+                  setExpanded(false);
+                }}
+                onCancel={() => setEditing(false)}
+              />
+            </>
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <h2
+                  id="memo-section"
+                  className="text-xs font-medium text-muted-foreground"
+                >
+                  元メモ
+                </h2>
+                <div className="flex gap-2">
+                  {(note.body.length > 80 || hasDetails) && (
+                    <button
+                      type="button"
+                      onClick={() => setExpanded((v) => !v)}
+                      className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 min-h-8"
+                      aria-expanded={expanded}
+                    >
+                      <ChevronDown
+                        className={`size-3.5 transition-transform ${
+                          expanded ? "rotate-180" : ""
+                        }`}
+                        aria-hidden
+                      />
+                      {expanded ? "閉じる" : "全文"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(true);
+                      setExpanded(true);
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 min-h-8"
+                  >
+                    <Pencil className="size-3.5" aria-hidden />
+                    編集
+                  </button>
+                </div>
+              </div>
+              <p
+                className={`text-sm whitespace-pre-wrap break-words ${
+                  expanded ? "" : "line-clamp-3"
+                }`}
+              >
+                {note.body}
+              </p>
+              {expanded && hasDetails && (
+                <dl className="space-y-1 text-xs text-muted-foreground pt-1 border-t">
+                  {note.subdomain && (
+                    <div className="flex gap-2">
+                      <dt className="font-medium shrink-0">サブ分野:</dt>
+                      <dd>{note.subdomain}</dd>
+                    </div>
+                  )}
+                  {note.learning_goal && (
+                    <div className="flex gap-2">
+                      <dt className="font-medium shrink-0">学習目的:</dt>
+                      <dd>{note.learning_goal}</dd>
+                    </div>
+                  )}
+                  {note.note_context && (
+                    <div className="flex gap-2">
+                      <dt className="font-medium shrink-0">補足:</dt>
+                      <dd>{note.note_context}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+            </>
+          )}
         </section>
 
-        <NoteSeedForm note={note} />
+        {/* AI 生成 + 候補一覧 (編集中は隠す) */}
+        {!editing && <GenerateCandidatesView noteSeedId={noteId} />}
 
-        <section
-          aria-labelledby="danger-zone"
-          className="border border-destructive/30 rounded-xl p-4 md:p-5 space-y-3"
-        >
-          <h2
-            id="danger-zone"
-            className="text-sm font-medium text-destructive"
+        {/* 危険な操作 */}
+        {!editing && (
+          <section
+            aria-labelledby="danger-zone"
+            className="border border-destructive/30 rounded-xl p-4 md:p-5 space-y-3"
           >
-            危険な操作
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            このメモから生成された AI 候補もすべて削除されます (カード採用済みは残ります)。
-          </p>
-          <Button
-            type="button"
-            variant="destructive"
-            size="lg"
-            className="min-h-11"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "削除中..." : "メモを削除"}
-          </Button>
-        </section>
+            <h2
+              id="danger-zone"
+              className="text-sm font-medium text-destructive"
+            >
+              危険な操作
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              このメモから生成された AI 候補もすべて削除されます (カード採用済みは残ります)。
+            </p>
+            <Button
+              type="button"
+              variant="destructive"
+              size="lg"
+              className="min-h-11"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "削除中..." : "メモを削除"}
+            </Button>
+          </section>
+        )}
       </div>
     </main>
   );

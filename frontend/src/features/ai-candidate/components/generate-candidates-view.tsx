@@ -118,22 +118,6 @@ export function GenerateCandidatesView({
 
   return (
     <div className="space-y-6 pb-8">
-      {/* 元メモ表示 */}
-      <section
-        aria-labelledby="source-note"
-        className="border rounded-xl p-4 md:p-5 bg-muted/30"
-      >
-        <h2 id="source-note" className="text-xs font-medium text-muted-foreground mb-2">
-          元メモ
-        </h2>
-        <p className="text-sm whitespace-pre-wrap break-words">{note.body}</p>
-        {note.learning_goal && (
-          <p className="text-xs text-muted-foreground mt-2">
-            目的: {note.learning_goal}
-          </p>
-        )}
-      </section>
-
       {/* 生成設定 */}
       <section className="border rounded-xl p-4 md:p-5 space-y-4">
         <h2 className="font-medium flex items-center gap-2">
