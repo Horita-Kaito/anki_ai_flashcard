@@ -31,6 +31,17 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('双方向カード', $prompt);
         $this->assertStringContainsString('手順・順序・依存関係', $prompt);
         $this->assertStringContainsString('文脈', $prompt);
+        $this->assertStringContainsString('冗長性', $prompt);
+    }
+
+    public function test_システムプロンプトに冗長性の多角度ルールが含まれる(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('複数角度', $prompt);
+        $this->assertStringContainsString('単語 → 意味', $prompt);
+        $this->assertStringContainsString('意味 → 単語', $prompt);
+        $this->assertStringContainsString('穴埋め位置', $prompt);
     }
 
     public function test_システムプロンプトに分野タグと具体例の指示が含まれる(): void
