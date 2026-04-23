@@ -125,6 +125,7 @@ final class CardGenerationService
                     'card_type' => $data['card_type'],
                     'focus_type' => $data['focus_type'],
                     'rationale' => $data['rationale'],
+                    'explanation' => $data['explanation'],
                     'confidence' => $data['confidence'],
                     'suggested_deck_id' => in_array($data['suggested_deck_id'] ?? null, $deckIds, true)
                         ? $data['suggested_deck_id']

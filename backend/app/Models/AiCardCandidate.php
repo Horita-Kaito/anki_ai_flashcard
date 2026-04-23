@@ -26,6 +26,7 @@ class AiCardCandidate extends Model
         'card_type',
         'focus_type',
         'rationale',
+        'explanation',
         'confidence',
         'status',
         'suggested_deck_id',

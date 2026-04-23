@@ -97,7 +97,9 @@ final class AiCardCandidateService
                 'deck_id' => $overrides['deck_id'],
                 'question' => $overrides['question'] ?? $candidate->question,
                 'answer' => $overrides['answer'] ?? $candidate->answer,
-                'explanation' => $overrides['explanation'] ?? null,
+                'explanation' => array_key_exists('explanation', $overrides)
+                    ? $overrides['explanation']
+                    : $candidate->explanation,
                 'card_type' => $candidate->card_type?->value ?? 'basic_qa',
                 'source_note_seed_id' => $candidate->note_seed_id,
                 'source_ai_candidate_id' => $candidate->id,

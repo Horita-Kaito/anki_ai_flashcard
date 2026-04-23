@@ -31,6 +31,7 @@ final class AiCardCandidateFactory extends Factory
             'card_type' => 'basic_qa',
             'focus_type' => 'definition',
             'rationale' => $this->faker->sentence(),
+            'explanation' => $this->faker->optional()->sentence(),
             'confidence' => 0.85,
             'status' => 'pending',
             'raw_response' => null,

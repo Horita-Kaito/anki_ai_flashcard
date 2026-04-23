@@ -82,4 +82,26 @@ final class CandidateParserTest extends TestCase
         $this->assertSame(1.0, $result[0]['confidence']);
         $this->assertSame(0.0, $result[1]['confidence']);
     }
+
+    public function test_explanationをパースできる(): void
+    {
+        $json = json_encode(['candidates' => [
+            [
+                'question' => 'Q',
+                'answer' => 'A',
+                'card_type' => 'basic_qa',
+                'explanation' => '[生物] 晴れた日の葉で起きる反応',
+            ],
+            [
+                'question' => 'Q2',
+                'answer' => 'A2',
+                'card_type' => 'basic_qa',
+            ],
+        ]]);
+
+        $result = $this->parser->parse($json);
+
+        $this->assertSame('[生物] 晴れた日の葉で起きる反応', $result[0]['explanation']);
+        $this->assertNull($result[1]['explanation']);
+    }
 }

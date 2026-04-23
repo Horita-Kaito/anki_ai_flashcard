@@ -30,6 +30,17 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('穴埋め', $prompt);
         $this->assertStringContainsString('双方向カード', $prompt);
         $this->assertStringContainsString('手順・順序・依存関係', $prompt);
+        $this->assertStringContainsString('文脈', $prompt);
+    }
+
+    public function test_システムプロンプトに分野タグと具体例の指示が含まれる(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('分野タグ', $prompt);
+        $this->assertStringContainsString('[生物]', $prompt);
+        $this->assertStringContainsString('具体例', $prompt);
+        $this->assertStringContainsString('explanation', $prompt);
     }
 
     public function test_システムプロンプトに手順系の3手法が含まれる(): void

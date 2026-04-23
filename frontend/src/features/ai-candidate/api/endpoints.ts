@@ -61,7 +61,7 @@ export async function fetchCandidatesForNote(
 
 export async function updateCandidate(
   candidateId: number,
-  input: { question?: string; answer?: string }
+  input: { question?: string; answer?: string; explanation?: string | null }
 ): Promise<AiCardCandidate> {
   await fetchCsrfCookie();
   const res = await apiClient.put<{ data: AiCardCandidate }>(

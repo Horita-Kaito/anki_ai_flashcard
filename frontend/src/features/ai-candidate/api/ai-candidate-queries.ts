@@ -66,7 +66,7 @@ export function useUpdateCandidate() {
       input,
     }: {
       id: number;
-      input: { question?: string; answer?: string };
+      input: { question?: string; answer?: string; explanation?: string | null };
     }) => updateCandidate(id, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });

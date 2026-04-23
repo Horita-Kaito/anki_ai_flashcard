@@ -167,6 +167,7 @@ final class AiCardCandidateControllerTest extends TestCase
             'note_seed_id' => $note->id,
             'question' => 'DIとは',
             'answer' => '依存性注入',
+            'explanation' => '[設計] 具体例: コンストラクタで依存を外から受け取る',
             'card_type' => 'basic_qa',
         ])->create();
 
@@ -177,12 +178,33 @@ final class AiCardCandidateControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.source_ai_candidate_id', $candidate->id)
-            ->assertJsonPath('data.schedule.state', 'new');
+            ->assertJsonPath('data.schedule.state', 'new')
+            ->assertJsonPath('data.explanation', '[設計] 具体例: コンストラクタで依存を外から受け取る');
 
         $this->assertDatabaseHas('ai_card_candidates', [
             'id' => $candidate->id,
             'status' => 'adopted',
         ]);
+    }
+
+    public function test_採用時にexplanationを上書きできる(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'explanation' => '[元] 候補側の補足',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/adopt", [
+                'deck_id' => $deck->id,
+                'explanation' => '[編集] 自分用に差し替え',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.explanation', '[編集] 自分用に差し替え');
     }
 
     public function test_他ユーザーのデッキには採用できない(): void

@@ -14,6 +14,7 @@ export const aiCardCandidateResponseSchema = z
     card_type: z.enum(CARD_TYPES),
     focus_type: z.string().nullable(),
     rationale: z.string().nullable(),
+    explanation: z.string().nullable(),
     confidence: z.number().nullable(),
     suggested_deck_id: z.number().nullable(),
     status: z.enum(CANDIDATE_STATUSES),

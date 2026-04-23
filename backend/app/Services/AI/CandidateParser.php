@@ -19,6 +19,7 @@ final class CandidateParser
      *   card_type: string,
      *   focus_type: ?string,
      *   rationale: ?string,
+     *   explanation: ?string,
      *   confidence: ?float,
      *   suggested_deck_id: ?int,
      * }>
@@ -66,12 +67,18 @@ final class CandidateParser
                 $suggestedDeckId = is_numeric($suggestedDeckId) ? (int) $suggestedDeckId : null;
             }
 
+            $explanation = $this->strOrNull($item, 'explanation');
+            if ($explanation !== null) {
+                $explanation = mb_substr($explanation, 0, 5000);
+            }
+
             $out[] = [
                 'question' => mb_substr($question, 0, 2000),
                 'answer' => mb_substr($answer, 0, 2000),
                 'card_type' => $cardType,
                 'focus_type' => $this->strOrNull($item, 'focus_type'),
                 'rationale' => $this->strOrNull($item, 'rationale'),
+                'explanation' => $explanation,
                 'confidence' => $confidence,
                 'suggested_deck_id' => $suggestedDeckId,
             ];

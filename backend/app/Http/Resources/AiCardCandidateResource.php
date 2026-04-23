@@ -26,6 +26,7 @@ final class AiCardCandidateResource extends BaseJsonResource
             'card_type' => $this->card_type?->value,
             'focus_type' => $this->focus_type,
             'rationale' => $this->rationale,
+            'explanation' => $this->explanation,
             'confidence' => $this->confidence,
             'status' => $this->status?->value,
             'suggested_deck_id' => $this->suggested_deck_id,

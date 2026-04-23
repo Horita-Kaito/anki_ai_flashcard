@@ -23,6 +23,7 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
   const [editing, setEditing] = useState(false);
   const [question, setQuestion] = useState(candidate.question);
   const [answer, setAnswer] = useState(candidate.answer);
+  const [explanation, setExplanation] = useState(candidate.explanation ?? "");
   const [deckId, setDeckId] = useState<number | "">(
     candidate.suggested_deck_id ?? defaultDeckId ?? ""
   );
@@ -48,6 +49,7 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
           deck_id: Number(deckId),
           question,
           answer,
+          explanation: explanation.trim() === "" ? null : explanation,
         },
       });
       toast.success("カードとして採用しました");
@@ -83,7 +85,11 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
     try {
       await updateMutation.mutateAsync({
         id: candidate.id,
-        input: { question, answer },
+        input: {
+          question,
+          answer,
+          explanation: explanation.trim() === "" ? null : explanation,
+        },
       });
       toast.success("候補を更新しました");
       setEditing(false);
@@ -156,6 +162,18 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
               className="w-full border rounded-md px-3 py-2 text-base md:text-sm resize-y"
             />
           </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              補足説明 (任意)
+            </label>
+            <textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              rows={3}
+              className="w-full border rounded-md px-3 py-2 text-base md:text-sm resize-y"
+              placeholder="[分野タグ] 自分が思い出しやすい具体例など"
+            />
+          </div>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -174,6 +192,7 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
               onClick={() => {
                 setQuestion(candidate.question);
                 setAnswer(candidate.answer);
+                setExplanation(candidate.explanation ?? "");
                 setEditing(false);
               }}
             >
@@ -185,6 +204,11 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
         <div className="space-y-2">
           <p className="font-medium">{question}</p>
           <p className="text-sm text-muted-foreground">{answer}</p>
+          {explanation && (
+            <p className="text-sm text-muted-foreground border-l-2 border-muted-foreground/30 pl-2 whitespace-pre-wrap">
+              {explanation}
+            </p>
+          )}
           {candidate.rationale && (
             <p className="text-xs text-muted-foreground italic">
               AIの判断: {candidate.rationale}

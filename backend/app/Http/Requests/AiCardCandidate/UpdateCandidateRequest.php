@@ -19,6 +19,7 @@ final class UpdateCandidateRequest extends FormRequest
         return [
             'question' => ['sometimes', 'required', 'string', 'max:2000'],
             'answer' => ['sometimes', 'required', 'string', 'max:2000'],
+            'explanation' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 }
