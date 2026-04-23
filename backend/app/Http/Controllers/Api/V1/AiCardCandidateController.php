@@ -31,6 +31,7 @@ final class AiCardCandidateController extends Controller
         GenerateCandidatesRequest $request,
         int $noteSeedId,
         bool $regenerate = false,
+        bool $additional = false,
     ): JsonResponse {
         $note = $this->noteSeedService->getForUser(
             userId: $request->user()->id,
@@ -39,6 +40,7 @@ final class AiCardCandidateController extends Controller
 
         $options = $request->validated();
         $options['regenerate'] = $regenerate;
+        $options['additional'] = $additional;
 
         $result = $this->generationService->generate($note, $options);
 
@@ -51,6 +53,15 @@ final class AiCardCandidateController extends Controller
     public function regenerate(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse
     {
         return $this->generate($request, $noteSeedId, regenerate: true);
+    }
+
+    /**
+     * pending 候補を温存したまま追加で候補を生成する。
+     * 既存候補の question をプロンプトに渡して重複を回避する。
+     */
+    public function addMore(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse
+    {
+        return $this->generate($request, $noteSeedId, additional: true);
     }
 
     public function indexForNoteSeed(Request $request, int $noteSeedId): JsonResponse

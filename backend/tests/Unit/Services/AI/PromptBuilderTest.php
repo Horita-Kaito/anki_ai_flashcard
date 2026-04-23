@@ -141,7 +141,31 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('ネットワーク基礎', $prompt);
         $this->assertStringContainsString('トランスポート層', $prompt);
         $this->assertStringContainsString('基本情報試験対策', $prompt);
-        $this->assertStringContainsString('候補数: 5 件', $prompt);
+        $this->assertStringContainsString('最大 5 件', $prompt);
+        $this->assertStringContainsString('過不足なく', $prompt);
+    }
+
+    public function test_追加モードで既存質問が重複回避指示と共に渡される(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => 'テストメモ',
+        ]);
+
+        $prompt = $this->builder->userPrompt($note, [
+            'count' => 3,
+            'additional' => true,
+            'existing_questions' => [
+                'DI とは何か?',
+                'DI のメリットは?',
+            ],
+        ]);
+
+        $this->assertStringContainsString('既に生成済みの候補', $prompt);
+        $this->assertStringContainsString('重複しない切り口', $prompt);
+        $this->assertStringContainsString('- DI とは何か?', $prompt);
+        $this->assertStringContainsString('- DI のメリットは?', $prompt);
+        $this->assertStringContainsString('追加生成モード', $prompt);
     }
 
     public function test_優先カード種別がユーザープロンプトに含まれる(): void

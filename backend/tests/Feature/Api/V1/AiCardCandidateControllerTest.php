@@ -245,6 +245,28 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame(3, AiCardCandidate::where('status', 'pending')->count());
     }
 
+    public function test_追加生成では既存pending候補が温存される(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        AiCardCandidate::factory()->count(2)->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'status' => 'pending',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/additional-candidates", [
+                'count' => 3,
+            ])
+            ->assertCreated()
+            ->assertJsonCount(3, 'data');
+
+        // 元の 2件は pending のまま、新しい 3件も pending
+        $this->assertSame(5, AiCardCandidate::where('status', 'pending')->count());
+        $this->assertSame(0, AiCardCandidate::where('status', 'rejected')->count());
+    }
+
     public function test_複数候補を一括採用できる(): void
     {
         $user = User::factory()->create();

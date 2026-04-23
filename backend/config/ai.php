@@ -102,9 +102,10 @@ return [
     |--------------------------------------------------------------------------
     | Usage Limits (per user, per day)
     |--------------------------------------------------------------------------
-    | 将来の収益化で plan 別に拡張。現状は全ユーザー共通の安全側上限。
+    | 将来の収益化で plan 別に拡張。
+    | 0 以下は無制限扱い (現在はクローズド運用なので無制限がデフォルト)。
     */
     'limits' => [
-        'daily_generation_calls' => (int) env('AI_DAILY_GENERATION_LIMIT', 100),
+        'daily_generation_calls' => (int) env('AI_DAILY_GENERATION_LIMIT', 0),
     ],
 ];

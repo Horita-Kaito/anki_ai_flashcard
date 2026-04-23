@@ -44,7 +44,7 @@ final class CardGenerationService
     ) {}
 
     /**
-     * @param  array{count?: int, preferred_card_types?: array<int, string>, domain_template_id?: int, regenerate?: bool}  $options
+     * @param  array{count?: int|null, preferred_card_types?: array<int, string>, domain_template_id?: int, regenerate?: bool, additional?: bool}  $options
      * @return array<int, AiCardCandidate>
      *
      * @throws AiGenerationFailedException
@@ -55,10 +55,11 @@ final class CardGenerationService
         $this->assertDailyLimit($note->user_id);
 
         $template = $this->resolveTemplate($note, $options);
-        $count = $this->clampCount($options['count'] ?? null);
+        $count = $this->clampCount($options['count'] ?? null, $note->body);
         $model = (string) config('ai.default_model', 'gpt-4o-mini');
         $promptVersion = $this->promptBuilder->promptVersion();
         $regenerate = (bool) ($options['regenerate'] ?? false);
+        $additional = (bool) ($options['additional'] ?? false);
 
         $decks = Deck::where('user_id', $note->user_id)
             ->select(['id', 'name'])
@@ -67,11 +68,20 @@ final class CardGenerationService
             ->map(fn (Deck $d) => ['id' => $d->id, 'name' => $d->name])
             ->toArray();
 
+        $existingQuestions = $additional
+            ? $this->candidateRepository
+                ->listForNoteSeed($note->user_id, $note->id, null)
+                ->pluck('question')
+                ->all()
+            : [];
+
         $request = new AiGenerationRequest(
             systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, [
                 'count' => $count,
                 'preferred_card_types' => $options['preferred_card_types'] ?? null,
+                'existing_questions' => $existingQuestions,
+                'additional' => $additional,
             ]),
             model: $model,
             temperature: (float) config('ai.generation.temperature', 0.6),
@@ -153,7 +163,11 @@ final class CardGenerationService
 
     private function assertDailyLimit(int $userId): void
     {
-        $limit = (int) config('ai.limits.daily_generation_calls', 100);
+        $limit = (int) config('ai.limits.daily_generation_calls', 0);
+        // limit <= 0 は無制限
+        if ($limit <= 0) {
+            return;
+        }
         $count = $this->logRepository->countForUserInPeriod(
             $userId,
             now()->startOfDay(),
@@ -174,13 +188,26 @@ final class CardGenerationService
         return $this->templateRepository->findForUser($note->user_id, (int) $templateId);
     }
 
-    private function clampCount(mixed $raw): int
+    /**
+     * count が明示指定されていない場合はメモ本文長から自動算出する。
+     * 目安: 200 文字ごとに +1 枚、3〜max_candidate_count の範囲にクランプ。
+     */
+    private function clampCount(mixed $raw, ?string $body = null): int
     {
-        $default = (int) config('ai.generation.default_candidate_count', 3);
         $max = (int) config('ai.generation.max_candidate_count', 10);
-        $value = (int) ($raw ?? $default);
 
-        return max(1, min($max, $value));
+        if ($raw !== null && $raw !== '') {
+            return max(1, min($max, (int) $raw));
+        }
+
+        $default = (int) config('ai.generation.default_candidate_count', 3);
+        if ($body === null || $body === '') {
+            return max(1, min($max, $default));
+        }
+
+        $estimated = (int) ceil(mb_strlen($body) / 200);
+
+        return max($default, min($max, $estimated));
     }
 
     /**

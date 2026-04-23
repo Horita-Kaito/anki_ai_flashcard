@@ -176,12 +176,14 @@ PROMPT;
     }
 
     /**
-     * @param  array<string, mixed>  $options  count, preferred_card_types 等
+     * @param  array{count?: int, preferred_card_types?: array<int, string>|null, existing_questions?: array<int, string>, additional?: bool}  $options
      */
     public function userPrompt(NoteSeed $note, array $options = []): string
     {
         $count = (int) ($options['count'] ?? 3);
         $preferredTypes = $options['preferred_card_types'] ?? null;
+        $existingQuestions = $options['existing_questions'] ?? [];
+        $additional = (bool) ($options['additional'] ?? false);
 
         $parts = [
             '【メモ本文】',
@@ -198,8 +200,18 @@ PROMPT;
             $parts[] = "\n【補足】\n".$note->note_context;
         }
 
+        if ($additional && $existingQuestions !== []) {
+            $parts[] = "\n【既に生成済みの候補 (これらと重複しない切り口で生成すること)】";
+            foreach ($existingQuestions as $q) {
+                $parts[] = '- '.$q;
+            }
+        }
+
         $parts[] = "\n【生成指示】";
-        $parts[] = "- 候補数: {$count} 件";
+        $parts[] = "- 候補数: **最大 {$count} 件**。メモ内の独立した知識点の数に応じて過不足なく生成する。知識点が少なければ上限を下回ってよい。";
+        if ($additional) {
+            $parts[] = '- 追加生成モード: 既存候補と問い方・切り口が被らないように、異なる角度 (別の用語、反例、具体例、cloze 位置違い等) から生成すること。';
+        }
         if (is_array($preferredTypes) && $preferredTypes !== []) {
             $parts[] = '- 優先するカード種別: '.implode(', ', $preferredTypes);
         }

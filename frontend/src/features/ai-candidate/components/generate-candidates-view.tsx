@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, RefreshCw } from "lucide-react";
+import { Sparkles, RefreshCw, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
+  useAddMoreCandidates,
   useCandidatesForNote,
   useGenerateCandidates,
   useRegenerateCandidates,
@@ -26,13 +27,13 @@ export function GenerateCandidatesView({
   const { data: candidates, isLoading: candidatesLoading } =
     useCandidatesForNote(noteSeedId);
 
-  const [count, setCount] = useState(3);
   const [templateId, setTemplateId] = useState<number | null>(
     note?.domain_template_id ?? null
   );
 
   const generateMutation = useGenerateCandidates(noteSeedId);
   const regenerateMutation = useRegenerateCandidates(noteSeedId);
+  const addMoreMutation = useAddMoreCandidates(noteSeedId);
 
   // 初回ロード時に note.domain_template_id を反映
   if (note && templateId === null && note.domain_template_id) {
@@ -42,11 +43,11 @@ export function GenerateCandidatesView({
   const pendingCandidates = candidates?.filter((c) => c.status === "pending") ?? [];
   const historyCandidates = candidates?.filter((c) => c.status !== "pending") ?? [];
   const hasPending = pendingCandidates.length > 0;
+  const hasAnyCandidates = (candidates?.length ?? 0) > 0;
 
   async function handleGenerate() {
     try {
       const result = await generateMutation.mutateAsync({
-        count,
         domain_template_id: templateId,
       });
       const m = result.meta;
@@ -66,6 +67,26 @@ export function GenerateCandidatesView({
     }
   }
 
+  async function handleAddMore() {
+    try {
+      const result = await addMoreMutation.mutateAsync({
+        domain_template_id: templateId,
+      });
+      const m = result.meta;
+      toast.success(
+        `${m.model} で ${result.candidates.length} 件追加生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
+      );
+    } catch (err: unknown) {
+      const status =
+        (err as { response?: { status?: number } }).response?.status;
+      if (status === 502) {
+        toast.error("AI の応答解析に失敗しました。再試行してください");
+      } else {
+        toast.error("追加生成に失敗しました");
+      }
+    }
+  }
+
   async function handleRegenerate() {
     if (
       !confirm(
@@ -76,7 +97,6 @@ export function GenerateCandidatesView({
     }
     try {
       const result = await regenerateMutation.mutateAsync({
-        count,
         domain_template_id: templateId,
       });
       const m = result.meta;
@@ -121,67 +141,75 @@ export function GenerateCandidatesView({
           AI 生成設定
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label htmlFor="template" className="text-sm font-medium">
-              分野テンプレート
-            </label>
-            <select
-              id="template"
-              value={templateId ?? ""}
-              onChange={(e) =>
-                setTemplateId(
-                  e.target.value === "" ? null : Number(e.target.value)
-                )
-              }
-              className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
-            >
-              <option value="">指定しない</option>
-              {templates?.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label htmlFor="count" className="text-sm font-medium">
-              生成数 (1〜10)
-            </label>
-            <input
-              id="count"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={10}
-              value={count}
-              onChange={(e) => setCount(Math.max(1, Math.min(10, Number(e.target.value))))}
-              className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
-            />
-          </div>
+        <div className="space-y-1.5">
+          <label htmlFor="template" className="text-sm font-medium">
+            分野テンプレート
+          </label>
+          <select
+            id="template"
+            value={templateId ?? ""}
+            onChange={(e) =>
+              setTemplateId(
+                e.target.value === "" ? null : Number(e.target.value)
+              )
+            }
+            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+          >
+            <option value="">指定しない</option>
+            {templates?.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
         </div>
 
+        <p className="text-xs text-muted-foreground">
+          候補数はメモの情報量から自動で調整されます。足りなければ生成後に「さらに追加」で増やせます。
+        </p>
+
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            size="lg"
-            className="min-h-11"
-            onClick={handleGenerate}
-            disabled={generateMutation.isPending || hasPending}
-          >
-            {generateMutation.isPending ? (
-              <>
-                <RefreshCw className="size-4 animate-spin" aria-hidden />
-                生成中...
-              </>
-            ) : (
-              <>
-                <Sparkles className="size-4" aria-hidden />
-                AI で候補生成
-              </>
-            )}
-          </Button>
+          {!hasAnyCandidates ? (
+            <Button
+              type="button"
+              size="lg"
+              className="min-h-11"
+              onClick={handleGenerate}
+              disabled={generateMutation.isPending}
+            >
+              {generateMutation.isPending ? (
+                <>
+                  <RefreshCw className="size-4 animate-spin" aria-hidden />
+                  生成中...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="size-4" aria-hidden />
+                  AI で候補生成
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="lg"
+              className="min-h-11"
+              onClick={handleAddMore}
+              disabled={addMoreMutation.isPending}
+            >
+              {addMoreMutation.isPending ? (
+                <>
+                  <RefreshCw className="size-4 animate-spin" aria-hidden />
+                  追加生成中...
+                </>
+              ) : (
+                <>
+                  <Plus className="size-4" aria-hidden />
+                  さらに候補を追加
+                </>
+              )}
+            </Button>
+          )}
           {hasPending && (
             <Button
               type="button"

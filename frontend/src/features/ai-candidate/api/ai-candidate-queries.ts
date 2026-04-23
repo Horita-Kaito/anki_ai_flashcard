@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  addMoreCandidates,
   adoptCandidate,
   batchAdoptCandidates,
   fetchCandidatesForNote,
@@ -52,6 +53,17 @@ export function useRegenerateCandidates(noteSeedId: number) {
   return useMutation({
     mutationFn: (options: GenerateOptions) =>
       regenerateCandidates(noteSeedId, options),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+    },
+  });
+}
+
+export function useAddMoreCandidates(noteSeedId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (options: GenerateOptions) =>
+      addMoreCandidates(noteSeedId, options),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
     },

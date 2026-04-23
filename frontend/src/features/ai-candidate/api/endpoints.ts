@@ -48,6 +48,18 @@ export async function regenerateCandidates(
   return { candidates: res.data.data, meta: res.data.meta };
 }
 
+export async function addMoreCandidates(
+  noteSeedId: number,
+  options: GenerateOptions = {}
+): Promise<GenerationResult> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
+    `/note-seeds/${noteSeedId}/additional-candidates`,
+    options
+  );
+  return { candidates: res.data.data, meta: res.data.meta };
+}
+
 export async function fetchCandidatesForNote(
   noteSeedId: number,
   status?: CandidateStatus

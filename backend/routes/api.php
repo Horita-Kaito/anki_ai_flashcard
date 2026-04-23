@@ -58,6 +58,9 @@ Route::prefix('v1')->group(function () {
             Route::post('note-seeds/{id}/regenerate-candidates', [
                 AiCardCandidateController::class, 'regenerate',
             ]);
+            Route::post('note-seeds/{id}/additional-candidates', [
+                AiCardCandidateController::class, 'addMore',
+            ]);
         });
 
         Route::get('note-seeds/{id}/candidates', [
