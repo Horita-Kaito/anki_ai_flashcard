@@ -42,9 +42,7 @@ services:
       - traefik.http.routers.anki-frontend.entrypoints=websecure
       - traefik.http.routers.anki-frontend.tls.certresolver=letsencrypt
       - traefik.http.routers.anki-frontend.priority=1
-      - traefik.http.routers.anki-frontend.middlewares=anki-auth
       - traefik.http.services.anki-frontend.loadbalancer.server.port=3000
-      - "traefik.http.middlewares.anki-auth.basicauth.users=staging:$$apr1$$flEwxrPu$$dFUyQ/GBcz8Hju91Nt0uC0"
 
   # ----------------------------------------
   # Backend - Laravel (pre-built image, code volume-mounted)
@@ -89,7 +87,6 @@ services:
       - traefik.http.routers.anki-api.entrypoints=websecure
       - traefik.http.routers.anki-api.tls.certresolver=letsencrypt
       - traefik.http.routers.anki-api.priority=10
-      - traefik.http.routers.anki-api.middlewares=anki-auth
       - traefik.http.services.anki-api.loadbalancer.server.port=8000
 
   # ----------------------------------------

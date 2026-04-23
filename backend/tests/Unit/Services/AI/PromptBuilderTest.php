@@ -46,7 +46,7 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('3つの特徴', $prompt);
     }
 
-    public function test_システムプロンプトにJSON出力形式の定義が含まれる(): void
+    public function test_システムプロンプトに_j_s_o_n出力形式の定義が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 

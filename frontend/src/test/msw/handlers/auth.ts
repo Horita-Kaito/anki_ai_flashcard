@@ -17,10 +17,6 @@ export const authHandlers = [
     HttpResponse.json({ data: mockUser })
   ),
 
-  http.post(`${API}/api/v1/register`, () =>
-    HttpResponse.json({ data: mockUser }, { status: 201 })
-  ),
-
   http.post(`${API}/api/v1/logout`, () =>
     new HttpResponse(null, { status: 204 })
   ),

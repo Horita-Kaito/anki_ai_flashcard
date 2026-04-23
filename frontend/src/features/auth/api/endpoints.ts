@@ -1,14 +1,8 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { User } from "@/entities/user/types";
-import type { LoginInput, RegisterInput } from "../schemas/auth-schemas";
+import type { LoginInput } from "../schemas/auth-schemas";
 import { userResponseSchema } from "@/entities/user/schemas";
 import { parseApiDataResponse } from "@/shared/api/parse-response";
-
-export async function registerUser(input: RegisterInput): Promise<User> {
-  await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: User }>("/register", input);
-  return res.data.data;
-}
 
 export async function loginUser(input: LoginInput): Promise<User> {
   await fetchCsrfCookie();

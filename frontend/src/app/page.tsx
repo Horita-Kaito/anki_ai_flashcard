@@ -63,22 +63,12 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm sm:w-auto sm:max-w-none pt-2">
               <Link
-                href="/register"
-                className={`${buttonVariants({ size: "lg" })} min-h-12 px-6 justify-center text-base shadow-sm`}
-              >
-                無料で始める
-              </Link>
-              <Link
                 href="/login"
-                className={`${buttonVariants({ variant: "outline", size: "lg" })} min-h-12 px-6 justify-center text-base`}
+                className={`${buttonVariants({ size: "lg" })} min-h-12 px-6 justify-center text-base shadow-sm`}
               >
                 ログイン
               </Link>
             </div>
-
-            <p className="text-xs text-muted-foreground pt-2">
-              クレジットカード不要 · 個人利用完全無料
-            </p>
           </div>
         </div>
       </section>

@@ -21,8 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     // === 認証系 (ゲスト可) ===
-    Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:5,1');
+    // 新規登録は廃止 (管理者のみ artisan app:create-user で作成)
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1');
 

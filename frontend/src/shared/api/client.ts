@@ -11,7 +11,7 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-const AUTH_ENDPOINTS = ["/login", "/register", "/me"];
+const AUTH_ENDPOINTS = ["/login", "/me"];
 
 apiClient.interceptors.response.use(
   (response) => response,

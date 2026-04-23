@@ -13,7 +13,7 @@ final class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_新規ユーザーを登録できる(): void
+    public function test_登録エンドポイントは廃止されている(): void
     {
         $response = $this->postJson('/api/v1/register', [
             'name' => '太郎',
@@ -22,56 +22,8 @@ final class AuthControllerTest extends TestCase
             'password_confirmation' => 'password123',
         ]);
 
-        $response->assertStatus(201)
-            ->assertJsonStructure(['data' => ['id', 'name', 'email']]);
-
-        $this->assertDatabaseHas('users', ['email' => 'taro@example.com']);
-    }
-
-    public function test_登録時にはテンプレートやユーザー設定は作成されない(): void
-    {
-        $response = $this->postJson('/api/v1/register', [
-            'name' => '太郎',
-            'email' => 'taro@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ]);
-
-        $response->assertStatus(201);
-
-        $userId = $response->json('data.id');
-
-        // オンボーディングに移行したため、登録時にはテンプレートは作成されない
-        $this->assertDatabaseCount('domain_templates', 0);
-        $this->assertDatabaseMissing('user_settings', ['user_id' => $userId]);
-    }
-
-    public function test_メール重複で登録できない(): void
-    {
-        User::factory()->create(['email' => 'dup@example.com']);
-
-        $response = $this->postJson('/api/v1/register', [
-            'name' => '太郎',
-            'email' => 'dup@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
-    }
-
-    public function test_パスワード不一致で登録できない(): void
-    {
-        $response = $this->postJson('/api/v1/register', [
-            'name' => '太郎',
-            'email' => 'taro@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'different',
-        ]);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['password']);
+        $response->assertStatus(404);
+        $this->assertDatabaseMissing('users', ['email' => 'taro@example.com']);
     }
 
     public function test_正しい認証情報でログインできる(): void
