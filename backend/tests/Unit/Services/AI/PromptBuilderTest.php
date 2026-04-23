@@ -19,7 +19,7 @@ final class PromptBuilderTest extends TestCase
         $this->builder = new PromptBuilder('v1.1');
     }
 
-    public function test_システムプロンプトにウォズニアックの6原則が含まれる(): void
+    public function test_システムプロンプトにウォズニアックの原則が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 
@@ -29,6 +29,17 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('集合・列挙の回避', $prompt);
         $this->assertStringContainsString('穴埋め', $prompt);
         $this->assertStringContainsString('双方向カード', $prompt);
+        $this->assertStringContainsString('手順・順序・依存関係', $prompt);
+    }
+
+    public function test_システムプロンプトに手順系の3手法が含まれる(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('穴埋め連鎖', $prompt);
+        $this->assertStringContainsString('{{c1::', $prompt);
+        $this->assertStringContainsString('前後を個別に問う', $prompt);
+        $this->assertStringContainsString('オーバーラップ法', $prompt);
     }
 
     public function test_システムプロンプトに曖昧な問いを禁止する悪例が含まれる(): void
