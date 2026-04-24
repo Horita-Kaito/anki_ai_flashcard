@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Deck;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class StoreDeckRequest extends FormRequest
 {
@@ -13,15 +14,21 @@ final class StoreDeckRequest extends FormRequest
         return true;
     }
 
-    /** @return array<string, array<int, string>> */
+    /** @return array<string, array<int, mixed>> */
     public function rules(): array
     {
+        $userId = $this->user()->id;
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => [
+                'nullable',
+                'integer',
+                // 同一ユーザー所有のデッキに限定
+                Rule::exists('decks', 'id')->where('user_id', $userId),
+            ],
             'default_domain_template_id' => ['nullable', 'integer'],
-            'new_cards_limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'review_limit' => ['nullable', 'integer', 'min:1', 'max:500'],
         ];
     }
 
@@ -32,8 +39,7 @@ final class StoreDeckRequest extends FormRequest
             'name.required' => 'デッキ名を入力してください',
             'name.max' => 'デッキ名は255文字以内で入力してください',
             'description.max' => '説明は1000文字以内で入力してください',
-            'new_cards_limit.min' => '新規カード上限は1以上で指定してください',
-            'new_cards_limit.max' => '新規カード上限は100以下で指定してください',
+            'parent_id.exists' => '指定された親デッキが存在しません',
         ];
     }
 }

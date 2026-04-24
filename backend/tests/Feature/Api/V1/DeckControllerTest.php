@@ -30,7 +30,7 @@ final class DeckControllerTest extends TestCase
             ->assertJsonCount(3, 'data')
             ->assertJsonStructure([
                 'data' => [
-                    ['id', 'name', 'description', 'new_cards_limit', 'created_at', 'updated_at'],
+                    ['id', 'parent_id', 'name', 'description', 'display_order', 'created_at', 'updated_at'],
                 ],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
             ]);
@@ -55,12 +55,11 @@ final class DeckControllerTest extends TestCase
         $response = $this->actingAs($user)->postJson('/api/v1/decks', [
             'name' => 'Web開発',
             'description' => 'Web開発の基礎知識',
-            'new_cards_limit' => 30,
         ]);
 
         $response->assertCreated()
             ->assertJsonPath('data.name', 'Web開発')
-            ->assertJsonPath('data.new_cards_limit', 30);
+            ->assertJsonPath('data.parent_id', null);
 
         $this->assertDatabaseHas('decks', [
             'user_id' => $user->id,

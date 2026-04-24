@@ -17,8 +17,6 @@ final class UserSettingResource extends BaseJsonResource
     {
         return [
             'default_domain_template_id' => $this->default_domain_template_id,
-            'daily_new_limit' => $this->daily_new_limit,
-            'daily_review_limit' => $this->daily_review_limit,
             'default_ai_provider' => $this->default_ai_provider,
             'default_ai_model' => $this->default_ai_model,
             'default_generation_count' => $this->default_generation_count,

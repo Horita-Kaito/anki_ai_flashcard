@@ -13,8 +13,6 @@ class UserSetting extends Model
     protected $fillable = [
         'user_id',
         'default_domain_template_id',
-        'daily_new_limit',
-        'daily_review_limit',
         'default_ai_provider',
         'default_ai_model',
         'default_generation_count',
@@ -22,8 +20,6 @@ class UserSetting extends Model
 
     /** @var array<string, string> */
     protected $casts = [
-        'daily_new_limit' => 'integer',
-        'daily_review_limit' => 'integer',
         'default_generation_count' => 'integer',
         'default_domain_template_id' => 'integer',
     ];

@@ -26,8 +26,6 @@ final class UpdateUserSettingRequest extends FormRequest
                 'integer',
                 Rule::exists('domain_templates', 'id')->where('user_id', $userId),
             ],
-            'daily_new_limit' => ['sometimes', 'integer', 'min:0', 'max:500'],
-            'daily_review_limit' => ['sometimes', 'integer', 'min:0', 'max:2000'],
             'default_ai_provider' => [
                 'sometimes',
                 'string',

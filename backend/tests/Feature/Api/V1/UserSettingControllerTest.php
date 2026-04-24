@@ -25,8 +25,6 @@ final class UserSettingControllerTest extends TestCase
         $this->actingAs($user)
             ->getJson('/api/v1/settings')
             ->assertOk()
-            ->assertJsonPath('data.daily_new_limit', 20)
-            ->assertJsonPath('data.daily_review_limit', 100)
             ->assertJsonPath('data.default_ai_provider', config('ai.default_provider'));
 
         $this->assertDatabaseHas('user_settings', ['user_id' => $user->id]);
@@ -38,14 +36,12 @@ final class UserSettingControllerTest extends TestCase
 
         $this->actingAs($user)
             ->putJson('/api/v1/settings', [
-                'daily_new_limit' => 50,
-                'daily_review_limit' => 200,
                 'default_ai_provider' => 'anthropic',
                 'default_generation_count' => 5,
             ])
             ->assertOk()
-            ->assertJsonPath('data.daily_new_limit', 50)
-            ->assertJsonPath('data.default_ai_provider', 'anthropic');
+            ->assertJsonPath('data.default_ai_provider', 'anthropic')
+            ->assertJsonPath('data.default_generation_count', 5);
     }
 
     public function test_無効な_a_iプロバイダで422(): void

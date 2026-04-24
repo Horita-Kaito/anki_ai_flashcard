@@ -76,8 +76,6 @@ final class DevelopmentSeeder extends Seeder
         return UserSetting::create([
             'user_id' => $user->id,
             'default_domain_template_id' => null,
-            'daily_new_limit' => 20,
-            'daily_review_limit' => 100,
             'default_ai_provider' => 'openai',
             'default_ai_model' => 'gpt-4o-mini',
             'default_generation_count' => 5,
@@ -165,8 +163,6 @@ final class DevelopmentSeeder extends Seeder
                 'name' => $def['name'],
                 'description' => $def['description'],
                 'default_domain_template_id' => $templates[$def['template']]->id,
-                'new_cards_limit' => 20,
-                'review_limit' => 100,
                 'display_order' => $def['order'],
             ]);
         }

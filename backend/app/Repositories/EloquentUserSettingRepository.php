@@ -18,8 +18,6 @@ final class EloquentUserSettingRepository implements UserSettingRepositoryInterf
     {
         return UserSetting::create([
             'user_id' => $userId,
-            'daily_new_limit' => 20,
-            'daily_review_limit' => 100,
             'default_ai_provider' => config('ai.default_provider', 'openai'),
             'default_ai_model' => config('ai.default_model', 'gpt-4o-mini'),
             'default_generation_count' => (int) config('ai.generation.default_candidate_count', 3),

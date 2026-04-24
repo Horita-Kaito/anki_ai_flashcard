@@ -17,11 +17,19 @@ final class DeckResource extends BaseJsonResource
     {
         return [
             'id' => $this->id,
+            'parent_id' => $this->parent_id,
             'name' => $this->name,
             'description' => $this->description,
             'default_domain_template_id' => $this->default_domain_template_id,
-            'new_cards_limit' => $this->new_cards_limit,
-            'review_limit' => $this->review_limit,
+            'display_order' => $this->display_order,
+            'path' => $this->when(
+                $this->relationLoaded('ancestors') || isset($this->path),
+                fn () => $this->path ?? null,
+            ),
+            'has_children' => $this->when(
+                isset($this->children_count),
+                fn () => ((int) $this->children_count) > 0,
+            ),
             ...$this->timestamps(),
         ];
     }

@@ -22,11 +22,11 @@ final class DeckFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'parent_id' => null,
             'name' => $this->faker->words(2, true),
             'description' => $this->faker->optional()->sentence(),
             'default_domain_template_id' => null,
-            'new_cards_limit' => 20,
-            'review_limit' => null,
+            'display_order' => 0,
         ];
     }
 }
