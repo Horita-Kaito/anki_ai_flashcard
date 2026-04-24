@@ -7,7 +7,7 @@ namespace App\Http\Requests\Deck;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-final class ReorderDecksRequest extends FormRequest
+final class UpdateDeckTreeRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -20,11 +20,18 @@ final class ReorderDecksRequest extends FormRequest
         $userId = $this->user()->id;
 
         return [
-            'deck_ids' => ['required', 'array', 'min:1'],
-            'deck_ids.*' => [
+            'nodes' => ['required', 'array', 'min:1'],
+            'nodes.*.id' => [
+                'required',
                 'integer',
                 Rule::exists('decks', 'id')->where('user_id', $userId),
             ],
+            'nodes.*.parent_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('decks', 'id')->where('user_id', $userId),
+            ],
+            'nodes.*.display_order' => ['required', 'integer', 'min:0'],
         ];
     }
 }

@@ -32,7 +32,6 @@ final class DeckControllerTest extends TestCase
                 'data' => [
                     ['id', 'parent_id', 'name', 'description', 'display_order', 'created_at', 'updated_at'],
                 ],
-                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
             ]);
     }
 
@@ -137,5 +136,92 @@ final class DeckControllerTest extends TestCase
             ->assertNotFound();
 
         $this->assertDatabaseHas('decks', ['id' => $deck->id]);
+    }
+
+    public function test_子デッキがあると親デッキは削除できず409を返す(): void
+    {
+        $user = User::factory()->create();
+        $parent = Deck::factory()->for($user)->create();
+        $child = Deck::factory()->for($user)->create(['parent_id' => $parent->id]);
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/decks/{$parent->id}")
+            ->assertStatus(409);
+
+        $this->assertDatabaseHas('decks', ['id' => $parent->id]);
+        $this->assertDatabaseHas('decks', ['id' => $child->id]);
+    }
+
+    public function test_親を指定してデッキを作成できる(): void
+    {
+        $user = User::factory()->create();
+        $parent = Deck::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/decks', [
+                'name' => '子デッキ',
+                'parent_id' => $parent->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.parent_id', $parent->id);
+    }
+
+    public function test_親に自身を指定すると422(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/decks/{$deck->id}", ['parent_id' => $deck->id])
+            ->assertStatus(422);
+    }
+
+    public function test_親に自身の子孫を指定すると422(): void
+    {
+        $user = User::factory()->create();
+        $parent = Deck::factory()->for($user)->create();
+        $child = Deck::factory()->for($user)->create(['parent_id' => $parent->id]);
+        $grandchild = Deck::factory()->for($user)->create(['parent_id' => $child->id]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/decks/{$parent->id}", ['parent_id' => $grandchild->id])
+            ->assertStatus(422);
+    }
+
+    public function test_tree一括更新で階層と並び順を同時に変更できる(): void
+    {
+        $user = User::factory()->create();
+        $a = Deck::factory()->for($user)->create(['display_order' => 0]);
+        $b = Deck::factory()->for($user)->create(['display_order' => 1]);
+        $c = Deck::factory()->for($user)->create(['display_order' => 2]);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/decks/tree', [
+                'nodes' => [
+                    ['id' => $a->id, 'parent_id' => null, 'display_order' => 0],
+                    ['id' => $b->id, 'parent_id' => $a->id, 'display_order' => 0],
+                    ['id' => $c->id, 'parent_id' => $a->id, 'display_order' => 1],
+                ],
+            ])
+            ->assertNoContent();
+
+        $this->assertDatabaseHas('decks', ['id' => $b->id, 'parent_id' => $a->id, 'display_order' => 0]);
+        $this->assertDatabaseHas('decks', ['id' => $c->id, 'parent_id' => $a->id, 'display_order' => 1]);
+    }
+
+    public function test_tree一括更新で循環は422(): void
+    {
+        $user = User::factory()->create();
+        $a = Deck::factory()->for($user)->create();
+        $b = Deck::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/decks/tree', [
+                'nodes' => [
+                    ['id' => $a->id, 'parent_id' => $b->id, 'display_order' => 0],
+                    ['id' => $b->id, 'parent_id' => $a->id, 'display_order' => 0],
+                ],
+            ])
+            ->assertStatus(422);
     }
 }

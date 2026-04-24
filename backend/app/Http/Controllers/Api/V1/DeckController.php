@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Deck\ReorderDecksRequest;
 use App\Http\Requests\Deck\StoreDeckRequest;
 use App\Http\Requests\Deck\UpdateDeckRequest;
+use App\Http\Requests\Deck\UpdateDeckTreeRequest;
 use App\Http\Resources\DeckResource;
 use App\Services\DeckService;
 use Illuminate\Http\JsonResponse;
@@ -21,12 +21,8 @@ final class DeckController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->query('per_page', '20');
-        $perPage = max(1, min($perPage, 100));
-
-        $decks = $this->deckService->paginateForUser(
+        $decks = $this->deckService->allWithTreeMetaForUser(
             userId: $request->user()->id,
-            perPage: $perPage,
         );
 
         return DeckResource::collection($decks)->response();
@@ -73,13 +69,18 @@ final class DeckController extends Controller
         return response()->json(null, 204);
     }
 
-    public function reorder(ReorderDecksRequest $request): JsonResponse
+    /**
+     * 階層 + 並び順の一括更新 (ドラッグ DnD 後)。
+     * reorder は廃止し、本エンドポイントに統合。
+     */
+    public function updateTree(UpdateDeckTreeRequest $request): JsonResponse
     {
-        /** @var array<int, int> $deckIds */
-        $deckIds = $request->validated('deck_ids');
-        $this->deckService->reorderForUser(
+        /** @var array<int, array{id: int, parent_id: ?int, display_order: int}> $nodes */
+        $nodes = $request->validated('nodes');
+
+        $this->deckService->updateTreeForUser(
             userId: $request->user()->id,
-            orderedIds: $deckIds,
+            nodes: $nodes,
         );
 
         return response()->json(null, 204);
