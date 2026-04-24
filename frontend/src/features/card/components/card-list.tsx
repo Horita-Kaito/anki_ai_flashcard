@@ -16,16 +16,22 @@ import type { Card } from "@/entities/card/types";
 
 type ArchiveFilter = "active" | "archived";
 
-export function CardList() {
+interface CardListProps {
+  /** 指定時はそのデッキのカードに固定して絞り込み、デッキ select を非表示にする */
+  lockedDeckId?: number;
+}
+
+export function CardList({ lockedDeckId }: CardListProps = {}) {
   const [keyword, setKeyword] = useState("");
-  const [deckId, setDeckId] = useState<number | "">("");
+  const [deckId, setDeckId] = useState<number | "">(lockedDeckId ?? "");
   const [tagId, setTagId] = useState<number | "">("");
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
   const debouncedKeyword = useDebouncedValue(keyword, 300);
 
+  const effectiveDeckId = lockedDeckId ?? (deckId === "" ? undefined : Number(deckId));
   const filters = {
     q: debouncedKeyword || undefined,
-    deck_id: deckId === "" ? undefined : Number(deckId),
+    deck_id: effectiveDeckId,
     tag_id: tagId === "" ? undefined : Number(tagId),
     archived: archiveFilter === "archived" ? true : false,
   };
@@ -35,11 +41,15 @@ export function CardList() {
   const deckOptions = buildHierarchicalOptions(decks ?? []);
   const { data: tags } = useTagList();
 
-  const hasActiveFilter = keyword !== "" || deckId !== "" || tagId !== "" || archiveFilter !== "active";
+  const hasActiveFilter =
+    keyword !== "" ||
+    (lockedDeckId === undefined && deckId !== "") ||
+    tagId !== "" ||
+    archiveFilter !== "active";
 
   function resetFilters() {
     setKeyword("");
-    setDeckId("");
+    if (lockedDeckId === undefined) setDeckId("");
     setTagId("");
     setArchiveFilter("active");
   }
@@ -91,21 +101,27 @@ export function CardList() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <select
-            value={deckId}
-            onChange={(e) => setDeckId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
-            aria-label="デッキで絞り込み"
-          >
-            <option value="">すべてのデッキ</option>
-            {deckOptions.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {"— ".repeat(opt.depth)}
-                {opt.name}
-              </option>
-            ))}
-          </select>
+        <div
+          className={`grid gap-2 ${
+            lockedDeckId === undefined ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+          }`}
+        >
+          {lockedDeckId === undefined && (
+            <select
+              value={deckId}
+              onChange={(e) => setDeckId(e.target.value === "" ? "" : Number(e.target.value))}
+              className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+              aria-label="デッキで絞り込み"
+            >
+              <option value="">すべてのデッキ</option>
+              {deckOptions.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {"— ".repeat(opt.depth)}
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          )}
           <select
             value={tagId}
             onChange={(e) => setTagId(e.target.value === "" ? "" : Number(e.target.value))}
