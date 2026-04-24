@@ -375,9 +375,8 @@ final class StoreDeckRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'parent_id' => ['nullable', 'integer', 'exists:decks,id'], // 同一ユーザー所有チェックは FormRequest 内で
             'default_domain_template_id' => ['nullable', 'integer', 'exists:domain_templates,id'],
-            'new_cards_limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'review_limit' => ['nullable', 'integer', 'min:1', 'max:500'],
         ];
     }
 
@@ -453,11 +452,13 @@ final class DeckResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'parent_id' => $this->parent_id,
             'name' => $this->name,
             'description' => $this->description,
             'default_domain_template_id' => $this->default_domain_template_id,
-            'new_cards_limit' => $this->new_cards_limit,
-            'review_limit' => $this->review_limit,
+            'display_order' => $this->display_order,
+            'path' => $this->when(isset($this->path), $this->path),
+            'has_children' => $this->when(isset($this->has_children), (bool) $this->has_children),
             'card_count' => $this->whenLoaded('cards', fn () => $this->cards->count()),
             'due_count' => $this->when(isset($this->due_count), $this->due_count),
             'created_at' => $this->created_at?->toIso8601String(),

@@ -44,11 +44,11 @@ erDiagram
     decks {
         bigint id PK
         bigint user_id FK
+        bigint parent_id FK
         varchar name
         text description
         bigint default_domain_template_id FK
-        int new_cards_limit
-        int review_limit
+        int display_order
         timestamp created_at
         timestamp updated_at
     }
@@ -156,8 +156,6 @@ erDiagram
         bigint id PK
         bigint user_id FK
         bigint default_domain_template_id FK
-        int daily_new_limit
-        int daily_review_limit
         varchar default_ai_provider
         varchar default_ai_model
         int default_generation_count
@@ -188,15 +186,23 @@ erDiagram
 |--------|------|------|------|
 | id | BIGINT UNSIGNED | PK, AUTO_INCREMENT | |
 | user_id | BIGINT UNSIGNED | FK(users.id), NOT NULL | 所有者 |
+| parent_id | BIGINT UNSIGNED | FK(decks.id) self-ref, NULLABLE, restrictOnDelete | 親デッキ (階層) |
 | name | VARCHAR(255) | NOT NULL | デッキ名 |
 | description | TEXT | NULLABLE | 説明 |
 | default_domain_template_id | BIGINT UNSIGNED | FK(domain_templates.id), NULLABLE | 既定テンプレート |
-| new_cards_limit | INT UNSIGNED | DEFAULT 20 | 新規カード出題上限/日 |
-| review_limit | INT UNSIGNED | NULLABLE | 復習上限/日 |
+| display_order | INT UNSIGNED | DEFAULT 0 | 兄弟内の並び順 (同一 parent_id の中で昇順) |
 | created_at | TIMESTAMP | | |
 | updated_at | TIMESTAMP | | |
 
-**INDEX**: `idx_decks_user_id` (user_id)
+**INDEX**: `idx_decks_user_parent_order` (user_id, parent_id, display_order)
+
+**階層仕様**:
+- Adjacency List 方式 (self-reference)。子孫取得は MySQL 8 の再帰 CTE で行う
+- 親子の所有者 (user_id) は同一ユーザーに限定
+- 循環参照はアプリ層で検出して拒否
+- 親デッキにも子デッキにも直接カードを配置可能 (Anki 準拠)
+- 親デッキ削除は子デッキが残っている間は不可 (409 Conflict)
+- 1 日の上限値 (旧 new_cards_limit / review_limit) は撤廃。復習対象は due なカードを制限なく取得する
 
 ### cards
 
@@ -349,8 +355,6 @@ erDiagram
 | id | BIGINT UNSIGNED | PK, AUTO_INCREMENT | |
 | user_id | BIGINT UNSIGNED | FK(users.id), NOT NULL, UNIQUE | 対象ユーザー |
 | default_domain_template_id | BIGINT UNSIGNED | FK, NULLABLE | 既定テンプレート |
-| daily_new_limit | INT UNSIGNED | DEFAULT 20 | 新規カード上限/日 |
-| daily_review_limit | INT UNSIGNED | DEFAULT 100 | 復習上限/日 |
 | default_ai_provider | VARCHAR(50) | DEFAULT 'openai' | 既定AIプロバイダ |
 | default_ai_model | VARCHAR(100) | DEFAULT 'gpt-4o-mini' | 既定AIモデル |
 | default_generation_count | INT UNSIGNED | DEFAULT 3 | 既定生成候補数 |

@@ -145,8 +145,6 @@ GET /sanctum/csrf-cookie
     "name": "テストユーザー",
     "email": "test@example.com",
     "settings": {
-      "daily_new_limit": 20,
-      "daily_review_limit": 100,
       "default_ai_provider": "openai",
       "default_ai_model": "gpt-4o-mini",
       "default_generation_count": 3
@@ -159,12 +157,10 @@ GET /sanctum/csrf-cookie
 
 ## 2. デッキ系 API
 
-### GET /api/decks
-デッキ一覧取得
+デッキは自己参照 (`parent_id`) で階層化される。API レスポンスは `path` (ルートから自身までのデッキ名配列) と `has_children` を含み、一覧は原則フラット (ネストせず) で `parent_id` + `display_order` を返す。階層の組み立てはフロント側で行う。
 
-**Query Parameters**:
-- `per_page` (int, optional): 1ページあたり件数 (default: 20)
-- `page` (int, optional): ページ番号
+### GET /api/decks
+デッキ一覧取得 (全件、階層構造は parent_id と display_order から組み立て)
 
 **Response 200**:
 ```json
@@ -172,18 +168,32 @@ GET /sanctum/csrf-cookie
   "data": [
     {
       "id": 1,
-      "name": "Web開発",
-      "description": "Web開発関連の知識",
+      "parent_id": null,
+      "name": "マーケティング",
+      "description": null,
       "default_domain_template_id": 1,
-      "new_cards_limit": 20,
-      "review_limit": null,
-      "card_count": 45,
-      "due_count": 12,
+      "display_order": 0,
+      "path": ["マーケティング"],
+      "has_children": true,
+      "card_count": 3,
+      "due_count": 0,
       "created_at": "2026-04-13T00:00:00Z",
       "updated_at": "2026-04-13T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "parent_id": 1,
+      "name": "PESOモデル",
+      "description": null,
+      "default_domain_template_id": null,
+      "display_order": 0,
+      "path": ["マーケティング", "PESOモデル"],
+      "has_children": false,
+      "card_count": 12,
+      "due_count": 4,
+      ...
     }
-  ],
-  "meta": { ... }
+  ]
 }
 ```
 
@@ -195,54 +205,66 @@ GET /sanctum/csrf-cookie
 **Request Body**:
 ```json
 {
-  "name": "Web開発",
-  "description": "Web開発関連の知識",
-  "default_domain_template_id": 1,
-  "new_cards_limit": 20,
-  "review_limit": null
+  "name": "PESOモデル",
+  "description": null,
+  "parent_id": 1,
+  "default_domain_template_id": null
 }
 ```
 
 **Validation**:
 - name: 必須, 最大255文字
 - description: 任意, 最大1000文字
-- default_domain_template_id: 任意, domain_templates.idに存在
-- new_cards_limit: 任意, 整数, 1-100
-- review_limit: 任意, 整数, 1-500
+- parent_id: 任意, decks.id (同一ユーザー所有) に存在
+- default_domain_template_id: 任意, domain_templates.id に存在 (同一ユーザー)
 
-**Response 201**:
-```json
-{
-  "data": {
-    "id": 1,
-    "name": "Web開発",
-    "description": "Web開発関連の知識",
-    "default_domain_template_id": 1,
-    "new_cards_limit": 20,
-    "review_limit": null,
-    "card_count": 0,
-    "due_count": 0,
-    "created_at": "2026-04-13T00:00:00Z",
-    "updated_at": "2026-04-13T00:00:00Z"
-  }
-}
-```
+**Response 201**: 作成されたデッキデータ (GET と同構造)
 
 ---
 
 ### GET /api/decks/{id}
 デッキ詳細取得
 
-**Response 200**: 上記と同じデータ構造 + カード一覧を含める(オプション)
+**Response 200**: 上記と同じデータ構造。
 
 ---
 
 ### PUT /api/decks/{id}
-デッキ更新
+デッキ更新 (部分更新可)
 
-**Request Body**: POST と同じ(部分更新可)
+**Request Body**: POST と同じ + `parent_id` の変更可
+
+**バリデーション**:
+- parent_id に自身 / 自分の子孫を指定できない (循環防止、422)
+- parent_id の所有者は同一ユーザーに限定 (422)
 
 **Response 200**: 更新後のデッキデータ
+
+---
+
+### POST /api/decks/tree
+階層 + 並び順の一括更新 (ドラッグ DnD 後の保存用)
+
+**Request Body**:
+```json
+{
+  "nodes": [
+    {"id": 1, "parent_id": null, "display_order": 0},
+    {"id": 2, "parent_id": 1,    "display_order": 0},
+    {"id": 3, "parent_id": 1,    "display_order": 1}
+  ]
+}
+```
+
+**バリデーション**:
+- 循環参照が含まれる場合は 422
+- 自ユーザー所有外の id が含まれる場合は 422
+- トランザクションで一括更新
+
+**Response 204**: No Content
+
+**補足**: 既存の `POST /api/decks/reorder` (display_order のみの一括更新) は廃止し、
+本エンドポイントに統合する。
 
 ---
 
@@ -251,7 +273,10 @@ GET /sanctum/csrf-cookie
 
 **Response 204**: No Content
 
-**注意**: デッキ内のカード・スケジュール・レビュー履歴も連動削除 (CASCADE)
+**注意**:
+- 子デッキが残っている場合は **409 Conflict** を返し削除を拒否する。
+  先に子デッキを別デッキへ移動するか個別削除する必要がある。
+- 配下のカード・スケジュール・レビュー履歴は CASCADE で連動削除する。
 
 ---
 
@@ -860,11 +885,11 @@ AI候補生成
 **Request Body**:
 ```json
 {
-  "daily_new_limit": 20,
-  "daily_review_limit": 100,
   "default_domain_template_id": 1,
   "default_ai_provider": "openai",
   "default_ai_model": "gpt-4o-mini",
   "default_generation_count": 3
 }
 ```
+
+**補足**: 旧 `daily_new_limit` / `daily_review_limit` は廃止。復習対象は due なカードを制限なく返す。
