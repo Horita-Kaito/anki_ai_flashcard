@@ -106,6 +106,26 @@ final class ReviewSessionControllerTest extends TestCase
             ->assertJsonPath('data.total_due', 1);
     }
 
+    public function test_親デッキ指定で子孫デッキのカードも復習対象に含まれる(): void
+    {
+        $user = User::factory()->create();
+        $parent = Deck::factory()->for($user)->create();
+        $child = Deck::factory()->for($user)->create(['parent_id' => $parent->id]);
+        $grand = Deck::factory()->for($user)->create(['parent_id' => $child->id]);
+        $other = Deck::factory()->for($user)->create();
+
+        // parent(直下), child(孫), grand(ひ孫), other(無関係) にそれぞれカード
+        $this->makeCardWithSchedule($user, $parent);
+        $this->makeCardWithSchedule($user, $child);
+        $this->makeCardWithSchedule($user, $grand);
+        $this->makeCardWithSchedule($user, $other);
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/review-sessions/today?deck_id={$parent->id}")
+            ->assertOk()
+            ->assertJsonPath('data.total_due', 3);
+    }
+
     public function test_suspended_カードは含まれない(): void
     {
         $user = User::factory()->create();

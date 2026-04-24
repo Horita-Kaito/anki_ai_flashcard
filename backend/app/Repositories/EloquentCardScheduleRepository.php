@@ -48,16 +48,16 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
             ->count();
     }
 
-    public function dueCardsForUser(int $userId, \DateTimeInterface $before, ?int $deckId, int $limit): array
+    public function dueCardsForUser(int $userId, \DateTimeInterface $before, ?array $deckIds, int $limit): array
     {
         return CardSchedule::query()
             ->with(['card.tags'])
             ->where('user_id', $userId)
             ->where('due_at', '<=', $before)
             ->whereNull('archived_at')
-            ->when($deckId !== null, fn ($q) => $q->whereHas(
+            ->when($deckIds !== null && $deckIds !== [], fn ($q) => $q->whereHas(
                 'card',
-                fn ($cq) => $cq->where('deck_id', $deckId),
+                fn ($cq) => $cq->whereIn('deck_id', $deckIds),
             ))
             ->whereHas('card', fn ($cq) => $cq->where('is_suspended', false))
             ->orderBy('due_at')

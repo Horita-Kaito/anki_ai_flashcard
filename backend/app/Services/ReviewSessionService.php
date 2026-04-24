@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardReviewRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Services\Review\SchedulerInterface;
 use App\Enums\ReviewRating;
 use App\Exceptions\Domain\CardNotFoundException;
@@ -28,6 +29,7 @@ final class ReviewSessionService
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
         private readonly CardReviewRepositoryInterface $reviewRepository,
         private readonly CardRepositoryInterface $cardRepository,
+        private readonly DeckRepositoryInterface $deckRepository,
         private readonly SchedulerInterface $scheduler,
     ) {}
 
@@ -38,10 +40,19 @@ final class ReviewSessionService
     {
         $this->applyOverdueDecay($userId);
 
+        // 親デッキを指定された場合は、全子孫デッキのカードも対象に含める
+        $deckIds = null;
+        if ($deckId !== null) {
+            $deckIds = [
+                $deckId,
+                ...$this->deckRepository->descendantIdsFor($userId, $deckId),
+            ];
+        }
+
         return $this->scheduleRepository->dueCardsForUser(
             $userId,
             now(),
-            $deckId,
+            $deckIds,
             $limit,
         );
     }
