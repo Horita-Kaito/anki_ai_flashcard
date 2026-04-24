@@ -15,6 +15,7 @@ import {
 import { TagPicker } from "@/entities/tag/ui/tag-picker";
 import { useCreateTag } from "@/features/tag";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
+import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
 import { CARD_TYPES, CARD_TYPE_LABELS } from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
 import type { Card } from "@/entities/card/types";
@@ -34,7 +35,8 @@ export function CardForm({
   const createMutation = useCreateCard();
   const updateMutation = useUpdateCard(card?.id ?? 0);
   const createTag = useCreateTag();
-  const { data: decksPage } = useDeckList();
+  const { data: decks } = useDeckList();
+  const deckOptions = buildHierarchicalOptions(decks ?? []);
   const isEdit = !!card;
 
   const {
@@ -95,9 +97,10 @@ export function CardForm({
           aria-invalid={!!errors.deck_id}
         >
           <option value={0}>選択してください</option>
-          {decksPage?.data.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
+          {deckOptions.map((opt) => (
+            <option key={opt.id} value={opt.id}>
+              {"— ".repeat(opt.depth)}
+              {opt.name}
             </option>
           ))}
         </select>

@@ -5,6 +5,7 @@ import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useBatchAdoptCandidates } from "../api/ai-candidate-queries";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
+import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
 import { Button } from "@/shared/ui/button";
 
 interface BatchAdoptBarProps {
@@ -16,6 +17,7 @@ interface BatchAdoptBarProps {
  */
 export function BatchAdoptBar({ candidateIds }: BatchAdoptBarProps) {
   const { data: decks } = useDeckList();
+  const deckOptions = buildHierarchicalOptions(decks ?? []);
   const batchMutation = useBatchAdoptCandidates();
   const [deckId, setDeckId] = useState<number | "">("");
 
@@ -53,9 +55,10 @@ export function BatchAdoptBar({ candidateIds }: BatchAdoptBarProps) {
         aria-label="採用先のデッキ"
       >
         <option value="">デッキ選択</option>
-        {decks?.data.map((d) => (
-          <option key={d.id} value={d.id}>
-            {d.name}
+        {deckOptions.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {"— ".repeat(opt.depth)}
+            {opt.name}
           </option>
         ))}
       </select>

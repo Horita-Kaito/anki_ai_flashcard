@@ -27,7 +27,14 @@ export async function deleteDeck(id: number): Promise<void> {
   await apiClient.delete(`/decks/${id}`);
 }
 
-export async function reorderDecks(deckIds: number[]): Promise<void> {
+/** 階層 + 並び順の一括更新。ドラッグ&ドロップ保存後に呼ぶ。 */
+export interface DeckTreeNode {
+  id: number;
+  parent_id: number | null;
+  display_order: number;
+}
+
+export async function updateDeckTree(nodes: DeckTreeNode[]): Promise<void> {
   await fetchCsrfCookie();
-  await apiClient.post("/decks/reorder", { deck_ids: deckIds });
+  await apiClient.post("/decks/tree", { nodes });
 }

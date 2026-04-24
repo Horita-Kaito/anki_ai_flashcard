@@ -1,5 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createDeck, deleteDeck, reorderDecks, updateDeck } from "./endpoints";
+import {
+  createDeck,
+  deleteDeck,
+  updateDeck,
+  updateDeckTree,
+  type DeckTreeNode,
+} from "./endpoints";
 import type {
   CreateDeckInput,
   UpdateDeckInput,
@@ -40,10 +46,10 @@ export function useDeleteDeck() {
   });
 }
 
-export function useReorderDecks() {
+export function useUpdateDeckTree() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (deckIds: number[]) => reorderDecks(deckIds),
+    mutationFn: (nodes: DeckTreeNode[]) => updateDeckTree(nodes),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: deckKeys.all });
     },

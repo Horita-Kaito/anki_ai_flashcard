@@ -13,6 +13,7 @@ import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 import { Button } from "@/shared/ui/button";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
+import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
 
 interface CandidateCardProps {
   candidate: AiCardCandidate;
@@ -28,7 +29,8 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
     candidate.suggested_deck_id ?? defaultDeckId ?? ""
   );
 
-  const { data: decksPage } = useDeckList();
+  const { data: allDecks } = useDeckList();
+  const deckOptions = buildHierarchicalOptions(allDecks ?? []);
   const adoptMutation = useAdoptCandidate();
   const rejectMutation = useRejectCandidate();
   const restoreMutation = useRestoreCandidate();
@@ -228,9 +230,10 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
             aria-label="採用先のデッキ"
           >
             <option value="">採用先のデッキを選択</option>
-            {decksPage?.data.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
+            {deckOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {"— ".repeat(opt.depth)}
+                {opt.name}
               </option>
             ))}
           </select>

@@ -3,45 +3,28 @@ import type { Deck } from "@/entities/deck/types";
 
 const API = "http://localhost:8000";
 
-let mockDecks: Deck[] = [
+const initialDecks = (): Deck[] => [
   {
     id: 1,
+    parent_id: null,
     name: "Web開発",
     description: "Web開発関連の知識",
     default_domain_template_id: null,
-    new_cards_limit: 20,
-    review_limit: null,
+    display_order: 0,
     created_at: "2026-04-13T00:00:00+00:00",
     updated_at: "2026-04-13T00:00:00+00:00",
   },
 ];
 
+let mockDecks: Deck[] = initialDecks();
+
 export function resetMockDecks(): void {
-  mockDecks = [
-    {
-      id: 1,
-      name: "Web開発",
-      description: "Web開発関連の知識",
-      default_domain_template_id: null,
-      new_cards_limit: 20,
-      review_limit: null,
-      created_at: "2026-04-13T00:00:00+00:00",
-      updated_at: "2026-04-13T00:00:00+00:00",
-    },
-  ];
+  mockDecks = initialDecks();
 }
 
 export const deckHandlers = [
   http.get(`${API}/api/v1/decks`, () =>
-    HttpResponse.json({
-      data: mockDecks,
-      meta: {
-        current_page: 1,
-        last_page: 1,
-        per_page: 20,
-        total: mockDecks.length,
-      },
-    })
+    HttpResponse.json({ data: mockDecks })
   ),
 
   http.get(`${API}/api/v1/decks/:id`, ({ params }) => {
@@ -54,11 +37,11 @@ export const deckHandlers = [
     const body = (await request.json()) as Partial<Deck>;
     const created: Deck = {
       id: mockDecks.length + 1,
+      parent_id: body.parent_id ?? null,
       name: body.name ?? "",
       description: body.description ?? null,
-      default_domain_template_id: null,
-      new_cards_limit: body.new_cards_limit ?? 20,
-      review_limit: body.review_limit ?? null,
+      default_domain_template_id: body.default_domain_template_id ?? null,
+      display_order: mockDecks.length,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -76,6 +59,22 @@ export const deckHandlers = [
 
   http.delete(`${API}/api/v1/decks/:id`, ({ params }) => {
     mockDecks = mockDecks.filter((d) => d.id !== Number(params.id));
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${API}/api/v1/decks/tree`, async ({ request }) => {
+    const body = (await request.json()) as {
+      nodes: Array<{ id: number; parent_id: number | null; display_order: number }>;
+    };
+    for (const node of body.nodes) {
+      const idx = mockDecks.findIndex((d) => d.id === node.id);
+      if (idx === -1) continue;
+      mockDecks[idx] = {
+        ...mockDecks[idx],
+        parent_id: node.parent_id,
+        display_order: node.display_order,
+      };
+    }
     return new HttpResponse(null, { status: 204 });
   }),
 ];

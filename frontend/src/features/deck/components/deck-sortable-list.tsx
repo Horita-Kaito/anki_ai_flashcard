@@ -23,7 +23,7 @@ import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
 import { GripVertical, Layers } from "lucide-react";
 import { toast } from "sonner";
-import { useReorderDecks } from "../api/deck-queries";
+import { useUpdateDeckTree } from "../api/deck-queries";
 import type { Deck } from "@/entities/deck/types";
 import { haptic } from "@/shared/lib/haptics";
 
@@ -33,7 +33,7 @@ interface DeckSortableListProps {
 
 export function DeckSortableList({ decks }: DeckSortableListProps) {
   const [items, setItems] = useState<Deck[]>(decks);
-  const reorderMutation = useReorderDecks();
+  const reorderMutation = useUpdateDeckTree();
 
   // 親から新しい配列が来た場合は同期
   useEffect(() => {
@@ -66,7 +66,14 @@ export function DeckSortableList({ decks }: DeckSortableListProps) {
     haptic("medium");
 
     try {
-      await reorderMutation.mutateAsync(next.map((d) => d.id));
+      // 暫定: 階層は維持し、display_order のみ更新 (ツリー DnD は後続タスクで)
+      await reorderMutation.mutateAsync(
+        next.map((d, idx) => ({
+          id: d.id,
+          parent_id: d.parent_id,
+          display_order: idx,
+        })),
+      );
     } catch {
       // 失敗時は元に戻す
       setItems(items);
@@ -147,9 +154,6 @@ function SortableDeckItem({ deck }: { deck: Deck }) {
                 {deck.description}
               </span>
             )}
-          </span>
-          <span className="text-xs text-muted-foreground shrink-0">
-            上限 {deck.new_cards_limit}/日
           </span>
         </Link>
       </div>

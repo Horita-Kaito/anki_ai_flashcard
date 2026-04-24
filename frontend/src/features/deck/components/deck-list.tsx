@@ -35,7 +35,7 @@ export function DeckList() {
     );
   }
 
-  const decks = data?.data ?? [];
+  const decks = data ?? [];
 
   if (decks.length === 0) {
     return <DeckListEmpty />;

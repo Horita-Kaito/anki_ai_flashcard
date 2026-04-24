@@ -17,15 +17,18 @@ describe("createDeckSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("new_cards_limit が範囲外で失敗する", () => {
-    const over = createDeckSchema.safeParse({ name: "ok", new_cards_limit: 101 });
-    const under = createDeckSchema.safeParse({ name: "ok", new_cards_limit: 0 });
-    expect(over.success).toBe(false);
-    expect(under.success).toBe(false);
-  });
-
   it("description は省略可能", () => {
     const result = createDeckSchema.safeParse({ name: "Test", description: "" });
+    expect(result.success).toBe(true);
+  });
+
+  it("parent_id に null を指定できる", () => {
+    const result = createDeckSchema.safeParse({ name: "Test", parent_id: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("parent_id に数値を指定できる", () => {
+    const result = createDeckSchema.safeParse({ name: "Test", parent_id: 10 });
     expect(result.success).toBe(true);
   });
 });

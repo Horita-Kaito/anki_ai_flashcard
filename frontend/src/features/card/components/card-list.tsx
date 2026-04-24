@@ -7,6 +7,7 @@ import { CardListItem } from "./card-list-item";
 import { CardListEmpty } from "./card-list-empty";
 import { CardListSkeleton } from "./card-list-skeleton";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
+import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
 import { useTagList } from "@/entities/tag/api/tag-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
@@ -31,6 +32,7 @@ export function CardList() {
 
   const { data, isLoading, isError, refetch } = useCardList(1, filters);
   const { data: decks } = useDeckList();
+  const deckOptions = buildHierarchicalOptions(decks ?? []);
   const { data: tags } = useTagList();
 
   const hasActiveFilter = keyword !== "" || deckId !== "" || tagId !== "" || archiveFilter !== "active";
@@ -97,9 +99,10 @@ export function CardList() {
             aria-label="デッキで絞り込み"
           >
             <option value="">すべてのデッキ</option>
-            {decks?.data.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
+            {deckOptions.map((opt) => (
+              <option key={opt.id} value={opt.id}>
+                {"— ".repeat(opt.depth)}
+                {opt.name}
               </option>
             ))}
           </select>

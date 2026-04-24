@@ -10,19 +10,8 @@ export const createDeckSchema = z.object({
     .max(1000, "説明は1000文字以内で入力してください")
     .optional()
     .or(z.literal("")),
-  new_cards_limit: z
-    .number()
-    .int()
-    .min(1, "1以上で指定してください")
-    .max(100, "100以下で指定してください")
-    .optional(),
-  review_limit: z
-    .number()
-    .int()
-    .min(1)
-    .max(500)
-    .nullable()
-    .optional(),
+  parent_id: z.number().int().nullable().optional(),
+  default_domain_template_id: z.number().int().nullable().optional(),
 });
 
 export type CreateDeckInput = z.infer<typeof createDeckSchema>;

@@ -1,20 +1,18 @@
 import { apiClient } from "@/shared/api/client";
 import type { Deck } from "@/entities/deck/types";
-import type { PaginatedResponse } from "@/shared/types/pagination";
 import { deckResponseSchema } from "@/entities/deck/schemas";
-import { paginatedResponseSchema } from "@/shared/types/pagination-schema";
-import { parseApiResponse, parseApiDataResponse } from "@/shared/api/parse-response";
+import {
+  parseApiDataResponse,
+  parseApiListResponse,
+} from "@/shared/api/parse-response";
 
-const paginatedDeckSchema = paginatedResponseSchema(deckResponseSchema);
-
-export async function fetchDeckList(
-  page = 1,
-  perPage = 20
-): Promise<PaginatedResponse<Deck>> {
-  const res = await apiClient.get("/decks", {
-    params: { page, per_page: perPage },
-  });
-  return parseApiResponse(paginatedDeckSchema, res.data);
+/**
+ * デッキ一覧を全件取得する (階層表示に必要なため pagination なし)。
+ * 階層構造は parent_id と display_order からフロント側で組み立てる。
+ */
+export async function fetchDeckList(): Promise<Deck[]> {
+  const res = await apiClient.get("/decks");
+  return parseApiListResponse(deckResponseSchema, res);
 }
 
 export async function fetchDeck(id: number): Promise<Deck> {
