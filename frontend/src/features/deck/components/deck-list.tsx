@@ -3,11 +3,11 @@
 import { useDeckList } from "../api/deck-queries";
 import { DeckListEmpty } from "./deck-list-empty";
 import { DeckListSkeleton } from "./deck-list-skeleton";
-import { DeckSortableList } from "./deck-sortable-list";
+import { DeckTree } from "./deck-tree";
 
 /**
- * デッキ一覧コンテナ。
- * 並び順は DnD で変更可能 (display_order を保存)。
+ * デッキ一覧コンテナ (階層ツリー表示)。
+ * DnD で並び順と階層 (親子) を同時に変更可能。
  * モバイル: 長押し(200ms)でドラッグ開始、PC: 6px ドラッグで開始。
  */
 export function DeckList() {
@@ -44,9 +44,9 @@ export function DeckList() {
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground hidden md:block">
-        💡 左の handle をドラッグして並び順を変更できます
+        💡 ハンドルを上下にドラッグで並び替え、右にドラッグで別のデッキの子に入れられます
       </p>
-      <DeckSortableList decks={decks} />
+      <DeckTree decks={decks} />
     </div>
   );
 }
