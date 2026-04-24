@@ -5,8 +5,6 @@ const API = "http://localhost:8000";
 
 let mockSetting: UserSetting = {
   default_domain_template_id: null,
-  daily_new_limit: 20,
-  daily_review_limit: 100,
   default_ai_provider: "openai",
   default_ai_model: "gpt-4o-mini",
   default_generation_count: 3,

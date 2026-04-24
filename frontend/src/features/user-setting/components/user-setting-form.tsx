@@ -61,8 +61,6 @@ export function UserSettingForm() {
     if (setting) {
       reset({
         default_domain_template_id: setting.default_domain_template_id,
-        daily_new_limit: setting.daily_new_limit,
-        daily_review_limit: setting.daily_review_limit,
         default_ai_provider: setting.default_ai_provider,
         default_ai_model: setting.default_ai_model,
         default_generation_count: setting.default_generation_count,
@@ -87,38 +85,6 @@ export function UserSettingForm() {
     <form onSubmit={onSubmit} className="space-y-6" aria-label="設定フォーム">
       <section className="space-y-4 border rounded-xl p-4 md:p-5">
         <h2 className="font-medium">学習設定</h2>
-
-        <div className="space-y-1.5">
-          <label htmlFor="daily_new_limit" className="text-sm font-medium">
-            1日の新規カード上限
-          </label>
-          <input
-            id="daily_new_limit"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={500}
-            {...register("daily_new_limit", { valueAsNumber: true })}
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
-            aria-invalid={!!errors.daily_new_limit}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="daily_review_limit" className="text-sm font-medium">
-            1日の復習上限
-          </label>
-          <input
-            id="daily_review_limit"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            max={2000}
-            {...register("daily_review_limit", { valueAsNumber: true })}
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
-            aria-invalid={!!errors.daily_review_limit}
-          />
-        </div>
 
         <div className="space-y-1.5">
           <label
