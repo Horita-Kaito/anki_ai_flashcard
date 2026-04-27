@@ -11,6 +11,7 @@ import {
 } from "../api/ai-candidate-queries";
 import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
+import { toAiErrorMessage } from "../lib/ai-error-message";
 import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
@@ -55,15 +56,7 @@ export function GenerateCandidatesView({
         `${m.model} で ${result.candidates.length} 件生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
       );
     } catch (err: unknown) {
-      const status =
-        (err as { response?: { status?: number } }).response?.status;
-      if (status === 429) {
-        toast.error("本日の生成上限に達しました");
-      } else if (status === 502) {
-        toast.error("AI の応答解析に失敗しました。再試行してください");
-      } else {
-        toast.error("生成に失敗しました");
-      }
+      toast.error(toAiErrorMessage(err, "生成に失敗しました"));
     }
   }
 
@@ -77,13 +70,7 @@ export function GenerateCandidatesView({
         `${m.model} で ${result.candidates.length} 件追加生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
       );
     } catch (err: unknown) {
-      const status =
-        (err as { response?: { status?: number } }).response?.status;
-      if (status === 502) {
-        toast.error("AI の応答解析に失敗しました。再試行してください");
-      } else {
-        toast.error("追加生成に失敗しました");
-      }
+      toast.error(toAiErrorMessage(err, "追加生成に失敗しました"));
     }
   }
 
@@ -103,8 +90,8 @@ export function GenerateCandidatesView({
       toast.success(
         `${m.model} で ${result.candidates.length} 件再生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
       );
-    } catch {
-      toast.error("再生成に失敗しました");
+    } catch (err: unknown) {
+      toast.error(toAiErrorMessage(err, "再生成に失敗しました"));
     }
   }
 

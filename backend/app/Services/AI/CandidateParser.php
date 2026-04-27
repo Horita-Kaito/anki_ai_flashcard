@@ -5,42 +5,205 @@ declare(strict_types=1);
 namespace App\Services\AI;
 
 use App\Enums\CardType;
+use App\Exceptions\Domain\AiGenerationFailedException;
 
 /**
  * AI からの生応答テキストを構造化候補配列にパースする。
- * 不正な JSON、欠損フィールド、想定外の値に対して寛容にフォールバックする。
+ *
+ * 失敗パターンと挙動:
+ *   - 完全に空 / コードフェンスも JSON も無い → invalidResponse 例外 (debug に末尾抜粋)
+ *   - JSON 末尾が壊れている (max_output_tokens で打ち切り) →
+ *     完成済み要素のみ抽出して ParseResult(truncated=true) で返す。
+ *     1 件も復元できない場合は jsonTruncated 例外
+ *   - decode 自体は成功するが要素 0 件 → invalidResponse 例外
  */
 final class CandidateParser
 {
     /**
-     * @return array<int, array{
-     *   question: string,
-     *   answer: string,
-     *   card_type: string,
-     *   focus_type: ?string,
-     *   rationale: ?string,
-     *   explanation: ?string,
-     *   confidence: ?float,
-     *   suggested_deck_id: ?int,
-     * }>
+     * @throws AiGenerationFailedException
      */
-    public function parse(string $rawContent): array
+    public function parse(string $rawContent): ParseResult
     {
-        $json = $this->extractJson($rawContent);
-        if ($json === null) {
-            return [];
+        $trimmed = trim($rawContent);
+        if ($trimmed === '') {
+            throw AiGenerationFailedException::invalidResponse(
+                'empty content',
+                'rawContent is empty',
+            );
         }
 
-        $decoded = json_decode($json, true);
-        if (! is_array($decoded)) {
-            return [];
+        $json = $this->extractJson($trimmed);
+
+        // 通常パース
+        if ($json !== null) {
+            $decoded = json_decode($json, true);
+            if (is_array($decoded)) {
+                $list = $decoded['candidates'] ?? $decoded;
+                if (is_array($list)) {
+                    $items = $this->normalizeItems($list);
+                    if ($items !== []) {
+                        return new ParseResult($items, false);
+                    }
+                }
+            }
         }
 
-        $list = $decoded['candidates'] ?? $decoded;
-        if (! is_array($list)) {
-            return [];
+        // 部分リカバリ (末尾切れ JSON の救出)
+        $recovered = $this->recoverPartialCandidates($trimmed);
+        if ($recovered !== []) {
+            $items = $this->normalizeItems($recovered);
+            if ($items !== []) {
+                $tail = mb_substr($trimmed, max(0, mb_strlen($trimmed) - 200));
+                $detail = sprintf(
+                    'truncated, recovered %d items, tail=%s',
+                    count($items),
+                    $tail,
+                );
+
+                return new ParseResult($items, true, $detail);
+            }
         }
 
+        // 完全失敗
+        $jsonError = json_last_error_msg();
+        $tail = mb_substr($trimmed, max(0, mb_strlen($trimmed) - 200));
+        $endsWithCloseBracket = str_ends_with($trimmed, '}') || str_ends_with($trimmed, ']');
+
+        if (! $endsWithCloseBracket) {
+            // 末尾が括弧で閉じていない = 打ち切り濃厚
+            throw AiGenerationFailedException::jsonTruncated(
+                sprintf('json_error=%s, tail=%s', $jsonError, $tail),
+            );
+        }
+
+        throw AiGenerationFailedException::invalidResponse(
+            'JSON parse failed',
+            sprintf('json_error=%s, tail=%s', $jsonError, $tail),
+        );
+    }
+
+    /**
+     * 応答文から JSON 部分を抽出する (整形された応答を期待)。
+     * コードフェンス、前後の説明文を除去。
+     */
+    private function extractJson(string $trimmed): ?string
+    {
+        // コードフェンスを除去
+        if (preg_match('/```(?:json)?\s*(.+?)\s*```/s', $trimmed, $m)) {
+            return trim($m[1]);
+        }
+
+        // 最初の { から最後の } までを抽出
+        $start = strpos($trimmed, '{');
+        $end = strrpos($trimmed, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            return substr($trimmed, $start, $end - $start + 1);
+        }
+
+        // 配列直下の場合
+        $start = strpos($trimmed, '[');
+        $end = strrpos($trimmed, ']');
+        if ($start !== false && $end !== false && $end > $start) {
+            return substr($trimmed, $start, $end - $start + 1);
+        }
+
+        return null;
+    }
+
+    /**
+     * 末尾が壊れた JSON から、完成済みの candidates 要素 (`{...}`) だけを抽出する。
+     * `"candidates"` キー直後の `[` を起点に、ネスト深さを追って完全に閉じた
+     * オブジェクトのみ json_decode する。文字列内の `{` や `}`、エスケープも考慮する。
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function recoverPartialCandidates(string $trimmed): array
+    {
+        // candidates 配列の開始位置を探す
+        if (! preg_match('/"candidates"\s*:\s*\[/', $trimmed, $m, PREG_OFFSET_CAPTURE)) {
+            // candidates キーがない場合はトップレベル配列の可能性を試す
+            $arrayStart = strpos($trimmed, '[');
+            if ($arrayStart === false) {
+                return [];
+            }
+            $body = substr($trimmed, $arrayStart + 1);
+        } else {
+            $bodyStart = $m[0][1] + strlen($m[0][0]);
+            $body = substr($trimmed, $bodyStart);
+        }
+
+        return $this->extractCompleteObjects($body);
+    }
+
+    /**
+     * 配列ボディから、ネスト深さ 1 のオブジェクトを順に取り出す。
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function extractCompleteObjects(string $body): array
+    {
+        $items = [];
+        $depth = 0;
+        $start = -1;
+        $inString = false;
+        $escape = false;
+        $len = strlen($body);
+
+        for ($i = 0; $i < $len; $i++) {
+            $c = $body[$i];
+
+            if ($escape) {
+                $escape = false;
+
+                continue;
+            }
+            if ($c === '\\') {
+                $escape = true;
+
+                continue;
+            }
+            if ($c === '"') {
+                $inString = ! $inString;
+
+                continue;
+            }
+            if ($inString) {
+                continue;
+            }
+
+            if ($c === '{') {
+                if ($depth === 0) {
+                    $start = $i;
+                }
+                $depth++;
+            } elseif ($c === '}') {
+                $depth--;
+                if ($depth === 0 && $start !== -1) {
+                    $obj = substr($body, $start, $i - $start + 1);
+                    $decoded = json_decode($obj, true);
+                    if (is_array($decoded)) {
+                        $items[] = $decoded;
+                    }
+                    $start = -1;
+                }
+            } elseif ($c === ']' && $depth === 0) {
+                // candidates 配列の閉じ括弧、ここで終わり
+                break;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * 生 JSON 配列を正規化済み候補配列に変換する。
+     * 不正な要素はスキップし、デフォルト値で埋める。
+     *
+     * @param  array<int|string, mixed>  $list
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizeItems(array $list): array
+    {
         $out = [];
         foreach ($list as $item) {
             if (! is_array($item)) {
@@ -85,39 +248,6 @@ final class CandidateParser
         }
 
         return $out;
-    }
-
-    /**
-     * 応答文から JSON 部分を抽出する。
-     * ```json ``` で囲まれている場合、前後に説明文がある場合も対応。
-     */
-    private function extractJson(string $content): ?string
-    {
-        $trimmed = trim($content);
-        if ($trimmed === '') {
-            return null;
-        }
-
-        // コードフェンスを除去
-        if (preg_match('/```(?:json)?\s*(.+?)\s*```/s', $trimmed, $m)) {
-            return trim($m[1]);
-        }
-
-        // 最初の { から最後の } までを抽出
-        $start = strpos($trimmed, '{');
-        $end = strrpos($trimmed, '}');
-        if ($start !== false && $end !== false && $end > $start) {
-            return substr($trimmed, $start, $end - $start + 1);
-        }
-
-        // 配列直下の場合
-        $start = strpos($trimmed, '[');
-        $end = strrpos($trimmed, ']');
-        if ($start !== false && $end !== false && $end > $start) {
-            return substr($trimmed, $start, $end - $start + 1);
-        }
-
-        return null;
     }
 
     /**

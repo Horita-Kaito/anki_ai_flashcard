@@ -24,4 +24,22 @@ abstract class DomainException extends RuntimeException
     {
         return $this->getMessage();
     }
+
+    /**
+     * フロントが分岐可能な機械可読コード (例: JSON_TRUNCATED, SAFETY_BLOCKED)。
+     * デフォルトは null (未分類)。サブクラスで上書きする。
+     */
+    public function errorCode(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * デバッグ・運用ログ向けの追加情報 (ai_generation_logs.error_reason に保存される)。
+     * デフォルトは null。
+     */
+    public function debugDetail(): ?string
+    {
+        return null;
+    }
 }

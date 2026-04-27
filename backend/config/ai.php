@@ -57,7 +57,7 @@ return [
         'max_candidate_count' => (int) env('AI_MAX_CANDIDATE_COUNT', 10),
         'max_retries' => (int) env('AI_MAX_RETRIES', 2),
         'temperature' => (float) env('AI_TEMPERATURE', 0.6),
-        'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 2000),
+        'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 4000),
     ],
 
     /*

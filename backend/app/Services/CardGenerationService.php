@@ -91,8 +91,37 @@ final class CardGenerationService
         /** @var AiGenerationResult $result */
         $result = $this->callWithRetry($request);
 
-        // JSON パース (リトライ済みの最終応答を)
-        $parsed = $this->parser->parse($result->rawContent);
+        // JSON パース (リトライ済みの最終応答を)。失敗時は AiGenerationFailedException が投げられる。
+        try {
+            $parseResult = $this->parser->parse($result->rawContent);
+        } catch (AiGenerationFailedException $parseError) {
+            $this->logRepository->create([
+                'user_id' => $note->user_id,
+                'note_seed_id' => $note->id,
+                'provider' => $result->provider,
+                'model_name' => $result->model,
+                'prompt_version' => $promptVersion,
+                'input_tokens' => $result->inputTokens,
+                'output_tokens' => $result->outputTokens,
+                'cost_usd' => $result->costUsd,
+                'duration_ms' => $result->durationMs,
+                'status' => 'failed',
+                'error_reason' => mb_substr(
+                    sprintf(
+                        '[%s] %s',
+                        $parseError->errorCode() ?? 'PARSE_ERROR',
+                        $parseError->debugDetail() ?? $parseError->getMessage(),
+                    ),
+                    0,
+                    2000,
+                ),
+                'candidates_count' => 0,
+            ]);
+
+            throw $parseError;
+        }
+
+        $parsed = $parseResult->items;
 
         // ログはトランザクション外で保存 (失敗時もロールバックされないようにする)
         $log = $this->logRepository->create([
@@ -105,16 +134,12 @@ final class CardGenerationService
             'output_tokens' => $result->outputTokens,
             'cost_usd' => $result->costUsd,
             'duration_ms' => $result->durationMs,
-            'status' => $parsed === [] ? 'failed' : 'success',
-            'error_reason' => $parsed === [] ? 'JSON パースに失敗しました' : null,
+            'status' => 'success',
+            'error_reason' => $parseResult->truncated
+                ? mb_substr('[PARTIAL] '.($parseResult->debugDetail ?? ''), 0, 2000)
+                : null,
             'candidates_count' => count($parsed),
         ]);
-
-        if ($parsed === []) {
-            throw AiGenerationFailedException::invalidResponse(
-                'AI 応答の JSON パースに失敗しました'
-            );
-        }
 
         $deckIds = array_column($decks, 'id');
 

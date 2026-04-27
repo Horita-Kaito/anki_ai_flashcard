@@ -114,10 +114,46 @@ final class GoogleAiProvider implements AiProviderInterface
             throw AiGenerationFailedException::invalidResponse('non-array body');
         }
 
-        $content = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
-        if (! is_string($content) || $content === '') {
-            throw AiGenerationFailedException::invalidResponse('empty content');
+        // 入力プロンプト自体がブロックされた場合 (candidates が空)
+        $blockReason = $body['promptFeedback']['blockReason'] ?? null;
+        if (is_string($blockReason) && $blockReason !== '') {
+            throw AiGenerationFailedException::safetyBlocked(
+                "promptFeedback.blockReason={$blockReason}",
+            );
         }
+
+        $candidate = $body['candidates'][0] ?? null;
+        if (! is_array($candidate)) {
+            throw AiGenerationFailedException::invalidResponse(
+                'no candidates',
+                'response body had no candidates[0]',
+            );
+        }
+
+        // 応答が安全フィルタや MAX_TOKENS で打ち切られた場合
+        $finishReason = $candidate['finishReason'] ?? null;
+        $content = $candidate['content']['parts'][0]['text'] ?? null;
+
+        if ($finishReason === 'SAFETY' || $finishReason === 'RECITATION' || $finishReason === 'PROHIBITED_CONTENT') {
+            throw AiGenerationFailedException::safetyBlocked(
+                "finishReason={$finishReason}",
+            );
+        }
+
+        if ($finishReason === 'MAX_TOKENS' && (! is_string($content) || $content === '')) {
+            // 出力 0 で MAX_TOKENS になるケース (ほぼ思考トークンで埋まった等)
+            throw AiGenerationFailedException::maxTokens();
+        }
+
+        if (! is_string($content) || $content === '') {
+            throw AiGenerationFailedException::invalidResponse(
+                'empty content',
+                "finishReason={$finishReason}",
+            );
+        }
+
+        // MAX_TOKENS でもコンテンツがあれば downstream の CandidateParser で
+        // 部分リカバリさせる (truncated=true で記録される)。
 
         $usage = $body['usageMetadata'] ?? [];
         $inputTokens = (int) ($usage['promptTokenCount'] ?? 0);

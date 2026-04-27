@@ -28,9 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // ドメイン例外を API JSON レスポンスに変換
         $exceptions->render(function (DomainException $e, Request $request) {
             if ($request->expectsJson()) {
-                return response()->json([
-                    'message' => $e->userMessage(),
-                ], $e->statusCode());
+                $payload = ['message' => $e->userMessage()];
+                if ($e->errorCode() !== null) {
+                    $payload['code'] = $e->errorCode();
+                }
+
+                return response()->json($payload, $e->statusCode());
             }
 
             return null;
