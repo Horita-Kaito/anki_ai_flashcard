@@ -1,6 +1,7 @@
 "use client";
 
 import type { Card } from "@/entities/card/types";
+import { ClozeText } from "@/shared/ui/cloze-text";
 import { haptic } from "@/shared/lib/haptics";
 
 interface ReviewCardFlipProps {
@@ -71,9 +72,18 @@ export function ReviewCardFlip({
           <p className="text-xs font-medium text-muted-foreground mb-2">
             問題
           </p>
-          <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
-            {card.question}
-          </p>
+          {card.card_type === "cloze_like" ? (
+            <p className="text-lg md:text-xl">
+              <ClozeText
+                text={card.question}
+                mode={showAnswer ? "back" : "front"}
+              />
+            </p>
+          ) : (
+            <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
+              {card.question}
+            </p>
+          )}
         </div>
       </div>
 

@@ -170,4 +170,34 @@ final class CandidateParserTest extends TestCase
         $this->assertCount(1, $result->items);
         $this->assertSame('光合成', $result->items[0]['answer']);
     }
+
+    public function test_cloze_likeで中身空はbasic_qaにダウングレードする(): void
+    {
+        $json = json_encode(['candidates' => [
+            [
+                'question' => 'RFID は電磁波で情報を読み取る {{c1::}} 型の技術',
+                'answer' => '非接触',
+                'card_type' => 'cloze_like',
+            ],
+        ]]);
+
+        $result = $this->parser->parse($json);
+
+        $this->assertSame('basic_qa', $result->items[0]['card_type']);
+    }
+
+    public function test_cloze_likeで有効な_cloze_があればそのまま維持する(): void
+    {
+        $json = json_encode(['candidates' => [
+            [
+                'question' => 'RFID は電磁波で情報を読み取る {{c1::非接触}} 型の技術',
+                'answer' => '非接触',
+                'card_type' => 'cloze_like',
+            ],
+        ]]);
+
+        $result = $this->parser->parse($json);
+
+        $this->assertSame('cloze_like', $result->items[0]['card_type']);
+    }
 }

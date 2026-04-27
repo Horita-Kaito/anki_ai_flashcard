@@ -14,7 +14,7 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
   basic_qa: "基本Q&A",
   comparison: "比較",
   practical_case: "実務ケース",
-  cloze_like: "穴埋め (将来)",
+  cloze_like: "穴埋め",
 };
 
 export const SCHEDULE_STATES = ["new", "learning", "review", "relearning"] as const;

@@ -64,6 +64,15 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('オーバーラップ法', $prompt);
     }
 
+    public function test_システムプロンプトにcloze中身空禁止の明示がある(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('絶対禁止', $prompt);
+        $this->assertStringContainsString('{{c1::}}', $prompt);
+        $this->assertStringContainsString('{{c1::非接触}}', $prompt);
+    }
+
     public function test_システムプロンプトに曖昧な問いを禁止する悪例が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);

@@ -220,6 +220,12 @@ final class CandidateParser
                 $cardType = 'basic_qa';
             }
 
+            // cloze_like を名乗っているのに question に有効な {{cN::xxx}} が無ければ
+            // フロントで穴埋め描画できないため basic_qa にダウングレードする。
+            if ($cardType === 'cloze_like' && ! self::hasValidCloze($question)) {
+                $cardType = 'basic_qa';
+            }
+
             $confidence = $item['confidence'] ?? null;
             if ($confidence !== null) {
                 $confidence = max(0.0, min(1.0, (float) $confidence));
@@ -261,5 +267,14 @@ final class CandidateParser
         }
 
         return is_string($v) ? $v : (string) $v;
+    }
+
+    /**
+     * `{{cN::xxx}}` (xxx は非空) が 1 つ以上含まれるかを判定する。
+     * フロント側の ClozeText が描画できる cloze 記法の最低条件。
+     */
+    public static function hasValidCloze(string $question): bool
+    {
+        return (bool) preg_match('/\{\{c\d+::[^}]+\}\}/u', $question);
     }
 }

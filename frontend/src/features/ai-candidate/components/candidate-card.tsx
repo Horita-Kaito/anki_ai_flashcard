@@ -12,6 +12,7 @@ import {
 import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 import { Button } from "@/shared/ui/button";
+import { ClozeText } from "@/shared/ui/cloze-text";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
 
@@ -204,7 +205,13 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
         </div>
       ) : (
         <div className="space-y-2">
-          <p className="font-medium">{question}</p>
+          {candidate.card_type === "cloze_like" ? (
+            <p className="font-medium">
+              <ClozeText text={question} mode="front" />
+            </p>
+          ) : (
+            <p className="font-medium">{question}</p>
+          )}
           <p className="text-sm text-muted-foreground">{answer}</p>
           {explanation && (
             <p className="text-sm text-muted-foreground border-l-2 border-muted-foreground/30 pl-2 whitespace-pre-wrap">
