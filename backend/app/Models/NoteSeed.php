@@ -8,6 +8,7 @@ use Database\Factories\NoteSeedFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NoteSeed extends Model
 {
@@ -34,5 +35,17 @@ class NoteSeed extends Model
     public function domainTemplate(): BelongsTo
     {
         return $this->belongsTo(DomainTemplate::class);
+    }
+
+    /** @return HasMany<AiCardCandidate, self> */
+    public function candidates(): HasMany
+    {
+        return $this->hasMany(AiCardCandidate::class);
+    }
+
+    /** @return HasMany<AiGenerationLog, self> */
+    public function generationLogs(): HasMany
+    {
+        return $this->hasMany(AiGenerationLog::class);
     }
 }

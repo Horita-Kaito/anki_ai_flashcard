@@ -27,6 +27,11 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
         $keyword = $filters['q'] ?? null;
 
         return $this->userScopedQuery($userId)
+            ->withCount([
+                'candidates as candidates_pending_count' => fn ($q) => $q->where('status', 'pending'),
+                'candidates as candidates_adopted_count' => fn ($q) => $q->where('status', 'adopted'),
+                'generationLogs as generation_attempts_count',
+            ])
             ->when($templateId !== null, fn ($q) => $q->where('domain_template_id', $templateId))
             ->when($keyword !== null && $keyword !== '', function ($q) use ($keyword) {
                 $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);

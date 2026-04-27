@@ -10,6 +10,9 @@ export const noteSeedResponseSchema = z
     note_context: z.string().nullable(),
     created_at: z.string().nullable(),
     updated_at: z.string().nullable(),
+    candidates_pending_count: z.number().int().nonnegative().optional(),
+    candidates_adopted_count: z.number().int().nonnegative().optional(),
+    generation_attempts_count: z.number().int().nonnegative().optional(),
   })
   .passthrough();
 

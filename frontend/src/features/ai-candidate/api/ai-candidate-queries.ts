@@ -19,6 +19,7 @@ import {
 } from "./endpoints";
 import type { CandidateStatus } from "@/entities/ai-candidate/types";
 import { cardKeys } from "@/features/card/api/card-queries";
+import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
 
 export const aiCandidateKeys = {
   all: ["ai-candidates"] as const,
@@ -44,6 +45,8 @@ export function useGenerateCandidates(noteSeedId: number) {
       generateCandidates(noteSeedId, options),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -55,6 +58,8 @@ export function useRegenerateCandidates(noteSeedId: number) {
       regenerateCandidates(noteSeedId, options),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -66,6 +71,8 @@ export function useAddMoreCandidates(noteSeedId: number) {
       addMoreCandidates(noteSeedId, options),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -82,6 +89,8 @@ export function useUpdateCandidate() {
     }) => updateCandidate(id, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -92,6 +101,8 @@ export function useRejectCandidate() {
     mutationFn: (id: number) => rejectCandidate(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -102,6 +113,8 @@ export function useRestoreCandidate() {
     mutationFn: (id: number) => restoreCandidate(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
+      // メモ一覧の生成カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -114,6 +127,8 @@ export function useAdoptCandidate() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
       qc.invalidateQueries({ queryKey: cardKeys.all });
+      // メモ一覧の採用カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
@@ -125,6 +140,8 @@ export function useBatchAdoptCandidates() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
       qc.invalidateQueries({ queryKey: cardKeys.all });
+      // メモ一覧の採用カウンタを更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     },
   });
 }
