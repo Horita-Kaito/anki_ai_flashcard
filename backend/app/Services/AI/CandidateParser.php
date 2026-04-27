@@ -67,10 +67,11 @@ final class CandidateParser
         // 完全失敗
         $jsonError = json_last_error_msg();
         $tail = mb_substr($trimmed, max(0, mb_strlen($trimmed) - 200));
+        $hasJsonStart = str_contains($trimmed, '{') || str_contains($trimmed, '[');
         $endsWithCloseBracket = str_ends_with($trimmed, '}') || str_ends_with($trimmed, ']');
 
-        if (! $endsWithCloseBracket) {
-            // 末尾が括弧で閉じていない = 打ち切り濃厚
+        if ($hasJsonStart && ! $endsWithCloseBracket) {
+            // JSON 構造の開始はあるが括弧で閉じていない = 打ち切り濃厚
             throw AiGenerationFailedException::jsonTruncated(
                 sprintf('json_error=%s, tail=%s', $jsonError, $tail),
             );

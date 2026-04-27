@@ -22,7 +22,7 @@ final class AiGenerationFailedException extends DomainException
 
     private function __construct(
         string $message,
-        private readonly string $code,
+        private readonly string $errorKind,
         private readonly ?string $userText = null,
         private readonly ?string $debugDetailText = null,
     ) {
@@ -107,7 +107,7 @@ final class AiGenerationFailedException extends DomainException
 
     public function errorCode(): ?string
     {
-        return $this->code;
+        return $this->errorKind;
     }
 
     public function debugDetail(): ?string
