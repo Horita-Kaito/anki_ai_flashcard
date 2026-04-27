@@ -7,11 +7,17 @@ namespace App\Exceptions\Domain;
 final class AiGenerationFailedException extends DomainException
 {
     public const CODE_TIMEOUT = 'TIMEOUT';
+
     public const CODE_RATE_LIMITED = 'RATE_LIMITED';
+
     public const CODE_INVALID_RESPONSE = 'INVALID_RESPONSE';
+
     public const CODE_JSON_TRUNCATED = 'JSON_TRUNCATED';
+
     public const CODE_SAFETY_BLOCKED = 'SAFETY_BLOCKED';
+
     public const CODE_MAX_TOKENS = 'MAX_TOKENS';
+
     public const CODE_GENERIC = 'GENERIC';
 
     private function __construct(
