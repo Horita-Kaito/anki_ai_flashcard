@@ -29,7 +29,7 @@ final class NoteSeedService
     }
 
     /**
-     * @param  array{domain_template_id?: int, q?: string}  $filters
+     * @param  array{domain_template_id?: int, q?: string, generation_status?: string}  $filters
      * @return LengthAwarePaginator<int, NoteSeed>
      */
     public function paginateForUser(

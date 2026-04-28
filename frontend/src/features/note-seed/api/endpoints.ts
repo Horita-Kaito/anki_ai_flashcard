@@ -14,6 +14,7 @@ const paginatedNoteSeedSchema = paginatedResponseSchema(noteSeedResponseSchema);
 export interface NoteSeedListFilters {
   domain_template_id?: number;
   q?: string;
+  generation_status?: "no-attempt";
 }
 
 export async function fetchNoteSeedList(
@@ -26,6 +27,9 @@ export async function fetchNoteSeedList(
     params.domain_template_id = filters.domain_template_id;
   }
   if (filters.q && filters.q.trim() !== "") params.q = filters.q;
+  if (filters.generation_status) {
+    params.generation_status = filters.generation_status;
+  }
 
   const res = await apiClient.get("/note-seeds", { params });
   return parseApiResponse(paginatedNoteSeedSchema, res.data);

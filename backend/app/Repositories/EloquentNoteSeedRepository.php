@@ -25,6 +25,7 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
     {
         $templateId = $filters['domain_template_id'] ?? null;
         $keyword = $filters['q'] ?? null;
+        $generationStatus = $filters['generation_status'] ?? null;
 
         return $this->userScopedQuery($userId)
             ->withCount([
@@ -33,6 +34,7 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
                 'generationLogs as generation_attempts_count',
             ])
             ->when($templateId !== null, fn ($q) => $q->where('domain_template_id', $templateId))
+            ->when($generationStatus === 'no-attempt', fn ($q) => $q->whereDoesntHave('generationLogs'))
             ->when($keyword !== null && $keyword !== '', function ($q) use ($keyword) {
                 $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
                 $like = '%'.$escaped.'%';
@@ -47,6 +49,7 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
             ->appends(array_filter([
                 'domain_template_id' => $templateId,
                 'q' => $keyword,
+                'generation_status' => $generationStatus,
             ], fn ($v) => $v !== null && $v !== ''));
     }
 

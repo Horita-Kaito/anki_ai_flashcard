@@ -15,21 +15,24 @@ import type { NoteSeed } from "@/entities/note-seed/types";
 export function NoteSeedList() {
   const [keyword, setKeyword] = useState("");
   const [templateId, setTemplateId] = useState<number | "">("");
+  const [onlyNoAttempt, setOnlyNoAttempt] = useState(false);
   const debouncedKeyword = useDebouncedValue(keyword, 300);
 
   const filters = {
     q: debouncedKeyword || undefined,
     domain_template_id: templateId === "" ? undefined : Number(templateId),
+    generation_status: onlyNoAttempt ? ("no-attempt" as const) : undefined,
   };
 
   const { data, isLoading, isError, refetch } = useNoteSeedList(1, filters);
   const { data: templates } = useDomainTemplateList();
 
-  const hasActiveFilter = keyword !== "" || templateId !== "";
+  const hasActiveFilter = keyword !== "" || templateId !== "" || onlyNoAttempt;
 
   function resetFilters() {
     setKeyword("");
     setTemplateId("");
+    setOnlyNoAttempt(false);
   }
 
   return (
@@ -65,6 +68,16 @@ export function NoteSeedList() {
             </option>
           ))}
         </select>
+
+        <label className="flex items-center gap-2 min-h-11 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={onlyNoAttempt}
+            onChange={(e) => setOnlyNoAttempt(e.target.checked)}
+            className="size-4 rounded border-input accent-primary cursor-pointer"
+          />
+          <span className="text-sm">未生成のメモのみ表示</span>
+        </label>
 
         {hasActiveFilter && (
           <Button

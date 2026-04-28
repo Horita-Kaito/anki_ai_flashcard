@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\AiGenerationLog;
 use App\Models\DomainTemplate;
 use App\Models\NoteSeed;
 use App\Models\User;
@@ -65,5 +66,43 @@ final class NoteSeedSearchTest extends TestCase
             ->getJson('/api/v1/note-seeds?q=DI')
             ->assertOk()
             ->assertJsonCount(1, 'data');
+    }
+
+    public function test_generation_status_no_attemptで生成試行のないメモのみ返る(): void
+    {
+        $user = User::factory()->create();
+        $withLog = NoteSeed::factory()->for($user)->create(['body' => '生成済みメモ']);
+        $withoutLog = NoteSeed::factory()->for($user)->create(['body' => '未生成メモ']);
+
+        AiGenerationLog::create([
+            'user_id' => $user->id,
+            'note_seed_id' => $withLog->id,
+            'provider' => 'fake',
+            'model_name' => 'fake-model',
+            'prompt_version' => 'v1.0',
+            'input_tokens' => 0,
+            'output_tokens' => 0,
+            'cost_usd' => 0,
+            'duration_ms' => 0,
+            'status' => 'success',
+            'candidates_count' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/note-seeds?generation_status=no-attempt')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $withoutLog->id);
+    }
+
+    public function test_generation_status_の不正値は無視される(): void
+    {
+        $user = User::factory()->create();
+        NoteSeed::factory()->for($user)->count(3)->create();
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/note-seeds?generation_status=garbage')
+            ->assertOk()
+            ->assertJsonCount(3, 'data');
     }
 }

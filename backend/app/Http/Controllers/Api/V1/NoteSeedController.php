@@ -30,6 +30,9 @@ final class NoteSeedController extends Controller
         if ($request->filled('q')) {
             $filters['q'] = (string) $request->query('q');
         }
+        if ($request->query('generation_status') === 'no-attempt') {
+            $filters['generation_status'] = 'no-attempt';
+        }
 
         $notes = $this->noteSeedService->paginateForUser(
             userId: $request->user()->id,
