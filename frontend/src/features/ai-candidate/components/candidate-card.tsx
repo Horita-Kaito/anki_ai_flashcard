@@ -142,7 +142,7 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
       </header>
 
       {editing ? (
-        <div className="space-y-3">
+        <div className="space-y-3 pb-[env(safe-area-inset-bottom)]">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               問題文
@@ -233,14 +233,14 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
             onChange={(e) =>
               setDeckId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background sm:flex-1"
+            className="border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background sm:flex-1 max-w-full"
             aria-label="採用先のデッキ"
           >
             <option value="">採用先のデッキを選択</option>
             {deckOptions.map((opt) => (
               <option key={opt.id} value={opt.id}>
                 {"— ".repeat(opt.depth)}
-                {opt.name}
+                {truncateDeckName(opt.name)}
               </option>
             ))}
           </select>
@@ -260,9 +260,10 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
               type="button"
               size="lg"
               variant="outline"
-              className="min-h-11"
+              className="min-h-11 min-w-11"
               onClick={() => setEditing(true)}
               aria-keyshortcuts="e"
+              aria-label="編集"
             >
               <Pencil className="size-4" aria-hidden />
             </Button>
@@ -270,10 +271,11 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
               type="button"
               size="lg"
               variant="outline"
-              className="min-h-11 text-destructive"
+              className="min-h-11 min-w-11 text-destructive"
               onClick={handleReject}
               disabled={rejectMutation.isPending}
               aria-keyshortcuts="r"
+              aria-label="却下"
             >
               <X className="size-4" aria-hidden />
             </Button>
@@ -282,4 +284,12 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
       )}
     </article>
   );
+}
+
+const MAX_DECK_NAME_LENGTH = 28;
+
+function truncateDeckName(name: string): string {
+  return name.length > MAX_DECK_NAME_LENGTH
+    ? name.slice(0, MAX_DECK_NAME_LENGTH) + "…"
+    : name;
 }

@@ -15,6 +15,7 @@ import { toAiErrorMessage } from "../lib/ai-error-message";
 import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 
 interface GenerateCandidatesViewProps {
   noteSeedId: number;
@@ -35,6 +36,8 @@ export function GenerateCandidatesView({
   const generateMutation = useGenerateCandidates(noteSeedId);
   const regenerateMutation = useRegenerateCandidates(noteSeedId);
   const addMoreMutation = useAddMoreCandidates(noteSeedId);
+
+  const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
 
   // 初回ロード時に note.domain_template_id を反映
   if (note && templateId === null && note.domain_template_id) {
@@ -75,13 +78,7 @@ export function GenerateCandidatesView({
   }
 
   async function handleRegenerate() {
-    if (
-      !confirm(
-        "現在の未採用候補をすべて却下して、新しい候補を生成します。よろしいですか?"
-      )
-    ) {
-      return;
-    }
+    setRegenerateConfirmOpen(false);
     try {
       const result = await regenerateMutation.mutateAsync({
         domain_template_id: templateId,
@@ -104,7 +101,17 @@ export function GenerateCandidatesView({
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-32 md:pb-8">
+      <ConfirmDialog
+        open={regenerateConfirmOpen}
+        title="再生成"
+        description="現在の未採用候補をすべて却下して、新しい候補を生成します。よろしいですか?"
+        confirmLabel="再生成する"
+        variant="destructive"
+        onConfirm={handleRegenerate}
+        onCancel={() => setRegenerateConfirmOpen(false)}
+        loading={regenerateMutation.isPending}
+      />
       {/* 生成設定 */}
       <section className="border rounded-xl p-4 md:p-5 space-y-4">
         <h2 className="font-medium flex items-center gap-2">
@@ -187,7 +194,7 @@ export function GenerateCandidatesView({
               variant="outline"
               size="lg"
               className="min-h-11"
-              onClick={handleRegenerate}
+              onClick={() => setRegenerateConfirmOpen(true)}
               disabled={regenerateMutation.isPending}
             >
               <RefreshCw className="size-4" aria-hidden />
