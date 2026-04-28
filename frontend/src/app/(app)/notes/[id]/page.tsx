@@ -12,6 +12,7 @@ import {
 import { GenerateCandidatesView } from "@/features/ai-candidate";
 import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
+import { MarkdownText } from "@/shared/ui/markdown-text";
 
 export default function NoteDetailPage({
   params,
@@ -127,13 +128,13 @@ export default function NoteDetailPage({
                   </button>
                 </div>
               </div>
-              <p
-                className={`text-sm whitespace-pre-wrap break-words ${
-                  expanded ? "" : "line-clamp-3"
-                }`}
-              >
-                {note.body}
-              </p>
+              {expanded ? (
+                <MarkdownText text={note.body} />
+              ) : (
+                <p className="text-sm whitespace-pre-wrap break-words line-clamp-3">
+                  {note.body}
+                </p>
+              )}
               {expanded && hasDetails && (
                 <dl className="space-y-1 text-xs text-muted-foreground pt-1 border-t">
                   {note.subdomain && (
