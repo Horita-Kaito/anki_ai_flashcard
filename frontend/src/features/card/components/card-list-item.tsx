@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { Card } from "@/entities/card/types";
 import { useArchiveCard, useUnarchiveCard } from "../api/card-queries";
+import { extractClozeAnswers, stripClozeMarkers } from "@/shared/utils/cloze";
 
 interface CardListItemProps {
   card: Card;
@@ -14,6 +15,16 @@ export function CardListItem({ card }: CardListItemProps) {
   const unarchiveMutation = useUnarchiveCard();
   const isArchived = card.is_archived ?? false;
   const isPending = archiveMutation.isPending || unarchiveMutation.isPending;
+
+  const isCloze = card.card_type === "cloze_like";
+  const questionPreview = isCloze
+    ? stripClozeMarkers(card.question)
+    : card.question;
+  const clozeAnswers = isCloze ? extractClozeAnswers(card.question) : [];
+  const answerPreview =
+    isCloze && clozeAnswers.length > 0
+      ? clozeAnswers.join("、")
+      : card.answer;
 
   function handleToggleArchive(e: React.MouseEvent) {
     e.preventDefault();
@@ -40,7 +51,7 @@ export function CardListItem({ card }: CardListItemProps) {
         className="group flex flex-col gap-2 border rounded-xl p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
       >
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm line-clamp-2 flex-1">{card.question}</p>
+          <p className="text-sm line-clamp-2 flex-1">{questionPreview}</p>
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
@@ -62,7 +73,7 @@ export function CardListItem({ card }: CardListItemProps) {
           </div>
         </div>
         <p className="text-xs text-muted-foreground line-clamp-1">
-          {card.answer}
+          {answerPreview}
         </p>
         {card.tags && card.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">

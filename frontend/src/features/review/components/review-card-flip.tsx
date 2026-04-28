@@ -3,6 +3,7 @@
 import type { Card } from "@/entities/card/types";
 import { ClozeText } from "@/shared/ui/cloze-text";
 import { haptic } from "@/shared/lib/haptics";
+import { extractClozeAnswers } from "@/shared/utils/cloze";
 
 interface ReviewCardFlipProps {
   card: Card;
@@ -91,9 +92,28 @@ export function ReviewCardFlip({
       {showAnswer ? (
         <div className="border-t pt-4 space-y-3">
           <p className="text-xs font-medium text-muted-foreground">答え</p>
-          <p className="text-base md:text-lg whitespace-pre-wrap break-words">
-            {card.answer}
-          </p>
+          {(() => {
+            // cloze_like は質問本文側で revealed 表示済みなので、
+            // 答え欄は question から導出した正解一覧に置き換える。
+            // (AI が answer に最初の cN しか入れない場合のフォールバック)
+            if (card.card_type === "cloze_like") {
+              const answers = extractClozeAnswers(card.question).filter(
+                (a) => a.trim() !== ""
+              );
+              if (answers.length > 0) {
+                return (
+                  <p className="text-base md:text-lg font-medium break-words">
+                    正解: {answers.join("、")}
+                  </p>
+                );
+              }
+            }
+            return (
+              <p className="text-base md:text-lg whitespace-pre-wrap break-words">
+                {card.answer}
+              </p>
+            );
+          })()}
           {card.explanation && (
             <p className="text-sm text-muted-foreground whitespace-pre-wrap border-t pt-3">
               {card.explanation}

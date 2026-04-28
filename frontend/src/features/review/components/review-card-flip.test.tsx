@@ -108,4 +108,32 @@ describe("ReviewCardFlip", () => {
     );
     expect(onReveal).not.toHaveBeenCalled();
   });
+
+  it("cloze_like で複数 cN のときは正解一覧を結合表示する", () => {
+    const clozeCard: Card = {
+      ...mockCard,
+      card_type: "cloze_like",
+      question: "{{c1::東京}}は{{c2::日本}}の首都",
+      answer: "東京",
+    };
+    renderWithProviders(
+      <ReviewCardFlip card={clozeCard} showAnswer={true} onReveal={vi.fn()} />
+    );
+    expect(screen.getByText("正解: 東京、日本")).toBeInTheDocument();
+    // 単一語の raw answer ("東京") が answer 欄として残らない
+    expect(screen.queryByText("東京", { selector: "p" })).toBeNull();
+  });
+
+  it("cloze_like で cloze 抽出が空のときは raw answer にフォールバック", () => {
+    const clozeCard: Card = {
+      ...mockCard,
+      card_type: "cloze_like",
+      question: "穴埋め記法のないテキスト",
+      answer: "ベタの答え",
+    };
+    renderWithProviders(
+      <ReviewCardFlip card={clozeCard} showAnswer={true} onReveal={vi.fn()} />
+    );
+    expect(screen.getByText("ベタの答え")).toBeInTheDocument();
+  });
 });
