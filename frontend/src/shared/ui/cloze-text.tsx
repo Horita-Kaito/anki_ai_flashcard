@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { CLOZE_RE } from "@/shared/utils/cloze";
 
 /**
  * Anki 風 cloze 記法 `{{cN::xxx}}` を含むテキストを描画する。
@@ -17,8 +18,6 @@ interface ClozeTextProps {
   mode: Mode;
   className?: string;
 }
-
-const CLOZE_RE = /\{\{c\d+::([^}]*)\}\}/g;
 
 interface Segment {
   kind: "text" | "cloze";
