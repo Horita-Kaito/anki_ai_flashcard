@@ -15,5 +15,10 @@ interface UserSettingRepositoryInterface
     /**
      * @param  array<string, mixed>  $attributes
      */
+    public function create(int $userId, array $attributes): UserSetting;
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
     public function update(UserSetting $setting, array $attributes): UserSetting;
 }

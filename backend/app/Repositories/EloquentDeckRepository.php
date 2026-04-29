@@ -32,6 +32,16 @@ final class EloquentDeckRepository extends AbstractUserScopedEloquentRepository 
             ->get();
     }
 
+    public function idsAndNamesForUser(int $userId): array
+    {
+        return $this->userScopedQuery($userId)
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Deck $d) => ['id' => (int) $d->id, 'name' => (string) $d->name])
+            ->all();
+    }
+
     public function create(int $userId, array $attributes): Deck
     {
         /** @var Deck */

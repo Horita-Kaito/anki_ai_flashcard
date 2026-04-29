@@ -14,6 +14,13 @@ final class EloquentAiGenerationLogRepository implements AiGenerationLogReposito
         return AiGenerationLog::create($attributes);
     }
 
+    public function update(AiGenerationLog $log, array $attributes): AiGenerationLog
+    {
+        $log->update($attributes);
+
+        return $log->refresh();
+    }
+
     public function countForUserInPeriod(int $userId, \DateTimeInterface $from, \DateTimeInterface $to): int
     {
         return AiGenerationLog::query()

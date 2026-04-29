@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\ReviewSessionController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\UserSettingController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\TokenController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -25,10 +26,18 @@ Route::prefix('v1')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])
         ->middleware('throttle:5,1');
 
+    // ネイティブアプリ用 Bearer Token 発行 (ゲスト可)
+    Route::post('/tokens', [TokenController::class, 'store'])
+        ->middleware('throttle:5,1');
+
     // === 認証必須 ===
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
+
+        // 自分が発行した Bearer Token の一覧 / 現在のTokenをrevoke
+        Route::get('/tokens', [TokenController::class, 'index']);
+        Route::delete('/tokens/current', [TokenController::class, 'destroy']);
 
         Route::post('/onboarding', [OnboardingController::class, 'store']);
         Route::get('/onboarding/status', [OnboardingController::class, 'status']);

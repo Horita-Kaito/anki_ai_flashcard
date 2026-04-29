@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Card\StoreCardRequest;
 use App\Http\Requests\Card\UpdateCardRequest;
@@ -16,6 +17,7 @@ final class CardController extends Controller
 {
     public function __construct(
         private readonly CardService $cardService,
+        private readonly TagRepositoryInterface $tagRepository,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -28,7 +30,11 @@ final class CardController extends Controller
             $filters['deck_id'] = (int) $request->query('deck_id');
         }
         if ($request->filled('tag_id')) {
-            $filters['tag_id'] = (int) $request->query('tag_id');
+            $tagId = (int) $request->query('tag_id');
+            // 他ユーザーの tag_id を渡された場合は無視 (空結果オラクルでの存在列挙を防ぐ)
+            if ($this->tagRepository->findForUser($request->user()->id, $tagId) !== null) {
+                $filters['tag_id'] = $tagId;
+            }
         }
         if ($request->filled('q')) {
             $filters['q'] = (string) $request->query('q');

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Exceptions\Domain\DeckCycleDetectedException;
+use App\Exceptions\Domain\DeckHasCardsException;
 use App\Exceptions\Domain\DeckHasChildrenException;
 use App\Exceptions\Domain\DeckNotFoundException;
 use App\Models\Deck;
@@ -15,6 +17,7 @@ final class DeckService
 {
     public function __construct(
         private readonly DeckRepositoryInterface $deckRepository,
+        private readonly CardRepositoryInterface $cardRepository,
     ) {}
 
     /**
@@ -94,6 +97,7 @@ final class DeckService
     }
 
     /**
+     * @throws DeckHasCardsException
      * @throws DeckHasChildrenException
      * @throws DeckNotFoundException
      */
@@ -103,6 +107,11 @@ final class DeckService
 
         if ($this->deckRepository->hasChildren($userId, $deckId)) {
             throw DeckHasChildrenException::make($deckId);
+        }
+
+        $cardCount = $this->cardRepository->countForDeck($userId, $deckId);
+        if ($cardCount > 0) {
+            throw DeckHasCardsException::make($deckId, $cardCount);
         }
 
         $this->deckRepository->delete($deck);

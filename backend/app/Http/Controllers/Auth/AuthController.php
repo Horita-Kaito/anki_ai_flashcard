@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 
 final class AuthController extends Controller
 {
@@ -18,7 +19,7 @@ final class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (! Auth::attempt($credentials, true)) {
+        if (! Auth::attempt($credentials)) {
             return response()->json([
                 'message' => '認証情報が正しくありません。',
             ], 401);
@@ -31,6 +32,12 @@ final class AuthController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        // Bearer Token 経由なら自分自身の Token を revoke (Cookie 経由は TransientToken なのでスキップ)
+        $token = $request->user()?->currentAccessToken();
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
+
         Auth::guard('web')->logout();
         $this->invalidateSession($request);
 

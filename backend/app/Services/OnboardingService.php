@@ -4,15 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Deck;
-use App\Models\DomainTemplate;
-use App\Models\Tag;
+use App\Contracts\Repositories\DeckRepositoryInterface;
+use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
+use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Contracts\Repositories\UserRepositoryInterface;
+use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Models\User;
-use App\Models\UserSetting;
 use Illuminate\Support\Facades\DB;
 
 final class OnboardingService
 {
+    public function __construct(
+        private readonly DomainTemplateRepositoryInterface $domainTemplateRepository,
+        private readonly DeckRepositoryInterface $deckRepository,
+        private readonly TagRepositoryInterface $tagRepository,
+        private readonly UserSettingRepositoryInterface $userSettingRepository,
+        private readonly UserRepositoryInterface $userRepository,
+    ) {}
+
     /**
      * ユーザーの学習目標に基づいて初期データを作成する。
      *
@@ -25,24 +34,22 @@ final class OnboardingService
             $templateCount = 0;
             $deckCount = 0;
             $tagNames = [];
-            $firstTemplate = null;
+            $firstTemplateId = null;
 
             foreach ($goals as $goal) {
                 $config = $this->getGoalConfig($goal);
 
-                $template = DomainTemplate::create([
-                    'user_id' => $user->id,
+                $template = $this->domainTemplateRepository->create($user->id, [
                     'name' => $config['template_name'],
                     'description' => $config['template_description'],
                     'instruction_json' => $config['instruction_json'],
                 ]);
 
-                if ($firstTemplate === null) {
-                    $firstTemplate = $template;
+                if ($firstTemplateId === null) {
+                    $firstTemplateId = $template->id;
                 }
 
-                Deck::create([
-                    'user_id' => $user->id,
+                $this->deckRepository->create($user->id, [
                     'name' => $config['deck_name'],
                     'default_domain_template_id' => $template->id,
                 ]);
@@ -56,30 +63,23 @@ final class OnboardingService
             }
 
             // 共通タグを追加
-            $commonTags = ['重要', '復習必須', '基礎'];
-            foreach ($commonTags as $tagName) {
-                $tagNames[] = $tagName;
+            foreach (['重要', '復習必須', '基礎'] as $commonTag) {
+                $tagNames[] = $commonTag;
             }
 
             // 重複を排除してタグ作成
             $uniqueTagNames = array_unique($tagNames);
             $tagCount = 0;
             foreach ($uniqueTagNames as $tagName) {
-                Tag::create([
-                    'user_id' => $user->id,
-                    'name' => $tagName,
-                ]);
+                $this->tagRepository->create($user->id, ['name' => $tagName]);
                 $tagCount++;
             }
 
-            // UserSetting 作成
-            UserSetting::create([
-                'user_id' => $user->id,
-                'default_domain_template_id' => $firstTemplate?->id,
+            $this->userSettingRepository->create($user->id, [
+                'default_domain_template_id' => $firstTemplateId,
             ]);
 
-            // onboarding 完了フラグ
-            $user->update(['onboarding_completed_at' => now()]);
+            $this->userRepository->markOnboarded($user);
 
             return [
                 'templates' => $templateCount,

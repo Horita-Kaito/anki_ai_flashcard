@@ -13,6 +13,7 @@ use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Contracts\Services\Review\SchedulerInterface;
 use App\Repositories\EloquentAiCardCandidateRepository;
@@ -24,6 +25,7 @@ use App\Repositories\EloquentDeckRepository;
 use App\Repositories\EloquentDomainTemplateRepository;
 use App\Repositories\EloquentNoteSeedRepository;
 use App\Repositories\EloquentTagRepository;
+use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
 use App\Services\Review\Sm2Scheduler;
 use Illuminate\Support\ServiceProvider;
@@ -52,6 +54,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         CardRepositoryInterface::class => EloquentCardRepository::class,
         CardScheduleRepositoryInterface::class => EloquentCardScheduleRepository::class,
         UserSettingRepositoryInterface::class => EloquentUserSettingRepository::class,
+        UserRepositoryInterface::class => EloquentUserRepository::class,
         AiCardCandidateRepositoryInterface::class => EloquentAiCardCandidateRepository::class,
         AiGenerationLogRepositoryInterface::class => EloquentAiGenerationLogRepository::class,
         CardReviewRepositoryInterface::class => EloquentCardReviewRepository::class,

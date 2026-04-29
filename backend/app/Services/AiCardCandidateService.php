@@ -8,6 +8,7 @@ use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Enums\CandidateStatus;
+use App\Exceptions\Domain\AiCardCandidateNotAdoptableException;
 use App\Exceptions\Domain\AiCardCandidateNotFoundException;
 use App\Models\AiCardCandidate;
 use App\Models\Card;
@@ -86,13 +87,24 @@ final class AiCardCandidateService
      *
      * @param  array{deck_id: int, question?: string, answer?: string, explanation?: ?string, tag_ids?: array<int, int>}  $overrides
      *
+     * @throws AiCardCandidateNotAdoptableException
      * @throws AiCardCandidateNotFoundException
      */
     public function adoptForUser(int $userId, int $candidateId, array $overrides): Card
     {
-        $candidate = $this->getForUser($userId, $candidateId);
+        return DB::transaction(function () use ($userId, $candidateId, $overrides) {
+            // ロック取得して二重採用を防ぐ
+            $candidate = $this->candidateRepository->findForUserForUpdate($userId, $candidateId);
+            if ($candidate === null) {
+                throw AiCardCandidateNotFoundException::make($candidateId);
+            }
+            if ($candidate->status !== CandidateStatus::Pending) {
+                throw AiCardCandidateNotAdoptableException::alreadyProcessed(
+                    $candidateId,
+                    $candidate->status->value,
+                );
+            }
 
-        return DB::transaction(function () use ($userId, $candidate, $overrides) {
             $card = $this->cardRepository->create($userId, [
                 'deck_id' => $overrides['deck_id'],
                 'question' => $overrides['question'] ?? $candidate->question,
@@ -121,6 +133,15 @@ final class AiCardCandidateService
     }
 
     /**
+     * @param  array<int, int>  $candidateIds
+     * @return array<int, int>
+     */
+    private function uniqueIds(array $candidateIds): array
+    {
+        return array_values(array_unique($candidateIds));
+    }
+
+    /**
      * 複数候補を一括採用する。
      *
      * @param  array<int, int>  $candidateIds
@@ -134,13 +155,13 @@ final class AiCardCandidateService
         array $tagIds = [],
     ): array {
         $cards = [];
-        foreach ($candidateIds as $id) {
+        foreach ($this->uniqueIds($candidateIds) as $id) {
             try {
                 $cards[] = $this->adoptForUser($userId, $id, [
                     'deck_id' => $deckId,
                     'tag_ids' => $tagIds,
                 ]);
-            } catch (AiCardCandidateNotFoundException) {
+            } catch (AiCardCandidateNotAdoptableException|AiCardCandidateNotFoundException) {
                 continue;
             }
         }

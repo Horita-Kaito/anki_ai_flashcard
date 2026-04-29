@@ -19,6 +19,13 @@ interface DeckRepositoryInterface
     public function allForUser(int $userId): Collection;
 
     /**
+     * AI 候補生成プロンプト用の最小デッキリスト ({id, name}) を name 昇順で返す。
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    public function idsAndNamesForUser(int $userId): array;
+
+    /**
      * @param  array<string, mixed>  $attributes
      */
     public function create(int $userId, array $attributes): Deck;

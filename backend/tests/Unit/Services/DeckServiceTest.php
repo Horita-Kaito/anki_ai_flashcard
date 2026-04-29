@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
+use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
+use App\Exceptions\Domain\DeckHasCardsException;
 use App\Exceptions\Domain\DeckNotFoundException;
 use App\Models\Deck;
 use App\Services\DeckService;
@@ -23,7 +25,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $service = new DeckService($repo);
+        $service = new DeckService($repo, $this->cardRepoStub());
 
         $this->expectException(DeckNotFoundException::class);
         $service->getForUser(1, 99);
@@ -41,7 +43,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn($deck);
 
-        $service = new DeckService($repo);
+        $service = new DeckService($repo, $this->cardRepoStub());
         $result = $service->getForUser(1, 10);
 
         $this->assertSame($deck, $result);
@@ -58,7 +60,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn($expected);
 
-        $service = new DeckService($repo);
+        $service = new DeckService($repo, $this->cardRepoStub());
         $result = $service->createForUser(1, ['name' => 'New']);
 
         $this->assertSame($expected, $result);
@@ -73,9 +75,37 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $service = new DeckService($repo);
+        $service = new DeckService($repo, $this->cardRepoStub());
 
         $this->expectException(DeckNotFoundException::class);
         $service->updateForUser(1, 99, ['name' => 'x']);
+    }
+
+    public function test_カードが残っているデッキは削除できない(): void
+    {
+        $deck = new Deck(['name' => 'WithCards']);
+        $deck->id = 7;
+
+        /** @var DeckRepositoryInterface&MockInterface $repo */
+        $repo = Mockery::mock(DeckRepositoryInterface::class);
+        $repo->shouldReceive('findForUser')->with(1, 7)->once()->andReturn($deck);
+        $repo->shouldReceive('hasChildren')->with(1, 7)->once()->andReturn(false);
+
+        /** @var CardRepositoryInterface&MockInterface $cardRepo */
+        $cardRepo = Mockery::mock(CardRepositoryInterface::class);
+        $cardRepo->shouldReceive('countForDeck')->with(1, 7)->once()->andReturn(3);
+
+        $service = new DeckService($repo, $cardRepo);
+
+        $this->expectException(DeckHasCardsException::class);
+        $service->deleteForUser(1, 7);
+    }
+
+    private function cardRepoStub(): CardRepositoryInterface
+    {
+        /** @var CardRepositoryInterface&MockInterface $stub */
+        $stub = Mockery::mock(CardRepositoryInterface::class);
+
+        return $stub;
     }
 }

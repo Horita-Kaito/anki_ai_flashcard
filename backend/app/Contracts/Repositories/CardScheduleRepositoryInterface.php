@@ -14,8 +14,6 @@ interface CardScheduleRepositoryInterface
      */
     public function createInitial(Card $card): CardSchedule;
 
-    public function findByCard(int $cardId): ?CardSchedule;
-
     /**
      * 指定時刻までに due_at が到達しているスケジュール件数 (= 今日の復習対象数)
      */
@@ -47,6 +45,14 @@ interface CardScheduleRepositoryInterface
      * @return array<int, CardSchedule>
      */
     public function overdueCardsForUser(int $userId, \DateTimeInterface $before): array;
+
+    /**
+     * 期限切れの interval を一括で減衰させる (1 リクエスト 3 UPDATE)。
+     * - overdue > 14日: interval=1 にリセット
+     * - 7 < overdue <= 14: interval *= 0.5 (最低1)
+     * - 1 < overdue <= 7: interval *= 0.8 (最低1)
+     */
+    public function decayOverdueForUser(int $userId, \DateTimeInterface $now): void;
 
     /**
      * カードをアーカイブする

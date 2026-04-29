@@ -6,14 +6,13 @@ namespace App\Services;
 
 use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
+use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Enums\CandidateStatus;
 use App\Exceptions\Domain\AiGenerationFailedException;
 use App\Exceptions\Domain\AiUsageLimitExceededException;
 use App\Models\AiCardCandidate;
-use App\Models\AiGenerationLog;
-use App\Models\Deck;
 use App\Models\NoteSeed;
 use App\Services\AI\AiGenerationRequest;
 use App\Services\AI\AiGenerationResult;
@@ -39,6 +38,7 @@ final class CardGenerationService
         private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly AiGenerationLogRepositoryInterface $logRepository,
         private readonly DomainTemplateRepositoryInterface $templateRepository,
+        private readonly DeckRepositoryInterface $deckRepository,
         private readonly PromptBuilder $promptBuilder,
         private readonly CandidateParser $parser,
     ) {}
@@ -61,12 +61,7 @@ final class CardGenerationService
         $regenerate = (bool) ($options['regenerate'] ?? false);
         $additional = (bool) ($options['additional'] ?? false);
 
-        $decks = Deck::where('user_id', $note->user_id)
-            ->select(['id', 'name'])
-            ->orderBy('name')
-            ->get()
-            ->map(fn (Deck $d) => ['id' => $d->id, 'name' => $d->name])
-            ->toArray();
+        $decks = $this->deckRepository->idsAndNamesForUser($note->user_id);
 
         $existingQuestions = $additional
             ? $this->candidateRepository
@@ -143,35 +138,47 @@ final class CardGenerationService
 
         $deckIds = array_column($decks, 'id');
 
-        $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds) {
-            if ($regenerate) {
-                $this->candidateRepository->rejectPendingForNoteSeed($note->id);
-            }
+        try {
+            $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds) {
+                if ($regenerate) {
+                    $this->candidateRepository->rejectPendingForNoteSeed($note->user_id, $note->id);
+                }
 
-            $candidates = [];
-            foreach ($parsed as $data) {
-                $candidates[] = $this->candidateRepository->create($note->user_id, [
-                    'note_seed_id' => $note->id,
-                    'ai_generation_log_id' => $log->id,
-                    'provider' => $result->provider,
-                    'model_name' => $result->model,
-                    'question' => $data['question'],
-                    'answer' => $data['answer'],
-                    'card_type' => $data['card_type'],
-                    'focus_type' => $data['focus_type'],
-                    'rationale' => $data['rationale'],
-                    'explanation' => $data['explanation'],
-                    'confidence' => $data['confidence'],
-                    'suggested_deck_id' => in_array($data['suggested_deck_id'] ?? null, $deckIds, true)
-                        ? $data['suggested_deck_id']
-                        : null,
-                    'status' => CandidateStatus::Pending->value,
-                    'raw_response' => $data,
-                ]);
-            }
+                $candidates = [];
+                foreach ($parsed as $data) {
+                    $candidates[] = $this->candidateRepository->create($note->user_id, [
+                        'note_seed_id' => $note->id,
+                        'ai_generation_log_id' => $log->id,
+                        'provider' => $result->provider,
+                        'model_name' => $result->model,
+                        'question' => $data['question'],
+                        'answer' => $data['answer'],
+                        'card_type' => $data['card_type'],
+                        'focus_type' => $data['focus_type'],
+                        'rationale' => $data['rationale'],
+                        'explanation' => $data['explanation'],
+                        'confidence' => $data['confidence'],
+                        'suggested_deck_id' => in_array($data['suggested_deck_id'] ?? null, $deckIds, true)
+                            ? $data['suggested_deck_id']
+                            : null,
+                        'status' => CandidateStatus::Pending->value,
+                        'raw_response' => $data,
+                    ]);
+                }
 
-            return $candidates;
-        });
+                return $candidates;
+            });
+        } catch (\Throwable $e) {
+            // 候補保存に失敗した場合、status=success のまま放置すると不整合になるため failed に直す。
+            // ログ自体は AI 呼び出しのコスト記録として残す (cost_usd は保持)。
+            $this->logRepository->update($log, [
+                'status' => 'failed',
+                'error_reason' => mb_substr('[CANDIDATE_SAVE_FAILED] '.$e->getMessage(), 0, 2000),
+                'candidates_count' => 0,
+            ]);
+
+            throw $e;
+        }
 
         return [
             'candidates' => $candidates,

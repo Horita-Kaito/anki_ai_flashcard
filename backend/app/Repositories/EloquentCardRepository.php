@@ -98,6 +98,13 @@ final class EloquentCardRepository extends AbstractUserScopedEloquentRepository 
         return $this->userScopedQuery($userId)->count();
     }
 
+    public function countForDeck(int $userId, int $deckId): int
+    {
+        return $this->userScopedQuery($userId)
+            ->where('deck_id', $deckId)
+            ->count();
+    }
+
     public function recentForUser(int $userId, int $limit = 5): array
     {
         return $this->userScopedQuery($userId)

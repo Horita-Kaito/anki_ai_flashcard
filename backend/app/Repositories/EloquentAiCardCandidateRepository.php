@@ -22,6 +22,15 @@ final class EloquentAiCardCandidateRepository extends AbstractUserScopedEloquent
         return $this->userScopedQuery($userId)->where('id', $candidateId)->first();
     }
 
+    public function findForUserForUpdate(int $userId, int $candidateId): ?AiCardCandidate
+    {
+        /** @var AiCardCandidate|null */
+        return $this->userScopedQuery($userId)
+            ->where('id', $candidateId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function listForNoteSeed(int $userId, int $noteSeedId, ?string $status = null): Collection
     {
         /** @var Collection<int, AiCardCandidate> */
@@ -49,9 +58,9 @@ final class EloquentAiCardCandidateRepository extends AbstractUserScopedEloquent
         $candidate->delete();
     }
 
-    public function rejectPendingForNoteSeed(int $noteSeedId): void
+    public function rejectPendingForNoteSeed(int $userId, int $noteSeedId): void
     {
-        AiCardCandidate::query()
+        $this->userScopedQuery($userId)
             ->where('note_seed_id', $noteSeedId)
             ->where('status', CandidateStatus::Pending->value)
             ->update(['status' => CandidateStatus::Rejected->value]);

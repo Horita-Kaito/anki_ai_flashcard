@@ -24,6 +24,11 @@ final class EloquentUserSettingRepository implements UserSettingRepositoryInterf
         ]);
     }
 
+    public function create(int $userId, array $attributes): UserSetting
+    {
+        return UserSetting::create([...$attributes, 'user_id' => $userId]);
+    }
+
     public function update(UserSetting $setting, array $attributes): UserSetting
     {
         $setting->update($attributes);

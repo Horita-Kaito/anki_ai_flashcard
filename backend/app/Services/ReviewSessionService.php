@@ -59,43 +59,11 @@ final class ReviewSessionService
 
     /**
      * 期限切れカードの interval を減衰させる (On-demand interval decay)。
-     *
-     * overdue_days <= 1: 変更なし
-     * overdue_days <= 7: interval *= 0.8
-     * overdue_days <= 14: interval *= 0.5
-     * overdue_days > 14: interval = 1 (リセット)
+     * Repository 側で 3 つの UPDATE 文に集約し、N 件のループ + refresh を回避する。
      */
     private function applyOverdueDecay(int $userId): void
     {
-        $now = now();
-        $overdueSchedules = $this->scheduleRepository->overdueCardsForUser($userId, $now);
-
-        foreach ($overdueSchedules as $schedule) {
-            $dueAt = $schedule->due_at instanceof Carbon
-                ? $schedule->due_at
-                : Carbon::parse($schedule->due_at);
-
-            $overdueDays = (int) $dueAt->diffInDays($now, false);
-            if ($overdueDays <= 1) {
-                continue;
-            }
-
-            $currentInterval = (int) $schedule->interval_days;
-
-            if ($overdueDays <= 7) {
-                $newInterval = max(1, (int) floor($currentInterval * 0.8));
-            } elseif ($overdueDays <= 14) {
-                $newInterval = max(1, (int) floor($currentInterval * 0.5));
-            } else {
-                $newInterval = 1;
-            }
-
-            if ($newInterval !== $currentInterval) {
-                $this->scheduleRepository->update($schedule, [
-                    'interval_days' => $newInterval,
-                ]);
-            }
-        }
+        $this->scheduleRepository->decayOverdueForUser($userId, now());
     }
 
     /**
@@ -148,7 +116,7 @@ final class ReviewSessionService
             throw CardNotFoundException::make($cardId);
         }
 
-        $schedule = $this->scheduleRepository->findByCard($cardId);
+        $schedule = $this->scheduleRepository->findByCardForUser($userId, $cardId);
         if ($schedule === null) {
             throw CardNotFoundException::make($cardId);
         }

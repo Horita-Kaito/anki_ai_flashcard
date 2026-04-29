@@ -8,6 +8,8 @@ use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Enums\ScheduleState;
 use App\Models\Card;
 use App\Models\CardSchedule;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentCardScheduleRepository implements CardScheduleRepositoryInterface
 {
@@ -23,11 +25,6 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
             'lapse_count' => 0,
             'state' => ScheduleState::New->value,
         ]);
-    }
-
-    public function findByCard(int $cardId): ?CardSchedule
-    {
-        return CardSchedule::query()->where('card_id', $cardId)->first();
     }
 
     public function dueCountForUser(int $userId, \DateTimeInterface $before): int
@@ -82,6 +79,48 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
             ->where('interval_days', '>', 0)
             ->get()
             ->all();
+    }
+
+    public function decayOverdueForUser(int $userId, \DateTimeInterface $now): void
+    {
+        $nowCarbon = Carbon::instance($now);
+        $cutoff1 = $nowCarbon->copy()->subDay();
+        $cutoff7 = $nowCarbon->copy()->subDays(7);
+        $cutoff14 = $nowCarbon->copy()->subDays(14);
+
+        // overdue > 14 日: interval を 1 にリセット
+        CardSchedule::query()
+            ->where('user_id', $userId)
+            ->whereNull('archived_at')
+            ->where('interval_days', '>', 0)
+            ->where('due_at', '<', $cutoff14)
+            ->update(['interval_days' => 1]);
+
+        // 7 < overdue <= 14: interval *= 0.5 (最低 1)
+        CardSchedule::query()
+            ->where('user_id', $userId)
+            ->whereNull('archived_at')
+            ->where('interval_days', '>', 0)
+            ->where('due_at', '<', $cutoff7)
+            ->where('due_at', '>=', $cutoff14)
+            ->update([
+                'interval_days' => DB::raw(
+                    'CASE WHEN FLOOR(interval_days * 0.5) < 1 THEN 1 ELSE FLOOR(interval_days * 0.5) END'
+                ),
+            ]);
+
+        // 1 < overdue <= 7: interval *= 0.8 (最低 1)
+        CardSchedule::query()
+            ->where('user_id', $userId)
+            ->whereNull('archived_at')
+            ->where('interval_days', '>', 0)
+            ->where('due_at', '<', $cutoff1)
+            ->where('due_at', '>=', $cutoff7)
+            ->update([
+                'interval_days' => DB::raw(
+                    'CASE WHEN FLOOR(interval_days * 0.8) < 1 THEN 1 ELSE FLOOR(interval_days * 0.8) END'
+                ),
+            ]);
     }
 
     public function archive(CardSchedule $schedule): CardSchedule

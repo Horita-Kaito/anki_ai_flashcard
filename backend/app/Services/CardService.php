@@ -114,7 +114,7 @@ final class CardService
     public function archiveForUser(int $userId, int $cardId): Card
     {
         $card = $this->getForUser($userId, $cardId);
-        $schedule = $this->scheduleRepository->findByCard($cardId);
+        $schedule = $this->scheduleRepository->findByCardForUser($userId, $cardId);
         if ($schedule === null) {
             throw CardNotFoundException::make($cardId);
         }
@@ -132,7 +132,7 @@ final class CardService
     public function unarchiveForUser(int $userId, int $cardId): Card
     {
         $card = $this->getForUser($userId, $cardId);
-        $schedule = $this->scheduleRepository->findByCard($cardId);
+        $schedule = $this->scheduleRepository->findByCardForUser($userId, $cardId);
         if ($schedule === null) {
             throw CardNotFoundException::make($cardId);
         }

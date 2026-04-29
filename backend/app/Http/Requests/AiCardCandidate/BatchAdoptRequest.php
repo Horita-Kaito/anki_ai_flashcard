@@ -25,9 +25,10 @@ final class BatchAdoptRequest extends FormRequest
                 'integer',
                 Rule::exists('decks', 'id')->where('user_id', $userId),
             ],
-            'candidate_ids' => ['required', 'array', 'min:1', 'max:20'],
+            'candidate_ids' => ['required', 'array', 'min:1', 'max:20', 'distinct'],
             'candidate_ids.*' => [
                 'integer',
+                'distinct',
                 Rule::exists('ai_card_candidates', 'id')->where('user_id', $userId),
             ],
             'tag_ids' => ['sometimes', 'array'],

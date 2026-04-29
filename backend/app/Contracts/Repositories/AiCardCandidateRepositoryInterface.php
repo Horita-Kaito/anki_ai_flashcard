@@ -11,6 +11,11 @@ interface AiCardCandidateRepositoryInterface
 {
     public function findForUser(int $userId, int $candidateId): ?AiCardCandidate;
 
+    /**
+     * 採用処理用に行ロックを取って取得する。トランザクション内でのみ使用すること。
+     */
+    public function findForUserForUpdate(int $userId, int $candidateId): ?AiCardCandidate;
+
     /** @return Collection<int, AiCardCandidate> */
     public function listForNoteSeed(int $userId, int $noteSeedId, ?string $status = null): Collection;
 
@@ -27,7 +32,7 @@ interface AiCardCandidateRepositoryInterface
     public function delete(AiCardCandidate $candidate): void;
 
     /**
-     * 指定 note_seed_id の pending 候補を一括 rejected にする
+     * 指定ユーザー・指定 note_seed_id の pending 候補を一括 rejected にする
      */
-    public function rejectPendingForNoteSeed(int $noteSeedId): void;
+    public function rejectPendingForNoteSeed(int $userId, int $noteSeedId): void;
 }

@@ -36,6 +36,8 @@ interface CardRepositoryInterface
 
     public function countForUser(int $userId): int;
 
+    public function countForDeck(int $userId, int $deckId): int;
+
     /** @return array<int, Card> */
     public function recentForUser(int $userId, int $limit = 5): array;
 }
