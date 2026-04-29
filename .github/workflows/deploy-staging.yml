@@ -47,11 +47,9 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
             docker compose -f "$COMPOSE_FILE" pull
 
-            # Composer install (vendor/ は volume mount のため必要)
-            docker compose -f "$COMPOSE_FILE" run --rm --no-deps \
-              backend composer install --no-dev --no-interaction --optimize-autoloader
-
             # 起動 (--force-recreate で古いイメージのコンテナを確実に入れ替え)
+            # backend image は Dockerfile.prod でビルドされ vendor/ も baked-in 済みのため
+            # composer install ステップは不要。
             docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --force-recreate
 
             # マイグレーション & キャッシュ

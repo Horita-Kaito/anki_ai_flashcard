@@ -1,0 +1,40 @@
+vendor/
+node_modules/
+
+# 環境変数とローカル状態
+.env
+.env.local
+.env.*.local
+
+# Laravel cache (image内で再生成)
+bootstrap/cache/*.php
+.phpunit.result.cache
+.phpunit.cache/
+
+# storage の動的生成物
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/debugbar/*
+storage/pail/*
+
+# IDE / OS
+.idea/
+.vscode/
+.fleet/
+.zed/
+.nova/
+.phpactor.json
+.DS_Store
+Thumbs.db
+
+# git
+.git/
+.gitattributes
+.gitignore
+.gitkeep
+
+# Composer
+auth.json

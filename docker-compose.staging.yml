@@ -10,6 +10,14 @@
 #   - ../data/.env に環境変数を配置
 #   - イメージは ghcr.io から pull (サーバー上でのビルド不要)
 #
+# アーキテクチャ:
+#   Traefik → frontend (Next.js, port 3000)
+#   Traefik → nginx (port 80) → backend (php-fpm, port 9000)
+#   queue は backend と同じ image を使い artisan queue:work で起動
+#
+# backend image は docker/php/Dockerfile.prod でビルドされ、image 内に
+# app コードと vendor/ を含む。volume mount は不要 (host コードは使わない)。
+#
 # ディレクトリ構成 (サーバー上):
 #   ~/srv/apps/anki-ai-flashcard/
 #   ├── repo/          <- このリポジトリ (このファイルの場所)
@@ -45,24 +53,14 @@ services:
       - traefik.http.services.anki-frontend.loadbalancer.server.port=3000
 
   # ----------------------------------------
-  # Backend - Laravel (pre-built image, code volume-mounted)
-  #
-  # NOTE: 現在の backend image は dev 用 Dockerfile (artisan serve) で
-  # 構築されており、image 内に app コードを含まない。そのため host の
-  # ./backend を /var/www/html にマウントし、deploy 時に composer install
-  # でホスト側に vendor/ を生成する。
-  # 将来的に docker/php/Dockerfile.prod を docker-build.yml で使う構成に
-  # 切り替えれば、volume mount + composer install は不要になり php-fpm +
-  # Nginx 構成 (前バージョンの本ファイル参照) に移行できる。
+  # Backend - Laravel PHP-FPM (pre-built image, code baked in)
   # ----------------------------------------
   backend:
     image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
     container_name: anki-backend
     restart: unless-stopped
     expose:
-      - "8000"
-    volumes:
-      - ./backend:/var/www/html
+      - "9000"
     env_file:
       - ../data/.env
     environment:
@@ -91,7 +89,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    networks:
+      - default
+
+  # ----------------------------------------
+  # Nginx - PHP-FPM front (Traefik routed)
+  # nginx はファイル共有せず、すべての API リクエストを backend (php-fpm)
+  # にそのまま FastCGI で転送する thin proxy。
+  # ----------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: anki-nginx
+    restart: unless-stopped
+    expose:
+      - "80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
     networks:
       - proxy
       - default
@@ -101,7 +116,7 @@ services:
       - traefik.http.routers.anki-api.entrypoints=websecure
       - traefik.http.routers.anki-api.tls.certresolver=letsencrypt
       - traefik.http.routers.anki-api.priority=10
-      - traefik.http.services.anki-api.loadbalancer.server.port=8000
+      - traefik.http.services.anki-api.loadbalancer.server.port=80
       # HSTS / セキュリティヘッダ (Traefik レイヤで付与)
       - traefik.http.middlewares.anki-hsts.headers.stsSeconds=31536000
       - traefik.http.middlewares.anki-hsts.headers.stsIncludeSubdomains=true
@@ -110,14 +125,12 @@ services:
       - traefik.http.routers.anki-api.middlewares=anki-hsts
 
   # ----------------------------------------
-  # Queue Worker
+  # Queue Worker (backend と同じ image、command だけ override)
   # ----------------------------------------
   queue:
     image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
     container_name: anki-queue
     restart: unless-stopped
-    volumes:
-      - ./backend:/var/www/html
     env_file:
       - ../data/.env
     environment:

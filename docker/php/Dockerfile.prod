@@ -2,8 +2,20 @@
 # 本番用 PHP-FPM (Multi-stage build)
 # ============================================
 
-# --- Stage 1: Composer install ---
-FROM composer:2.7 AS vendor
+# --- Stage 1: Composer install (PHP 8.4 ベース) ---
+# composer 公式イメージの PHP バージョンに依存しないよう、PHP 8.4 ベース上に
+# composer 2.8 のバイナリだけコピーして使う。
+FROM php:8.4-cli AS vendor
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git \
+        unzip \
+        libzip-dev \
+        libonig-dev \
+    && docker-php-ext-install mbstring zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /app
 
@@ -11,12 +23,16 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --optimize-autoloader
 
 COPY . .
+# bootstrap/cache は host (dev install) の残骸を持ち込まないよう念のためクリア。
+# .dockerignore でも除外しているが defense in depth。
+RUN rm -f bootstrap/cache/*.php
+# package:discover (post-autoload-dump フック) を含めて autoload を最適化
 RUN composer dump-autoload --no-dev --optimize
 
 # --- Stage 2: Production PHP-FPM ---
 FROM php:8.4-fpm
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         curl \
         libpng-dev \
@@ -36,23 +52,25 @@ RUN apt-get update && apt-get install -y \
 # PHP production settings
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-# OPcache settings
-RUN echo "opcache.enable=1\n\
-opcache.memory_consumption=128\n\
-opcache.interned_strings_buffer=8\n\
-opcache.max_accelerated_files=10000\n\
-opcache.validate_timestamps=0\n\
-opcache.save_comments=1" > "$PHP_INI_DIR/conf.d/opcache-prod.ini"
+# OPcache settings (本番は validate_timestamps=0 で再起動まで再評価しない)
+RUN { \
+        echo 'opcache.enable=1'; \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.interned_strings_buffer=8'; \
+        echo 'opcache.max_accelerated_files=10000'; \
+        echo 'opcache.validate_timestamps=0'; \
+        echo 'opcache.save_comments=1'; \
+    } > "$PHP_INI_DIR/conf.d/opcache-prod.ini"
 
 WORKDIR /var/www/html
 
-# Copy app code from vendor stage
+# Copy app code (and vendor/) from vendor stage
 COPY --from=vendor /app /var/www/html
 
-# Set permissions
+# 権限設定: storage と bootstrap/cache は www-data が書き込み可能でなければならない
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
 USER www-data
 
