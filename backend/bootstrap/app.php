@@ -15,7 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->trustProxies(at: '*');
+        // 本番/staging は Docker 内部ネットワーク (Traefik / nginx) のみ信頼。
+        // dev (TRUSTED_PROXIES 未設定) は '*' を許容して開発体験を維持。
+        $middleware->trustProxies(at: env('TRUSTED_PROXIES')
+            ? array_map('trim', explode(',', (string) env('TRUSTED_PROXIES')))
+            : '*');
 
         $middleware->statefulApi();
         $middleware->api(prepend: [

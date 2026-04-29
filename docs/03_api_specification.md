@@ -8,11 +8,23 @@ http://localhost:8000/api
 ```
 
 ### 認証
-Laravel Sanctum (SPA認証 / Cookie-based)
+Laravel Sanctum を採用し、用途に応じて2系統を使い分ける。
 
-初回アクセス時:
+| 用途 | 方式 | 認証情報 |
+|------|------|---------|
+| Web フロント (Next.js SPA) | Cookie / Session (stateful) | `POST /api/v1/login` → CSRF Cookie + Session Cookie |
+| ネイティブアプリ / 外部クライアント | Bearer Token (Personal Access Token) | `POST /api/v1/tokens` → `Authorization: Bearer <token>` |
+
+保護ルートのミドルウェアはどちらも `auth:sanctum` で共通。Sanctum が Cookie / Bearer を自動判別する。
+
+**SPA Cookie の初回アクセス**:
 ```
 GET /sanctum/csrf-cookie
+```
+
+**Bearer Token の付与例**:
+```
+Authorization: Bearer 1|abcdefg...
 ```
 
 ### 共通レスポンス形式
@@ -152,6 +164,65 @@ GET /sanctum/csrf-cookie
   }
 }
 ```
+
+---
+
+### POST /api/v1/tokens
+ネイティブアプリ / 外部クライアント向けの Bearer Token 発行 (ゲスト可、`throttle:5,1`)。
+
+**Request Body**:
+```json
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "device_name": "my-iphone"
+}
+```
+
+**Response 201**:
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "テストユーザー",
+    "email": "test@example.com"
+  },
+  "token": "1|abcdef0123456789..."
+}
+```
+
+`token` は発行時のみ平文で返却される。クライアントは安全なストレージ (Keychain / Keystore 等) に保存し、以降のリクエストは `Authorization: Bearer <token>` で送信する。
+
+**Error 401**: 認証情報が誤っている / ユーザーが存在しない
+**Error 422**: `device_name` 未指定
+
+---
+
+### GET /api/v1/tokens
+発行済み Token の一覧を取得 (自分のもののみ)。
+
+**Response 200**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "my-iphone",
+      "last_used_at": "2026-04-28T10:00:00Z",
+      "created_at": "2026-04-28T09:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### DELETE /api/v1/tokens/current
+現在のリクエストに使われている Bearer Token を revoke する。Cookie 認証経由で呼ばれた場合は何もしない (Token が存在しない)。
+
+**Response 204**: (No Content)
+
+> ヒント: `POST /api/v1/logout` も Bearer Token 経由なら自分の Token を revoke する。ネイティブアプリは `/tokens/current` または `/logout` のどちらでもログアウト可能。
 
 ---
 

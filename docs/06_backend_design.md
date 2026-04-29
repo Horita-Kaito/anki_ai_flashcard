@@ -98,11 +98,22 @@ Controller  →  Service  →  Repository  →  Model (Eloquent)
                (Interface)
 ```
 
-- **Controller は Service Interface にのみ依存** (具象 Service を直接 new しない)
+- **Controller は Service を直接 new しない** (常に DI で受け取る)
 - **Service は Repository Interface にのみ依存** (Eloquent Model を直接触らない)
-- **Service から他の Service を呼ぶときも Interface 経由**
+- **Service から他の Service を呼ぶときも DI で受け取る**
 - **Repository は具象 Model を触ってよい** (最下層)
 - **下のレイヤーは上のレイヤーを知らない** (Repository は Controller を知らない)
+
+#### Service の Interface 化ポリシー
+Repository は **常に Interface 必須**。Service は性質に応じて使い分ける:
+
+| 種別 | Interface | 例 |
+|------|-----------|-----|
+| 戦略パターン / 差し替えが本質 | **必須** | `AiProviderInterface` (OpenAI/Anthropic/Google), `SchedulerInterface` (SM-2/FSRS) |
+| 外部 SaaS / 副作用ありの抽象化 | **必須** | (将来) MailService, NotificationService |
+| Domain Service (CRUD のオーケストレーション中心) | 具象クラスで OK | `DeckService`, `CardService`, `ReviewSessionService` 等 |
+
+Domain Service については、テスト時は Repository をモックして Service ごと動かす方針 (Repository Interface があれば Service の振る舞いを検証可能)。Service 自体を Mock する必要が出た時点で Interface を切る。
 
 ### 2-2. 禁止事項
 - Controller に Eloquent クエリを書く
@@ -580,6 +591,18 @@ docker compose exec backend php artisan test --coverage
 - CSRF Cookie 必須 (Sanctum SPA)
 - 本番 `APP_DEBUG=false`
 - パスワードは `Hash::make` (bcrypt 12 rounds)
+
+### 11-1-1. 認証方式
+Sanctum を採用し、用途で2系統を使い分ける。`auth:sanctum` ミドルウェア自体は両方を自動判別する。
+
+- **Web フロント (Next.js SPA)**: stateful Cookie / Session
+  - エンドポイント: `POST /api/v1/login`, `POST /api/v1/logout`
+  - CSRF Cookie 必須 (`/sanctum/csrf-cookie`)
+- **ネイティブアプリ / 外部クライアント**: Bearer Token (Personal Access Token)
+  - エンドポイント: `POST /api/v1/tokens` (発行) / `GET /api/v1/tokens` (一覧) / `DELETE /api/v1/tokens/current` (revoke)
+  - リクエストヘッダ: `Authorization: Bearer <token>`
+  - Token は発行時のみ平文返却。サーバ側はハッシュ保存
+  - `POST /api/v1/logout` も Bearer 経由なら現在の Token を revoke する
 
 ### 11-2. SQL Injection 防止
 - Eloquent / Query Builder のパラメータバインディングを使う
