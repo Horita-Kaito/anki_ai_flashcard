@@ -28,7 +28,6 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_PORT || 22 }}
-          script_stop: true
           script: |
             set -e
             APP_ROOT="$HOME/srv/apps/anki-ai-flashcard"

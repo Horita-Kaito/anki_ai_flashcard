@@ -45,14 +45,24 @@ services:
       - traefik.http.services.anki-frontend.loadbalancer.server.port=3000
 
   # ----------------------------------------
-  # Backend - Laravel PHP-FPM (pre-built image)
+  # Backend - Laravel (pre-built image, code volume-mounted)
+  #
+  # NOTE: 現在の backend image は dev 用 Dockerfile (artisan serve) で
+  # 構築されており、image 内に app コードを含まない。そのため host の
+  # ./backend を /var/www/html にマウントし、deploy 時に composer install
+  # でホスト側に vendor/ を生成する。
+  # 将来的に docker/php/Dockerfile.prod を docker-build.yml で使う構成に
+  # 切り替えれば、volume mount + composer install は不要になり php-fpm +
+  # Nginx 構成 (前バージョンの本ファイル参照) に移行できる。
   # ----------------------------------------
   backend:
     image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
     container_name: anki-backend
     restart: unless-stopped
     expose:
-      - "9000"
+      - "8000"
+    volumes:
+      - ./backend:/var/www/html
     env_file:
       - ../data/.env
     environment:
@@ -81,22 +91,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    networks:
-      - default
-
-  # ----------------------------------------
-  # Nginx - PHP-FPM front (Traefik routed)
-  # ----------------------------------------
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: anki-nginx
-    restart: unless-stopped
-    expose:
-      - "80"
-    volumes:
-      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - backend
+    command: php artisan serve --host=0.0.0.0 --port=8000
     networks:
       - proxy
       - default
@@ -106,8 +101,8 @@ services:
       - traefik.http.routers.anki-api.entrypoints=websecure
       - traefik.http.routers.anki-api.tls.certresolver=letsencrypt
       - traefik.http.routers.anki-api.priority=10
-      - traefik.http.services.anki-api.loadbalancer.server.port=80
-      # HSTS / セキュリティヘッダ
+      - traefik.http.services.anki-api.loadbalancer.server.port=8000
+      # HSTS / セキュリティヘッダ (Traefik レイヤで付与)
       - traefik.http.middlewares.anki-hsts.headers.stsSeconds=31536000
       - traefik.http.middlewares.anki-hsts.headers.stsIncludeSubdomains=true
       - traefik.http.middlewares.anki-hsts.headers.stsPreload=true
@@ -121,11 +116,14 @@ services:
     image: ghcr.io/horita-kaito/anki_ai_flashcard-backend:develop
     container_name: anki-queue
     restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
     env_file:
       - ../data/.env
     environment:
       APP_ENV: staging
       APP_DEBUG: "false"
+      APP_TIMEZONE: Asia/Tokyo
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: "3306"
