@@ -29,20 +29,18 @@ export function GenerateCandidatesView({
   const { data: candidates, isLoading: candidatesLoading } =
     useCandidatesForNote(noteSeedId);
 
-  const [templateId, setTemplateId] = useState<number | null>(
-    note?.domain_template_id ?? null
-  );
+  // ユーザーが UI で明示選択した値だけを state で持ち、未選択時は note の値にフォールバック。
+  // これで render 中 setState を避けつつ、ユーザー操作 (null 選択を含む) も保持できる。
+  const [userTemplateId, setUserTemplateId] = useState<number | null | undefined>(undefined);
+  const templateId: number | null =
+    userTemplateId !== undefined ? userTemplateId : (note?.domain_template_id ?? null);
+  const setTemplateId = (id: number | null) => setUserTemplateId(id);
 
   const generateMutation = useGenerateCandidates(noteSeedId);
   const regenerateMutation = useRegenerateCandidates(noteSeedId);
   const addMoreMutation = useAddMoreCandidates(noteSeedId);
 
   const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
-
-  // 初回ロード時に note.domain_template_id を反映
-  if (note && templateId === null && note.domain_template_id) {
-    setTemplateId(note.domain_template_id);
-  }
 
   const pendingCandidates = candidates?.filter((c) => c.status === "pending") ?? [];
   const historyCandidates = candidates?.filter((c) => c.status !== "pending") ?? [];

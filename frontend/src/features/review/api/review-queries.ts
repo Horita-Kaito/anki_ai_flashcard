@@ -44,7 +44,9 @@ export function useAnswerReview() {
       response_time_ms?: number;
     }) => answerReview(input),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["review"] });
+      // ["review", "today"] は 1 セッション開始時のスナップショットを最後まで使う。
+      // ここで invalidate すると refetch で配列が縮み、index と添字がズレてカードを飛ばす。
+      qc.invalidateQueries({ queryKey: reviewKeys.stats });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -63,7 +65,8 @@ export function useArchiveFromReview() {
   return useMutation({
     mutationFn: (cardId: number) => archiveCardFromReview(cardId),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["review"] });
+      // 同上、today は invalidate しない (セッション中スナップショット維持)
+      qc.invalidateQueries({ queryKey: reviewKeys.stats });
       qc.invalidateQueries({ queryKey: ["cards"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
     },

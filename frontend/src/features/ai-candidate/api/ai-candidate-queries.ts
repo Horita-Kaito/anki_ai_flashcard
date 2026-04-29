@@ -18,7 +18,7 @@ import {
   type GenerateOptions,
 } from "./endpoints";
 import type { CandidateStatus } from "@/entities/ai-candidate/types";
-import { cardKeys } from "@/features/card/api/card-queries";
+import { cardKeys } from "@/entities/card/api/card-keys";
 import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
 
 export const aiCandidateKeys = {

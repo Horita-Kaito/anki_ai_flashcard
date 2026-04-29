@@ -14,7 +14,7 @@ import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 import { Button } from "@/shared/ui/button";
 import { ClozeText } from "@/shared/ui/cloze-text";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
-import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
+import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 
 interface CandidateCardProps {
   candidate: AiCardCandidate;

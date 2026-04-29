@@ -5,9 +5,6 @@ export async function submitOnboarding(goals: string[]): Promise<void> {
   await apiClient.post("/onboarding", { goals });
 }
 
-export async function fetchOnboardingStatus(): Promise<{ completed: boolean }> {
-  const res = await apiClient.get<{ data: { completed: boolean } }>(
-    "/onboarding/status",
-  );
-  return res.data.data;
-}
+// onboarding ステータス取得は cross-feature でも使うため entities/user/api に移動済み。
+// 後方互換のための re-export。
+export { fetchOnboardingStatus } from "@/entities/user/api/endpoints";

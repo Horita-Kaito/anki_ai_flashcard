@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchTagList } from "./endpoints";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createTag, deleteTag, fetchTagList } from "./endpoints";
 
 export const tagKeys = {
   all: ["tags"] as const,
@@ -11,5 +11,21 @@ export function useTagList() {
     queryKey: tagKeys.list(),
     queryFn: fetchTagList,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCreateTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => createTag(name),
+    onSuccess: () => qc.invalidateQueries({ queryKey: tagKeys.all }),
+  });
+}
+
+export function useDeleteTag() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteTag(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: tagKeys.all }),
   });
 }

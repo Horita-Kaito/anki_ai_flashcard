@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { Archive, CalendarClock, Check, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -76,14 +76,24 @@ export function ReviewSession() {
     setShowAnswer(true);
   }, []);
 
+  // mutateAsync を ref に固定し、useCallback の依存変動を抑える
+  const answerMutateRef = useRef(answerMutation.mutateAsync);
+  answerMutateRef.current = answerMutation.mutateAsync;
+  // 連打 / キーボード連打のガード (mutation.isPending では不十分: state更新前の連続呼び出しを止める)
+  const isSubmittingRef = useRef(false);
+
   const handleRate = useCallback(
     async (rating: ReviewRating) => {
       if (!current) return;
+      if (isSubmittingRef.current || answerMutation.isPending) return;
+      isSubmittingRef.current = true;
+      // タブ放置 / 時計操作対策: response_time を 5 分でクランプ
+      const elapsed = Math.min(Math.max(Date.now() - startedAt, 0), 5 * 60 * 1000);
       try {
-        await answerMutation.mutateAsync({
+        await answerMutateRef.current({
           card_id: current.id,
           rating,
-          response_time_ms: Date.now() - startedAt,
+          response_time_ms: elapsed,
         });
         haptic("success");
         setCompleted((c) => c + 1);
@@ -93,9 +103,11 @@ export function ReviewSession() {
       } catch {
         haptic("warning");
         toast.error("回答の保存に失敗しました");
+      } finally {
+        isSubmittingRef.current = false;
       }
     },
-    [current, answerMutation, startedAt]
+    [current, answerMutation.isPending, startedAt]
   );
 
   const handleNextExtra = useCallback(() => {

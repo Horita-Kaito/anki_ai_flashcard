@@ -5,7 +5,7 @@ import { CheckCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useBatchAdoptCandidates } from "../api/ai-candidate-queries";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
-import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
+import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 

@@ -12,10 +12,10 @@ import {
   createCardSchema,
   type CreateCardInput,
 } from "../schemas/card-schemas";
-import { TagPicker } from "@/entities/tag/ui/tag-picker";
-import { useCreateTag } from "@/features/tag";
+import { TagPicker } from "@/shared/ui/tag-picker";
+import { useCreateTag } from "@/entities/tag/api/tag-queries";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
-import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
+import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import { CARD_TYPES, CARD_TYPE_LABELS } from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
 import type { Card } from "@/entities/card/types";

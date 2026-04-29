@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { isAxiosError } from "axios";
 import { useLogin } from "../api/auth-queries";
 import { loginSchema, type LoginInput } from "../schemas/auth-schemas";
-import { fetchOnboardingStatus } from "@/features/onboarding";
+import { fetchOnboardingStatus } from "@/entities/user/api/endpoints";
 import { Button } from "@/shared/ui/button";
 
 export function LoginForm() {

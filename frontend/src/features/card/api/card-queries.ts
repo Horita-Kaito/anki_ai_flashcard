@@ -17,13 +17,10 @@ import type {
   CreateCardInput,
   UpdateCardInput,
 } from "../schemas/card-schemas";
+import { cardKeys } from "@/entities/card/api/card-keys";
 
-export const cardKeys = {
-  all: ["cards"] as const,
-  list: (page = 1, filters: CardListFilters = {}) =>
-    [...cardKeys.all, "list", page, filters] as const,
-  detail: (id: number) => [...cardKeys.all, "detail", id] as const,
-};
+// cross-feature で参照される invalidation 用に re-export
+export { cardKeys };
 
 export function useCardList(page = 1, filters: CardListFilters = {}) {
   return useQuery({

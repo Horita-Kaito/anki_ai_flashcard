@@ -7,7 +7,7 @@ import { CardListItem } from "./card-list-item";
 import { CardListEmpty } from "./card-list-empty";
 import { CardListSkeleton } from "./card-list-skeleton";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
-import { buildHierarchicalOptions } from "@/features/deck/lib/deck-tree";
+import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import { useTagList } from "@/entities/tag/api/tag-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { Button } from "@/shared/ui/button";
