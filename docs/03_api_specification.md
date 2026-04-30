@@ -378,6 +378,7 @@ Authorization: Bearer 1|abcdefg...
       "explanation": null,
       "card_type": "basic_qa",
       "is_suspended": false,
+      "scheduler": "fsrs",
       "source_note_seed_id": 1,
       "source_ai_candidate_id": 3,
       "tags": [
@@ -387,7 +388,10 @@ Authorization: Bearer 1|abcdefg...
         "state": "review",
         "due_at": "2026-04-15T00:00:00Z",
         "interval_days": 7,
-        "ease_factor": 2.5
+        "ease_factor": null,
+        "stability": 7.2,
+        "difficulty": 5.3,
+        "lapse_count": 0
       },
       "created_at": "2026-04-13T00:00:00Z",
       "updated_at": "2026-04-13T00:00:00Z"
@@ -396,6 +400,10 @@ Authorization: Bearer 1|abcdefg...
   "meta": { ... }
 }
 ```
+
+`scheduler` ごとに schedule の値の意味が変わる:
+- `scheduler="sm2"` → `ease_factor` (1.3〜2.5) を使う、`stability`/`difficulty` は null
+- `scheduler="fsrs"` → `stability` (日) と `difficulty` (1.0〜10.0) を使う、`ease_factor` は null
 
 ---
 
@@ -410,6 +418,7 @@ Authorization: Bearer 1|abcdefg...
   "answer": "依存性注入。オブジェクトの依存を外部から渡す設計パターン。",
   "explanation": "テスト容易性や拡張性が向上する。",
   "card_type": "basic_qa",
+  "scheduler": "fsrs",
   "tag_ids": [1, 3]
 }
 ```
@@ -420,6 +429,7 @@ Authorization: Bearer 1|abcdefg...
 - answer: 必須, 最大2000文字
 - explanation: 任意, 最大5000文字
 - card_type: 必須, basic_qa/comparison/practical_case/cloze_like
+- scheduler: 任意, "sm2" | "fsrs" (デフォルト "fsrs")
 - tag_ids: 任意, 配列, 各要素が自分のタグに存在
 
 **Response 201**: カードデータ + 自動作成された card_schedule
@@ -433,6 +443,21 @@ Authorization: Bearer 1|abcdefg...
 
 ### PUT /api/cards/{id}
 カード更新
+
+**Request Body** (一部抜粋):
+```json
+{
+  "question": "...",
+  "answer": "...",
+  "scheduler": "sm2"
+}
+```
+
+**注意**: `scheduler` を変更すると、card_schedule の学習進捗 (state, repetitions,
+interval_days, ease_factor, stability, difficulty, lapse_count, archived_at) は
+すべて初期化される (state=new、ease_factor=2.5、その他 0/null)。
+SM-2 と FSRS は状態変数が互換でないため、進捗を引き継ぐ自動変換は提供しない。
+UI 側で確認ダイアログを介してから送信する想定。
 
 ---
 
@@ -629,11 +654,14 @@ AI候補生成
   "question": "DIとは何か（編集後）",
   "answer": "依存性注入。（編集後）",
   "tag_ids": [1],
-  "explanation": "補足説明テキスト"
+  "explanation": "補足説明テキスト",
+  "scheduler": "fsrs"
 }
 ```
 
-**注意**: question/answer は省略時に候補の値をそのまま使用
+**注意**:
+- question/answer は省略時に候補の値をそのまま使用
+- `scheduler` は省略可 (デフォルト "fsrs")
 
 **Response 201**:
 ```json
@@ -645,13 +673,16 @@ AI候補生成
       "question": "DIとは何か（編集後）",
       "answer": "依存性注入。（編集後）",
       "card_type": "basic_qa",
+      "scheduler": "fsrs",
       "source_note_seed_id": 1,
       "source_ai_candidate_id": 1,
       "schedule": {
         "state": "new",
         "due_at": "2026-04-13T00:00:00Z",
         "interval_days": 0,
-        "ease_factor": 2.50
+        "ease_factor": null,
+        "stability": null,
+        "difficulty": null
       }
     },
     "candidate": {
@@ -672,9 +703,12 @@ AI候補生成
 {
   "deck_id": 1,
   "candidate_ids": [1, 2, 3],
-  "tag_ids": [1]
+  "tag_ids": [1],
+  "scheduler": "fsrs"
 }
 ```
+
+**注意**: `scheduler` は省略可 (デフォルト "fsrs")。すべての採用カードに適用。
 
 **Response 201**:
 ```json
@@ -789,11 +823,14 @@ AI候補生成
   "data": {
     "card_id": 1,
     "rating": "good",
+    "scheduler": "fsrs",
     "updated_schedule": {
       "state": "review",
       "repetitions": 4,
       "interval_days": 18,
-      "ease_factor": 2.50,
+      "ease_factor": null,
+      "stability": 18.4,
+      "difficulty": 5.2,
       "due_at": "2026-05-01T00:00:00Z",
       "lapse_count": 0
     },
@@ -805,6 +842,10 @@ AI候補生成
   }
 }
 ```
+
+`scheduler` ごとに `updated_schedule` の値の意味が変わる:
+- `scheduler="sm2"` → `ease_factor` を返し、`stability`/`difficulty` は null
+- `scheduler="fsrs"` → `stability`/`difficulty` を返し、`ease_factor` は null
 
 ---
 
@@ -959,8 +1000,14 @@ AI候補生成
   "default_domain_template_id": 1,
   "default_ai_provider": "openai",
   "default_ai_model": "gpt-4o-mini",
-  "default_generation_count": 3
+  "default_generation_count": 3,
+  "desired_retention": 0.9
 }
 ```
+
+**Validation**:
+- `desired_retention` (任意): FSRS の目標想起率。0.7〜0.97 (デフォルト 0.9)。
+  低いほど復習頻度が下がるが忘却率が上がる、高いほど確実だが復習量が増える。
+  SM-2 カードには影響しない。
 
 **補足**: 旧 `daily_new_limit` / `daily_review_limit` は廃止。復習対象は due なカードを制限なく返す。

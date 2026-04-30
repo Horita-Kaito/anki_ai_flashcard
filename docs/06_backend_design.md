@@ -334,6 +334,62 @@ $this->app->bind(AiProviderInterface::class, function ($app) {
 });
 ```
 
+### 3-6. 復習スケジューラ (SM-2 / FSRS) の per-card 切替
+
+復習アルゴリズムは **カード単位** で SM-2 / FSRS を選択できる。
+`Card::scheduler` カラム (`'sm2'` | `'fsrs'`) で保持し、`SchedulerResolver` が
+適切な `SchedulerInterface` 実装をディスパッチする。
+
+```php
+// SchedulerResolver: card 単位で実装を選ぶ
+public function resolveForCard(Card $card): SchedulerInterface
+{
+    return match ($card->scheduler) {
+        Card::SCHEDULER_FSRS => new FsrsScheduler(
+            desiredRetention: $this->loadDesiredRetention($card->user_id),
+        ),
+        default => $this->sm2Scheduler,
+    };
+}
+```
+
+#### バインディング方針
+- `SchedulerInterface` は **直接 bind しない** (個別 inject を防ぐ)
+- すべて `SchedulerResolverInterface` 経由で取得する
+- `SchedulerResolver` は **singleton** として登録: 内部にユーザー単位の
+  memo を持ち、レビュー中の `user_setting` 読み込みを 1 回に抑止
+
+```php
+public array $singletons = [
+    SchedulerResolverInterface::class => SchedulerResolver::class,
+];
+```
+
+#### 状態変数の互換性
+- SM-2 と FSRS は状態変数 (ease_factor / stability / difficulty) が完全に別物
+- `card_schedules` テーブルに両者のカラムを保持 (片方は null)
+- `CardResource` で FSRS カードの ease_factor は null を返す (フロント誤表示防止)
+
+#### scheduler 切替時のリセット
+カード作成後の scheduler 変更はサポートするが、状態変数の互換性が無いため
+**学習進捗を完全にリセット** する (state=new、interval=0、stability/difficulty=null、
+ease_factor=2.5、lapse_count=0、archived_at=null)。
+
+実装は `CardService::updateForUser` で `$attributes['scheduler'] !== $card->scheduler`
+を検出した場合のみリセットを実行。Frontend では destructive ConfirmDialog で
+ユーザーに警告してから送信する。
+
+#### overdue decay の SM-2 限定
+`CardScheduleRepository::decayOverdueForUser` は SM-2 設計の「忘れたら interval
+を縮める」ロジック。FSRS では interval が stability から導出されるため、
+decay は **SM-2 カードに限定** して走らせる (FSRS は次のレビューで自然に再計算)。
+
+#### Auto-archive 閾値
+- SM-2: 180 日 (config: `review.archive_interval_days`)
+- FSRS: 365 日 (config: `review.fsrs_archive_interval_days`)
+
+FSRS は長期 interval を出すのが本質なので、緩めの閾値に設定する。
+
 ---
 
 ## 4. 命名規則

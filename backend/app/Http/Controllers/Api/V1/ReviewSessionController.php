@@ -9,6 +9,7 @@ use App\Enums\ReviewRating;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Review\AnswerReviewRequest;
 use App\Http\Resources\CardResource;
+use App\Models\Card;
 use App\Models\CardSchedule;
 use App\Services\ReviewSessionService;
 use Illuminate\Http\JsonResponse;
@@ -103,18 +104,25 @@ final class ReviewSessionController extends Controller
 
         /** @var CardSchedule $schedule */
         $schedule = $result['schedule'];
+        /** @var Card $card */
+        $card = $result['card'];
+        $isFsrs = $card->scheduler === Card::SCHEDULER_FSRS;
 
         return response()->json([
             'data' => [
                 'card_id' => (int) $validated['card_id'],
                 'rating' => $validated['rating'],
+                'scheduler' => $card->scheduler,
                 'updated_schedule' => [
                     'state' => $schedule->state instanceof \BackedEnum
                         ? $schedule->state->value
                         : (string) $schedule->state,
                     'repetitions' => $schedule->repetitions,
                     'interval_days' => $schedule->interval_days,
-                    'ease_factor' => (float) $schedule->ease_factor,
+                    // FSRS では ease_factor を使わないので null
+                    'ease_factor' => $isFsrs ? null : (float) $schedule->ease_factor,
+                    'stability' => $schedule->stability !== null ? (float) $schedule->stability : null,
+                    'difficulty' => $schedule->difficulty !== null ? (float) $schedule->difficulty : null,
                     'due_at' => $schedule->due_at?->toIso8601String(),
                     'lapse_count' => $schedule->lapse_count,
                 ],

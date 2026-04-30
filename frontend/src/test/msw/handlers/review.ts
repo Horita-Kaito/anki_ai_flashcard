@@ -23,11 +23,14 @@ export const reviewHandlers = [
       data: {
         card_id: body.card_id,
         rating: body.rating,
+        scheduler: "fsrs",
         updated_schedule: {
           state: "review",
           repetitions: 1,
           interval_days: 1,
-          ease_factor: 2.5,
+          ease_factor: null,
+          stability: 1.0,
+          difficulty: 5.0,
           due_at: new Date().toISOString(),
           lapse_count: 0,
         },

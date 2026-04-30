@@ -1,4 +1,4 @@
-import type { Card } from "@/entities/card/types";
+import type { Card, Scheduler } from "@/entities/card/types";
 
 export const REVIEW_RATINGS = ["again", "hard", "good", "easy"] as const;
 export type ReviewRating = (typeof REVIEW_RATINGS)[number];
@@ -27,11 +27,17 @@ export interface TodaySession {
 export interface AnswerResult {
   card_id: number;
   rating: ReviewRating;
+  scheduler: Scheduler;
   updated_schedule: {
     state: string;
     repetitions: number;
     interval_days: number;
-    ease_factor: number;
+    /** SM-2 のみ。FSRS では null */
+    ease_factor: number | null;
+    /** FSRS のみ。SM-2 では null */
+    stability: number | null;
+    /** FSRS のみ。1.0〜10.0 */
+    difficulty: number | null;
     due_at: string | null;
     lapse_count: number;
   };

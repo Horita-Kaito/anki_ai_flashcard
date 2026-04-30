@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { REVIEW_RATINGS } from "./types";
+import { SCHEDULERS } from "@/entities/card/types";
 import { cardResponseSchema } from "@/entities/card/schemas";
 
 export const todaySessionResponseSchema = z
@@ -31,7 +32,9 @@ const updatedScheduleSchema = z
     state: z.string(),
     repetitions: z.number(),
     interval_days: z.number(),
-    ease_factor: z.number(),
+    ease_factor: z.number().nullable(),
+    stability: z.number().nullable().default(null),
+    difficulty: z.number().nullable().default(null),
     due_at: z.string().nullable(),
     lapse_count: z.number(),
   })
@@ -41,6 +44,7 @@ export const answerResultResponseSchema = z
   .object({
     card_id: z.number(),
     rating: z.enum(REVIEW_RATINGS),
+    scheduler: z.enum(SCHEDULERS).default("sm2"),
     updated_schedule: updatedScheduleSchema,
   })
   .passthrough();

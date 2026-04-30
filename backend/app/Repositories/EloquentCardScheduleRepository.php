@@ -88,9 +88,18 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         $cutoff7 = $nowCarbon->copy()->subDays(7);
         $cutoff14 = $nowCarbon->copy()->subDays(14);
 
+        // SM-2 カードに限定: FSRS は interval_days が stability から導出されるため
+        // ここで上書きしても次レビューで再計算されるだけで意味がない。
+        // sm2 のみを対象とすることで、interval_days と stability の一時的乖離を防ぐ。
+        $smCardSubquery = Card::query()
+            ->where('user_id', $userId)
+            ->where('scheduler', Card::SCHEDULER_SM2)
+            ->select('id');
+
         // overdue > 14 日: interval を 1 にリセット
         CardSchedule::query()
             ->where('user_id', $userId)
+            ->whereIn('card_id', $smCardSubquery)
             ->whereNull('archived_at')
             ->where('interval_days', '>', 0)
             ->where('due_at', '<', $cutoff14)
@@ -99,6 +108,7 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         // 7 < overdue <= 14: interval *= 0.5 (最低 1)
         CardSchedule::query()
             ->where('user_id', $userId)
+            ->whereIn('card_id', $smCardSubquery)
             ->whereNull('archived_at')
             ->where('interval_days', '>', 0)
             ->where('due_at', '<', $cutoff7)
@@ -112,6 +122,7 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         // 1 < overdue <= 7: interval *= 0.8 (最低 1)
         CardSchedule::query()
             ->where('user_id', $userId)
+            ->whereIn('card_id', $smCardSubquery)
             ->whereNull('archived_at')
             ->where('interval_days', '>', 0)
             ->where('due_at', '<', $cutoff1)
