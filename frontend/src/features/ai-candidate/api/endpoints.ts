@@ -10,54 +10,79 @@ export interface GenerateOptions {
   preferred_card_types?: CardType[];
 }
 
-export interface GenerationMeta {
-  model: string;
-  provider: string;
-  input_tokens: number;
-  output_tokens: number;
-  cost_usd: number;
-  duration_ms: number;
+export type GenerationStatusValue =
+  | "idle"
+  | "queued"
+  | "processing"
+  | "success"
+  | "failed";
+
+/**
+ * 進行中・完了問わずジョブの状態を表す。
+ * idle = まだ一度も生成依頼されていない (ログなし)
+ */
+export interface GenerationStatus {
+  id?: number;
+  note_seed_id: number;
+  status: GenerationStatusValue;
+  job_id?: string | null;
+  provider?: string;
+  model_name?: string;
+  candidates_count?: number;
+  duration_ms?: number;
+  error_reason?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-export interface GenerationResult {
-  candidates: AiCardCandidate[];
-  meta: GenerationMeta;
+export type GenerationDispatchResult = GenerationStatus;
+
+async function postGeneration(
+  path: string,
+  options: GenerateOptions
+): Promise<GenerationDispatchResult> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: GenerationStatus }>(path, options);
+  return res.data.data;
 }
 
 export async function generateCandidates(
   noteSeedId: number,
   options: GenerateOptions = {}
-): Promise<GenerationResult> {
-  await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
+): Promise<GenerationDispatchResult> {
+  return postGeneration(
     `/note-seeds/${noteSeedId}/generate-candidates`,
     options
   );
-  return { candidates: res.data.data, meta: res.data.meta };
 }
 
 export async function regenerateCandidates(
   noteSeedId: number,
   options: GenerateOptions = {}
-): Promise<GenerationResult> {
-  await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
+): Promise<GenerationDispatchResult> {
+  return postGeneration(
     `/note-seeds/${noteSeedId}/regenerate-candidates`,
     options
   );
-  return { candidates: res.data.data, meta: res.data.meta };
 }
 
 export async function addMoreCandidates(
   noteSeedId: number,
   options: GenerateOptions = {}
-): Promise<GenerationResult> {
-  await fetchCsrfCookie();
-  const res = await apiClient.post<{ data: AiCardCandidate[]; meta: GenerationMeta }>(
+): Promise<GenerationDispatchResult> {
+  return postGeneration(
     `/note-seeds/${noteSeedId}/additional-candidates`,
     options
   );
-  return { candidates: res.data.data, meta: res.data.meta };
+}
+
+export async function fetchGenerationStatus(
+  noteSeedId: number
+): Promise<GenerationStatus> {
+  const res = await apiClient.get<{ data: GenerationStatus }>(
+    `/note-seeds/${noteSeedId}/generation-status`
+  );
+  return res.data.data;
 }
 
 export async function fetchCandidatesForNote(

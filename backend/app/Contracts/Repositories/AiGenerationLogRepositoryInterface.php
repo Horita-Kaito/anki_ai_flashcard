@@ -27,4 +27,14 @@ interface AiGenerationLogRepositoryInterface
      * 指定期間のユーザーの累計コスト (USD)
      */
     public function totalCostForUserInPeriod(int $userId, \DateTimeInterface $from, \DateTimeInterface $to): float;
+
+    /**
+     * 指定メモに対して進行中 (queued/processing) のジョブを返す。
+     */
+    public function findInFlightForNote(int $userId, int $noteSeedId): ?AiGenerationLog;
+
+    /**
+     * 指定メモに対する最新ログ (進行中・完了問わず) を返す。
+     */
+    public function findLatestForNote(int $userId, int $noteSeedId): ?AiGenerationLog;
 }

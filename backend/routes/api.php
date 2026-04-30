@@ -75,6 +75,9 @@ Route::prefix('v1')->group(function () {
         Route::get('note-seeds/{id}/candidates', [
             AiCardCandidateController::class, 'indexForNoteSeed',
         ]);
+        Route::get('note-seeds/{id}/generation-status', [
+            AiCardCandidateController::class, 'generationStatus',
+        ]);
         Route::put('ai-card-candidates/{id}', [AiCardCandidateController::class, 'update']);
         Route::post('ai-card-candidates/{id}/reject', [AiCardCandidateController::class, 'reject']);
         Route::post('ai-card-candidates/{id}/restore', [AiCardCandidateController::class, 'restore']);

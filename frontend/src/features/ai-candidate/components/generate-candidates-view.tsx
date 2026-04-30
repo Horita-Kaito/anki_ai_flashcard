@@ -1,18 +1,22 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, RefreshCw, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles, RefreshCw, Plus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  aiCandidateKeys,
   useAddMoreCandidates,
   useCandidatesForNote,
   useGenerateCandidates,
+  useGenerationStatus,
   useRegenerateCandidates,
 } from "../api/ai-candidate-queries";
 import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
 import { toAiErrorMessage } from "../lib/ai-error-message";
 import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
+import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
@@ -24,69 +28,102 @@ interface GenerateCandidatesViewProps {
 export function GenerateCandidatesView({
   noteSeedId,
 }: GenerateCandidatesViewProps) {
+  const qc = useQueryClient();
   const { data: note, isLoading: noteLoading } = useNoteSeed(noteSeedId);
   const { data: templates } = useDomainTemplateList();
-  const { data: candidates, isLoading: candidatesLoading } =
-    useCandidatesForNote(noteSeedId);
+  const { data: generationStatus } = useGenerationStatus(noteSeedId);
+  const isInFlight =
+    generationStatus?.status === "queued" ||
+    generationStatus?.status === "processing";
 
-  // ユーザーが UI で明示選択した値だけを state で持ち、未選択時は note の値にフォールバック。
-  // これで render 中 setState を避けつつ、ユーザー操作 (null 選択を含む) も保持できる。
-  const [userTemplateId, setUserTemplateId] = useState<number | null | undefined>(undefined);
+  // 進行中は候補一覧を 3 秒ごとに refetch して、完了直後に候補が表示されるようにする
+  const { data: candidates, isLoading: candidatesLoading } =
+    useCandidatesForNote(noteSeedId, undefined, {
+      refetchInterval: isInFlight ? 3000 : false,
+    });
+
+  const [userTemplateId, setUserTemplateId] = useState<
+    number | null | undefined
+  >(undefined);
   const templateId: number | null =
-    userTemplateId !== undefined ? userTemplateId : (note?.domain_template_id ?? null);
+    userTemplateId !== undefined
+      ? userTemplateId
+      : (note?.domain_template_id ?? null);
   const setTemplateId = (id: number | null) => setUserTemplateId(id);
 
   const generateMutation = useGenerateCandidates(noteSeedId);
   const regenerateMutation = useRegenerateCandidates(noteSeedId);
   const addMoreMutation = useAddMoreCandidates(noteSeedId);
+  const isDispatching =
+    generateMutation.isPending ||
+    regenerateMutation.isPending ||
+    addMoreMutation.isPending;
 
   const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
 
-  const pendingCandidates = candidates?.filter((c) => c.status === "pending") ?? [];
-  const historyCandidates = candidates?.filter((c) => c.status !== "pending") ?? [];
+  // 進行中 → 完了 への遷移を検出して toast + 関連 query を invalidate する
+  const prevStatusRef = useRef<string | null>(null);
+  useEffect(() => {
+    const current = generationStatus?.status ?? null;
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = current;
+
+    if (!current || current === prev) return;
+
+    const wasInFlight = prev === "queued" || prev === "processing";
+
+    if (wasInFlight && current === "success") {
+      const count = generationStatus?.candidates_count ?? 0;
+      toast.success(`AI が ${count} 件の候補を生成しました`);
+      qc.invalidateQueries({ queryKey: aiCandidateKeys.forNote(noteSeedId) });
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+    } else if (wasInFlight && current === "failed") {
+      const reason = generationStatus?.error_reason
+        ? `: ${generationStatus.error_reason.slice(0, 80)}`
+        : "";
+      toast.error(`AI 生成に失敗しました${reason}`);
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+    }
+  }, [
+    generationStatus?.status,
+    generationStatus?.candidates_count,
+    generationStatus?.error_reason,
+    noteSeedId,
+    qc,
+  ]);
+
+  const pendingCandidates =
+    candidates?.filter((c) => c.status === "pending") ?? [];
+  const historyCandidates =
+    candidates?.filter((c) => c.status !== "pending") ?? [];
   const hasPending = pendingCandidates.length > 0;
   const hasAnyCandidates = (candidates?.length ?? 0) > 0;
 
   async function handleGenerate() {
     try {
-      const result = await generateMutation.mutateAsync({
-        domain_template_id: templateId,
-      });
-      const m = result.meta;
-      toast.success(
-        `${m.model} で ${result.candidates.length} 件生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
-      );
+      await generateMutation.mutateAsync({ domain_template_id: templateId });
+      toast.success("AI 生成を開始しました。完了したら候補が表示されます");
     } catch (err: unknown) {
-      toast.error(toAiErrorMessage(err, "生成に失敗しました"));
+      toast.error(toAiErrorMessage(err, "生成の開始に失敗しました"));
     }
   }
 
   async function handleAddMore() {
     try {
-      const result = await addMoreMutation.mutateAsync({
-        domain_template_id: templateId,
-      });
-      const m = result.meta;
-      toast.success(
-        `${m.model} で ${result.candidates.length} 件追加生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
-      );
+      await addMoreMutation.mutateAsync({ domain_template_id: templateId });
+      toast.success("AI 生成を開始しました");
     } catch (err: unknown) {
-      toast.error(toAiErrorMessage(err, "追加生成に失敗しました"));
+      toast.error(toAiErrorMessage(err, "追加生成の開始に失敗しました"));
     }
   }
 
   async function handleRegenerate() {
     setRegenerateConfirmOpen(false);
     try {
-      const result = await regenerateMutation.mutateAsync({
-        domain_template_id: templateId,
-      });
-      const m = result.meta;
-      toast.success(
-        `${m.model} で ${result.candidates.length} 件再生成 (${m.duration_ms}ms, $${m.cost_usd.toFixed(6)})`
-      );
+      await regenerateMutation.mutateAsync({ domain_template_id: templateId });
+      toast.success("AI 再生成を開始しました");
     } catch (err: unknown) {
-      toast.error(toAiErrorMessage(err, "再生成に失敗しました"));
+      toast.error(toAiErrorMessage(err, "再生成の開始に失敗しました"));
     }
   }
 
@@ -129,7 +166,8 @@ export function GenerateCandidatesView({
                 e.target.value === "" ? null : Number(e.target.value)
               )
             }
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+            disabled={isInFlight}
+            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background disabled:opacity-60"
           >
             <option value="">指定しない</option>
             {templates?.map((t) => (
@@ -144,6 +182,19 @@ export function GenerateCandidatesView({
           候補数はメモの情報量から自動で調整されます。足りなければ生成後に「さらに追加」で増やせます。
         </p>
 
+        {isInFlight && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 rounded-md px-3 py-2"
+          >
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            <span>
+              AI が候補を生成しています。画面を離れても続きます。完了すると自動で表示されます。
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-2">
           {!hasAnyCandidates ? (
             <Button
@@ -151,9 +202,9 @@ export function GenerateCandidatesView({
               size="lg"
               className="min-h-11"
               onClick={handleGenerate}
-              disabled={generateMutation.isPending}
+              disabled={isInFlight || isDispatching}
             >
-              {generateMutation.isPending ? (
+              {isInFlight || isDispatching ? (
                 <>
                   <RefreshCw className="size-4 animate-spin" aria-hidden />
                   生成中...
@@ -171,12 +222,12 @@ export function GenerateCandidatesView({
               size="lg"
               className="min-h-11"
               onClick={handleAddMore}
-              disabled={addMoreMutation.isPending}
+              disabled={isInFlight || isDispatching}
             >
-              {addMoreMutation.isPending ? (
+              {isInFlight || isDispatching ? (
                 <>
                   <RefreshCw className="size-4 animate-spin" aria-hidden />
-                  追加生成中...
+                  生成中...
                 </>
               ) : (
                 <>
@@ -193,7 +244,7 @@ export function GenerateCandidatesView({
               size="lg"
               className="min-h-11"
               onClick={() => setRegenerateConfirmOpen(true)}
-              disabled={regenerateMutation.isPending}
+              disabled={isInFlight || isDispatching}
             >
               <RefreshCw className="size-4" aria-hidden />
               再生成
@@ -207,12 +258,17 @@ export function GenerateCandidatesView({
         <p className="text-muted-foreground">候補を読み込み中...</p>
       ) : !candidates || candidates.length === 0 ? (
         <p className="text-sm text-muted-foreground p-4 text-center border border-dashed rounded-xl">
-          まだ候補がありません。上のボタンで AI 生成を開始してください。
+          {isInFlight
+            ? "生成完了までしばらくお待ちください。"
+            : "まだ候補がありません。上のボタンで AI 生成を開始してください。"}
         </p>
       ) : (
         <>
           {hasPending && (
-            <section aria-labelledby="pending-section" className="space-y-3">
+            <section
+              aria-labelledby="pending-section"
+              className="space-y-3"
+            >
               <div className="flex items-center justify-between gap-2">
                 <h2 id="pending-section" className="font-medium">
                   未採用候補 ({pendingCandidates.length})
@@ -234,8 +290,14 @@ export function GenerateCandidatesView({
           )}
 
           {historyCandidates.length > 0 && (
-            <section aria-labelledby="history-section" className="space-y-3">
-              <h2 id="history-section" className="text-sm font-medium text-muted-foreground">
+            <section
+              aria-labelledby="history-section"
+              className="space-y-3"
+            >
+              <h2
+                id="history-section"
+                className="text-sm font-medium text-muted-foreground"
+              >
                 履歴 ({historyCandidates.length})
               </h2>
               <div className="space-y-3">

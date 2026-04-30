@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
+use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiCardCandidate\AdoptCandidateRequest;
 use App\Http\Requests\AiCardCandidate\BatchAdoptRequest;
 use App\Http\Requests\AiCardCandidate\GenerateCandidatesRequest;
 use App\Http\Requests\AiCardCandidate\UpdateCandidateRequest;
 use App\Http\Resources\AiCardCandidateResource;
+use App\Http\Resources\AiGenerationStatusResource;
 use App\Http\Resources\CardResource;
 use App\Models\NoteSeed;
 use App\Services\AiCardCandidateService;
@@ -27,6 +29,9 @@ final class AiCardCandidateController extends Controller
         private readonly NoteSeedService $noteSeedService,
     ) {}
 
+    /**
+     * 生成ジョブをディスパッチして 202 Accepted を返す (実生成は worker 側で非同期実行)。
+     */
     public function generate(
         GenerateCandidatesRequest $request,
         int $noteSeedId,
@@ -42,12 +47,11 @@ final class AiCardCandidateController extends Controller
         $options['regenerate'] = $regenerate;
         $options['additional'] = $additional;
 
-        $result = $this->generationService->generate($note, $options);
+        $log = $this->generationService->dispatchGeneration($note, $options);
 
-        return response()->json([
-            'data' => AiCardCandidateResource::collection($result['candidates']),
-            'meta' => $result['meta'],
-        ], 201);
+        return (new AiGenerationStatusResource($log))
+            ->response()
+            ->setStatusCode(202);
     }
 
     public function regenerate(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse
@@ -62,6 +66,37 @@ final class AiCardCandidateController extends Controller
     public function addMore(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse
     {
         return $this->generate($request, $noteSeedId, additional: true);
+    }
+
+    /**
+     * 指定メモの最新生成ジョブの状態を返す。
+     * - 進行中 (queued/processing) があればそれ
+     * - なければ最後に完了した log
+     * - 一度も生成されていなければ status=idle
+     */
+    public function generationStatus(Request $request, int $noteSeedId): JsonResponse
+    {
+        $note = $this->noteSeedService->getForUser(
+            userId: $request->user()->id,
+            noteSeedId: $noteSeedId,
+        );
+
+        /** @var AiGenerationLogRepositoryInterface $repo */
+        $repo = app(AiGenerationLogRepositoryInterface::class);
+
+        $log = $repo->findInFlightForNote($note->user_id, $note->id)
+            ?? $repo->findLatestForNote($note->user_id, $note->id);
+
+        if ($log === null) {
+            return response()->json([
+                'data' => [
+                    'note_seed_id' => $note->id,
+                    'status' => 'idle',
+                ],
+            ]);
+        }
+
+        return (new AiGenerationStatusResource($log))->response();
     }
 
     public function indexForNoteSeed(Request $request, int $noteSeedId): JsonResponse

@@ -24,9 +24,31 @@ class AiGenerationLog extends Model
         'cost_usd',
         'duration_ms',
         'status',
+        'job_id',
         'error_reason',
         'candidates_count',
     ];
+
+    public const STATUS_QUEUED = 'queued';
+
+    public const STATUS_PROCESSING = 'processing';
+
+    public const STATUS_SUCCESS = 'success';
+
+    public const STATUS_FAILED = 'failed';
+
+    /**
+     * @return array<int, string>
+     */
+    public static function inFlightStatuses(): array
+    {
+        return [self::STATUS_QUEUED, self::STATUS_PROCESSING];
+    }
+
+    public function isInFlight(): bool
+    {
+        return in_array($this->status, self::inFlightStatuses(), true);
+    }
 
     /** @var array<string, string> */
     protected $casts = [

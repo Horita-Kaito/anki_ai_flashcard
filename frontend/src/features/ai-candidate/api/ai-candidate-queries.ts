@@ -8,6 +8,7 @@ import {
   adoptCandidate,
   batchAdoptCandidates,
   fetchCandidatesForNote,
+  fetchGenerationStatus,
   generateCandidates,
   regenerateCandidates,
   rejectCandidate,
@@ -25,16 +26,40 @@ export const aiCandidateKeys = {
   all: ["ai-candidates"] as const,
   forNote: (noteSeedId: number, status?: CandidateStatus) =>
     [...aiCandidateKeys.all, "by-note", noteSeedId, status ?? null] as const,
+  generationStatus: (noteSeedId: number) =>
+    [...aiCandidateKeys.all, "generation-status", noteSeedId] as const,
 };
 
 export function useCandidatesForNote(
   noteSeedId: number,
-  status?: CandidateStatus
+  status?: CandidateStatus,
+  options?: { refetchInterval?: number | false }
 ) {
   return useQuery({
     queryKey: aiCandidateKeys.forNote(noteSeedId, status),
     queryFn: () => fetchCandidatesForNote(noteSeedId, status),
     enabled: Number.isFinite(noteSeedId) && noteSeedId > 0,
+    refetchInterval: options?.refetchInterval,
+  });
+}
+
+/**
+ * 進行中ジョブがある間だけ短い間隔で polling し、idle/success/failed に到達したら停止する。
+ */
+export function useGenerationStatus(noteSeedId: number) {
+  return useQuery({
+    queryKey: aiCandidateKeys.generationStatus(noteSeedId),
+    queryFn: () => fetchGenerationStatus(noteSeedId),
+    enabled: Number.isFinite(noteSeedId) && noteSeedId > 0,
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (!data) return false;
+      return data.status === "queued" || data.status === "processing"
+        ? 3000
+        : false;
+    },
+    // ウィンドウフォーカス時にも最新状態を引き直す
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -44,9 +69,10 @@ export function useGenerateCandidates(noteSeedId: number) {
     mutationFn: (options: GenerateOptions) =>
       generateCandidates(noteSeedId, options),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
-      // メモ一覧の生成カウンタを更新
-      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      // dispatch 直後 → 進行状態を再取得して polling を起動
+      qc.invalidateQueries({
+        queryKey: aiCandidateKeys.generationStatus(noteSeedId),
+      });
     },
   });
 }
@@ -57,9 +83,9 @@ export function useRegenerateCandidates(noteSeedId: number) {
     mutationFn: (options: GenerateOptions) =>
       regenerateCandidates(noteSeedId, options),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
-      // メモ一覧の生成カウンタを更新
-      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      qc.invalidateQueries({
+        queryKey: aiCandidateKeys.generationStatus(noteSeedId),
+      });
     },
   });
 }
@@ -70,9 +96,9 @@ export function useAddMoreCandidates(noteSeedId: number) {
     mutationFn: (options: GenerateOptions) =>
       addMoreCandidates(noteSeedId, options),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: aiCandidateKeys.all });
-      // メモ一覧の生成カウンタを更新
-      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      qc.invalidateQueries({
+        queryKey: aiCandidateKeys.generationStatus(noteSeedId),
+      });
     },
   });
 }

@@ -36,4 +36,23 @@ final class EloquentAiGenerationLogRepository implements AiGenerationLogReposito
             ->whereBetween('created_at', [$from, $to])
             ->sum('cost_usd');
     }
+
+    public function findInFlightForNote(int $userId, int $noteSeedId): ?AiGenerationLog
+    {
+        return AiGenerationLog::query()
+            ->where('user_id', $userId)
+            ->where('note_seed_id', $noteSeedId)
+            ->whereIn('status', AiGenerationLog::inFlightStatuses())
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function findLatestForNote(int $userId, int $noteSeedId): ?AiGenerationLog
+    {
+        return AiGenerationLog::query()
+            ->where('user_id', $userId)
+            ->where('note_seed_id', $noteSeedId)
+            ->orderByDesc('id')
+            ->first();
+    }
 }

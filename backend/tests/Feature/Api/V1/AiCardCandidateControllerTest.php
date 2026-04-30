@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Contracts\Services\AI\AiProviderInterface;
+use App\Jobs\GenerateCardCandidatesJob;
 use App\Models\AiCardCandidate;
 use App\Models\AiGenerationLog;
 use App\Models\Deck;
@@ -12,6 +13,7 @@ use App\Models\NoteSeed;
 use App\Models\User;
 use App\Services\AI\FakeAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 final class AiCardCandidateControllerTest extends TestCase
@@ -39,13 +41,18 @@ final class AiCardCandidateControllerTest extends TestCase
             'body' => 'DIは依存を外から渡すことで差し替えやすくなる',
         ]);
 
+        // queue=sync の前提で同期実行される
         $response = $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates", [
                 'count' => 3,
             ]);
 
-        $response->assertCreated()->assertJsonCount(3, 'data');
+        // 202 で queued log を返す
+        $response->assertAccepted()
+            ->assertJsonStructure(['data' => ['id', 'status', 'note_seed_id']])
+            ->assertJsonPath('data.note_seed_id', $note->id);
 
+        // sync queue で job が実行された結果、候補が保存され log は success
         $this->assertDatabaseCount('ai_card_candidates', 3);
         $this->assertDatabaseCount('ai_generation_logs', 1);
         $this->assertDatabaseHas('ai_generation_logs', [
@@ -56,6 +63,26 @@ final class AiCardCandidateControllerTest extends TestCase
         ]);
     }
 
+    public function test_dispatch時は202で_queued_を返し_job未実行ならcandidatesは0件(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted()
+            ->assertJsonPath('data.status', 'queued');
+
+        $this->assertDatabaseCount('ai_card_candidates', 0);
+        $this->assertDatabaseHas('ai_generation_logs', [
+            'note_seed_id' => $note->id,
+            'status' => 'queued',
+        ]);
+        Queue::assertPushed(GenerateCardCandidatesJob::class);
+    }
+
     public function test_生成ログにコストが記録される(): void
     {
         $user = User::factory()->create();
@@ -63,14 +90,56 @@ final class AiCardCandidateControllerTest extends TestCase
 
         $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
-            ->assertCreated();
+            ->assertAccepted();
 
-        $log = AiGenerationLog::first();
+        // sync queue で job 完了後の log を取得
+        $log = AiGenerationLog::where('status', 'success')->first();
         $this->assertNotNull($log);
         $this->assertGreaterThan(0, $log->input_tokens);
         $this->assertGreaterThan(0, $log->output_tokens);
         // FakeAiProvider: 900 input + 300 output @ $0.15/$0.60 per 1M = $0.000315
         $this->assertEqualsWithDelta(0.000315, (float) $log->cost_usd, 0.0000001);
+    }
+
+    public function test_進行中ジョブがあれば409を返す(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        // すぐに 2 回目を投げると 409
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'ALREADY_IN_FLIGHT');
+    }
+
+    public function test_生成状態エンドポイントで進行状況を取得できる(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        // 一度も生成していなければ idle
+        $this->actingAs($user)
+            ->getJson("/api/v1/note-seeds/{$note->id}/generation-status")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'idle');
+
+        // dispatch 後は queued
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates");
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/note-seeds/{$note->id}/generation-status")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'queued');
     }
 
     public function test_他ユーザーのメモでは生成できない(): void
@@ -94,9 +163,10 @@ final class AiCardCandidateControllerTest extends TestCase
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
 
+        // 非同期化後は HTTP は 202 のまま、ドメイン失敗は log.status=failed で表現される
         $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
-            ->assertStatus(502);
+            ->assertAccepted();
 
         // 候補は作成されない
         $this->assertDatabaseCount('ai_card_candidates', 0);
@@ -238,9 +308,9 @@ final class AiCardCandidateControllerTest extends TestCase
 
         $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/regenerate-candidates")
-            ->assertCreated();
+            ->assertAccepted();
 
-        // 元の3件 → rejected、新しい 3件 → pending
+        // sync queue 完了後: 元の3件 → rejected、新しい 3件 → pending
         $this->assertSame(3, AiCardCandidate::where('status', 'rejected')->count());
         $this->assertSame(3, AiCardCandidate::where('status', 'pending')->count());
     }
@@ -259,8 +329,7 @@ final class AiCardCandidateControllerTest extends TestCase
             ->postJson("/api/v1/note-seeds/{$note->id}/additional-candidates", [
                 'count' => 3,
             ])
-            ->assertCreated()
-            ->assertJsonCount(3, 'data');
+            ->assertAccepted();
 
         // 元の 2件は pending のまま、新しい 3件も pending
         $this->assertSame(5, AiCardCandidate::where('status', 'pending')->count());
