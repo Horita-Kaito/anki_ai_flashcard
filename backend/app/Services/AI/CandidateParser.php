@@ -15,7 +15,8 @@ use App\Exceptions\Domain\AiGenerationFailedException;
  *   - JSON 末尾が壊れている (max_output_tokens で打ち切り) →
  *     完成済み要素のみ抽出して ParseResult(truncated=true) で返す。
  *     1 件も復元できない場合は jsonTruncated 例外
- *   - decode 自体は成功するが要素 0 件 → invalidResponse 例外
+ *   - decode 成功・構造正常だが候補が 0 件 → emptyCandidates 例外 (ユーザーに分かりやすいメッセージ)
+ *   - decode 自体は成功するが正常な要素を 1 件も抽出できなかった → invalidResponse 例外
  */
 final class CandidateParser
 {
@@ -40,10 +41,19 @@ final class CandidateParser
             if (is_array($decoded)) {
                 $list = $decoded['candidates'] ?? $decoded;
                 if (is_array($list)) {
+                    // AI が「該当なし」として明示的に空配列を返したケースは
+                    // パースエラーではなく "候補ゼロ" としてユーザーに伝える。
+                    if ($list === []) {
+                        throw AiGenerationFailedException::emptyCandidates(
+                            'AI returned empty candidates array',
+                        );
+                    }
                     $items = $this->normalizeItems($list);
                     if ($items !== []) {
                         return new ParseResult($items, false);
                     }
+                    // decode 成功・配列はあるが正常要素 0 件 (全要素が question/answer 欠如等)
+                    // → 異常応答として扱う (下流の invalidResponse へ落ちる)
                 }
             }
         }

@@ -12,6 +12,8 @@ final class AiGenerationFailedException extends DomainException
 
     public const CODE_INVALID_RESPONSE = 'INVALID_RESPONSE';
 
+    public const CODE_EMPTY_CANDIDATES = 'EMPTY_CANDIDATES';
+
     public const CODE_JSON_TRUNCATED = 'JSON_TRUNCATED';
 
     public const CODE_SAFETY_BLOCKED = 'SAFETY_BLOCKED';
@@ -53,6 +55,20 @@ final class AiGenerationFailedException extends DomainException
             "AI returned invalid response: {$reason}",
             self::CODE_INVALID_RESPONSE,
             'AI の応答を解析できませんでした。再試行してください。',
+            $debug,
+        );
+    }
+
+    /**
+     * AI が応答を返したが候補が 0 件だったケース。
+     * メモの情報量が少ない / 抽象的すぎる / メモ内容が AI の安全方針に抵触した可能性がある。
+     */
+    public static function emptyCandidates(?string $debug = null): self
+    {
+        return new self(
+            'AI returned empty candidates array',
+            self::CODE_EMPTY_CANDIDATES,
+            'AI はこのメモから候補を生成できませんでした。メモをより具体的にしたり、学習目的・サブ分野を設定してから再試行してください。',
             $debug,
         );
     }

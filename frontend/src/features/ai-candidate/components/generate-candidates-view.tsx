@@ -14,7 +14,7 @@ import {
 } from "../api/ai-candidate-queries";
 import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
-import { toAiErrorMessage } from "../lib/ai-error-message";
+import { toAiErrorMessage, toAsyncFailureMessage } from "../lib/ai-error-message";
 import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
@@ -78,10 +78,7 @@ export function GenerateCandidatesView({
       qc.invalidateQueries({ queryKey: aiCandidateKeys.forNote(noteSeedId) });
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     } else if (wasInFlight && current === "failed") {
-      const reason = generationStatus?.error_reason
-        ? `: ${generationStatus.error_reason.slice(0, 80)}`
-        : "";
-      toast.error(`AI 生成に失敗しました${reason}`);
+      toast.error(toAsyncFailureMessage(generationStatus?.error_reason));
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     }
   }, [
