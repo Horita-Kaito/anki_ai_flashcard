@@ -6,9 +6,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
+use App\Exceptions\Domain\AiUsageLimitExceededException;
+use App\Exceptions\Domain\GenerationAlreadyInFlightException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AiCardCandidate\AdoptCandidateRequest;
 use App\Http\Requests\AiCardCandidate\BatchAdoptRequest;
+use App\Http\Requests\AiCardCandidate\BulkGenerateCandidatesRequest;
 use App\Http\Requests\AiCardCandidate\GenerateCandidatesRequest;
 use App\Http\Requests\AiCardCandidate\UpdateCandidateRequest;
 use App\Http\Resources\AiCardCandidateResource;
@@ -66,6 +69,84 @@ final class AiCardCandidateController extends Controller
     public function addMore(GenerateCandidatesRequest $request, int $noteSeedId): JsonResponse
     {
         return $this->generate($request, $noteSeedId, additional: true);
+    }
+
+    /**
+     * 複数メモに対して一括で生成ジョブをディスパッチする。
+     *
+     * - 各メモごとに dispatchGeneration を呼ぶ (一部失敗しても全体は止めない)
+     * - 既に進行中 (ALREADY_IN_FLIGHT) のメモは skipped に分類して継続
+     * - 日次上限に達した時点で残りを停止 (それまでの dispatch 結果は返す)
+     *
+     * Response: 202 Accepted
+     * {
+     *   "data": {
+     *     "dispatched": [{ note_seed_id, log_id, status }, ...],
+     *     "skipped":    [{ note_seed_id, reason }],
+     *     "failed":     [{ note_seed_id, reason, code? }],
+     *   }
+     * }
+     */
+    public function bulkGenerate(BulkGenerateCandidatesRequest $request): JsonResponse
+    {
+        $userId = (int) $request->user()->id;
+        $validated = $request->validated();
+        $noteSeedIds = $validated['note_seed_ids'];
+
+        $sharedOptions = [
+            'count' => $validated['count'] ?? null,
+            'preferred_card_types' => $validated['preferred_card_types'] ?? null,
+            'domain_template_id' => $validated['domain_template_id'] ?? null,
+            'regenerate' => false,
+            'additional' => false,
+        ];
+
+        $dispatched = [];
+        $skipped = [];
+        $failed = [];
+
+        foreach ($noteSeedIds as $noteSeedId) {
+            $noteSeedId = (int) $noteSeedId;
+            try {
+                $note = $this->noteSeedService->getForUser(
+                    userId: $userId,
+                    noteSeedId: $noteSeedId,
+                );
+                $log = $this->generationService->dispatchGeneration($note, $sharedOptions);
+                $dispatched[] = [
+                    'note_seed_id' => $noteSeedId,
+                    'log_id' => $log->id,
+                    'status' => $log->status,
+                ];
+            } catch (GenerationAlreadyInFlightException $e) {
+                $skipped[] = [
+                    'note_seed_id' => $noteSeedId,
+                    'reason' => $e->userMessage(),
+                    'existing_log_id' => $e->existingLog->id,
+                ];
+            } catch (AiUsageLimitExceededException $e) {
+                $failed[] = [
+                    'note_seed_id' => $noteSeedId,
+                    'reason' => $e->userMessage(),
+                    'code' => $e->errorCode(),
+                ];
+                // limit に達したら以降全部弾かれるので早期終了
+                break;
+            } catch (\Throwable $e) {
+                $failed[] = [
+                    'note_seed_id' => $noteSeedId,
+                    'reason' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'data' => [
+                'dispatched' => $dispatched,
+                'skipped' => $skipped,
+                'failed' => $failed,
+            ],
+        ], 202);
     }
 
     /**

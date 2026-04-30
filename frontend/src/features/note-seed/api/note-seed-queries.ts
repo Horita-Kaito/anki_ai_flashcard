@@ -4,6 +4,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  bulkGenerateCandidates,
   createNoteSeed,
   deleteNoteSeed,
   fetchNoteSeedList,
@@ -65,5 +66,29 @@ export function useDeleteNoteSeed() {
   return useMutation({
     mutationFn: (id: number) => deleteNoteSeed(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: noteSeedKeys.all }),
+  });
+}
+
+/**
+ * 複数メモを一括で AI 生成キューに投入する。
+ * 完了後はメモ一覧と各メモの generation status を invalidate して再取得させる。
+ */
+export function useBulkGenerateNoteSeeds() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      noteSeedIds: number[];
+      domain_template_id?: number | null;
+      count?: number;
+    }) =>
+      bulkGenerateCandidates(input.noteSeedIds, {
+        domain_template_id: input.domain_template_id,
+        count: input.count,
+      }),
+    onSuccess: () => {
+      // メモ一覧 (生成バッジ更新) と各メモの generation status を更新
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      qc.invalidateQueries({ queryKey: ["ai-candidates"] });
+    },
   });
 }

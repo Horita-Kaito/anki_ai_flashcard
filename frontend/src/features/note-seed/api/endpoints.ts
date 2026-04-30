@@ -61,3 +61,43 @@ export async function deleteNoteSeed(id: number): Promise<void> {
   await fetchCsrfCookie();
   await apiClient.delete(`/note-seeds/${id}`);
 }
+
+export interface BulkGenerationResult {
+  dispatched: Array<{
+    note_seed_id: number;
+    log_id: number;
+    status: string;
+  }>;
+  skipped: Array<{
+    note_seed_id: number;
+    reason: string;
+    existing_log_id?: number;
+  }>;
+  failed: Array<{
+    note_seed_id: number;
+    reason: string;
+    code?: string;
+  }>;
+}
+
+/**
+ * 複数メモに対して一括 AI 候補生成を依頼する。
+ * 1 リクエストあたり最大 10 件、進行中のメモは skipped として返る。
+ */
+export async function bulkGenerateCandidates(
+  noteSeedIds: number[],
+  options: { domain_template_id?: number | null; count?: number } = {}
+): Promise<BulkGenerationResult> {
+  await fetchCsrfCookie();
+  const res = await apiClient.post<{ data: BulkGenerationResult }>(
+    "/note-seeds/bulk-generate-candidates",
+    {
+      note_seed_ids: noteSeedIds,
+      ...(options.domain_template_id !== undefined && options.domain_template_id !== null
+        ? { domain_template_id: options.domain_template_id }
+        : {}),
+      ...(options.count !== undefined ? { count: options.count } : {}),
+    }
+  );
+  return res.data.data;
+}

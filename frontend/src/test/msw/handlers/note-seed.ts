@@ -62,4 +62,20 @@ export const noteSeedHandlers = [
     mockNotes = mockNotes.filter((n) => n.id !== Number(params.id));
     return new HttpResponse(null, { status: 204 });
   }),
+
+  http.post(
+    `${API}/api/v1/note-seeds/bulk-generate-candidates`,
+    async ({ request }) => {
+      const body = (await request.json()) as { note_seed_ids: number[] };
+      const dispatched = body.note_seed_ids.map((id, i) => ({
+        note_seed_id: id,
+        log_id: i + 1,
+        status: "queued",
+      }));
+      return HttpResponse.json(
+        { data: { dispatched, skipped: [], failed: [] } },
+        { status: 202 }
+      );
+    }
+  ),
 ];

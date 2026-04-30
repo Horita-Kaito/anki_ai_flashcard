@@ -70,6 +70,9 @@ Route::prefix('v1')->group(function () {
             Route::post('note-seeds/{id}/additional-candidates', [
                 AiCardCandidateController::class, 'addMore',
             ]);
+            Route::post('note-seeds/bulk-generate-candidates', [
+                AiCardCandidateController::class, 'bulkGenerate',
+            ]);
         });
 
         Route::get('note-seeds/{id}/candidates', [

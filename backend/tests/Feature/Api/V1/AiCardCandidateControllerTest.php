@@ -365,6 +365,81 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertDatabaseCount('cards', 3);
     }
 
+    public function test_複数メモを一括で生成依頼できる(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $notes = NoteSeed::factory()->count(3)->for($user)->create();
+
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/note-seeds/bulk-generate-candidates', [
+                'note_seed_ids' => $notes->pluck('id')->all(),
+            ])
+            ->assertAccepted();
+
+        $response->assertJsonCount(3, 'data.dispatched')
+            ->assertJsonCount(0, 'data.skipped')
+            ->assertJsonCount(0, 'data.failed');
+
+        // 3 件分の queued log が作られる
+        $this->assertSame(3, AiGenerationLog::where('status', 'queued')->count());
+        Queue::assertPushed(GenerateCardCandidatesJob::class, 3);
+    }
+
+    public function test_一括生成で進行中のメモはskippedに分類される(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $note1 = NoteSeed::factory()->for($user)->create();
+        $note2 = NoteSeed::factory()->for($user)->create();
+
+        // note1 で先に generate を 1 回 dispatch
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note1->id}/generate-candidates")
+            ->assertAccepted();
+
+        // bulk で同じ note1 を含めて投げる → note1 は skipped、note2 は dispatched
+        $response = $this->actingAs($user)
+            ->postJson('/api/v1/note-seeds/bulk-generate-candidates', [
+                'note_seed_ids' => [$note1->id, $note2->id],
+            ])
+            ->assertAccepted();
+
+        $response->assertJsonCount(1, 'data.dispatched')
+            ->assertJsonCount(1, 'data.skipped')
+            ->assertJsonPath('data.skipped.0.note_seed_id', $note1->id);
+    }
+
+    public function test_一括生成で他ユーザーのメモidは422で弾かれる(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $myNote = NoteSeed::factory()->for($me)->create();
+        $otherNote = NoteSeed::factory()->for($other)->create();
+
+        $this->actingAs($me)
+            ->postJson('/api/v1/note-seeds/bulk-generate-candidates', [
+                'note_seed_ids' => [$myNote->id, $otherNote->id],
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['note_seed_ids.1']);
+    }
+
+    public function test_一括生成は10件超で422(): void
+    {
+        $user = User::factory()->create();
+        $notes = NoteSeed::factory()->count(11)->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/note-seeds/bulk-generate-candidates', [
+                'note_seed_ids' => $notes->pluck('id')->all(),
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['note_seed_ids']);
+    }
+
     public function test_他ユーザーの候補idは一括採用で弾かれる(): void
     {
         $me = User::factory()->create();
