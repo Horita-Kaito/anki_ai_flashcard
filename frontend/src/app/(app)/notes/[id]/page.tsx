@@ -64,6 +64,8 @@ export default function NoteDetailPage({
 
   const hasDetails =
     !!note.subdomain || !!note.learning_goal || !!note.note_context;
+  const isLong = note.body.length > 80;
+  const collapsible = isLong || hasDetails;
 
   return (
     <main className="flex-1 p-4 md:p-8">
@@ -99,7 +101,7 @@ export default function NoteDetailPage({
                   元メモ
                 </h2>
                 <div className="flex gap-2">
-                  {(note.body.length > 80 || hasDetails) && (
+                  {collapsible && (
                     <button
                       type="button"
                       onClick={() => setExpanded((v) => !v)}
@@ -128,12 +130,16 @@ export default function NoteDetailPage({
                   </button>
                 </div>
               </div>
-              {expanded ? (
+              {expanded || !collapsible ? (
                 <MarkdownText text={note.body} />
               ) : (
-                <p className="text-sm whitespace-pre-wrap break-words line-clamp-3">
-                  {note.body}
-                </p>
+                <div className="relative max-h-24 overflow-hidden">
+                  <MarkdownText text={note.body} />
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-muted/40 to-transparent"
+                  />
+                </div>
               )}
               {expanded && hasDetails && (
                 <dl className="space-y-1 text-xs text-muted-foreground pt-1 border-t">

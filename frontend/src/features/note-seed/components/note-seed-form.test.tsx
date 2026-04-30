@@ -78,4 +78,31 @@ describe("NoteSeedForm", () => {
       screen.getByRole("form", { name: "メモ作成フォーム" })
     ).toBeInTheDocument();
   });
+
+  it("プレビュータブに切替えると Markdown がレンダリングされる", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<NoteSeedForm />);
+
+    await user.type(
+      screen.getByLabelText(/メモ本文/),
+      "# 見出し{Enter}{Enter}- 項目"
+    );
+    await user.click(screen.getByRole("tab", { name: "プレビュー" }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "見出し" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("項目")).toBeInTheDocument();
+  });
+
+  it("プレビュータブで本文が空のときは空表示が出る", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<NoteSeedForm />);
+
+    await user.click(screen.getByRole("tab", { name: "プレビュー" }));
+
+    expect(
+      screen.getByText("プレビューするメモがありません")
+    ).toBeInTheDocument();
+  });
 });

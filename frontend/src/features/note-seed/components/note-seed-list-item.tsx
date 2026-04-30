@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, NotebookPen, Sparkles, Wand2 } from "lucide-react";
 import type { NoteSeed } from "@/entities/note-seed/types";
+import { stripMarkdown } from "@/shared/lib/strip-markdown";
 
 interface NoteSeedListItemProps {
   note: NoteSeed;
@@ -18,13 +19,14 @@ export function NoteSeedListItem({ note }: NoteSeedListItemProps) {
   const attempts = note.generation_attempts_count ?? 0;
   // 生成依頼を受けた事があるか。失敗のみのメモも「依頼済み」として扱う。
   const hasAttempt = attempts > 0 || pending > 0 || adopted > 0;
+  const preview = stripMarkdown(note.body);
 
   return (
     <li>
       <Link
         href={`/notes/${note.id}`}
         className="group flex items-start gap-3 border rounded-xl p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
-        aria-label={`メモ ${note.body.slice(0, 30)} を開く`}
+        aria-label={`メモ ${preview.slice(0, 30)} を開く`}
       >
         <span
           aria-hidden
@@ -34,7 +36,7 @@ export function NoteSeedListItem({ note }: NoteSeedListItemProps) {
         </span>
         <span className="flex-1 min-w-0 space-y-2">
           <span className="block text-sm line-clamp-2 break-words">
-            {note.body}
+            {preview}
           </span>
           <NoteSeedStatusBadges
             pending={pending}

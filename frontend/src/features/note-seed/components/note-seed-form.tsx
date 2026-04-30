@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import {
   useCreateNoteSeed,
@@ -16,7 +16,10 @@ import {
 } from "../schemas/note-seed-schemas";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
+import { MarkdownText } from "@/shared/ui/markdown-text";
 import type { NoteSeed } from "@/entities/note-seed/types";
+
+type BodyTab = "edit" | "preview";
 
 interface NoteSeedFormProps {
   note?: NoteSeed;
@@ -46,10 +49,13 @@ export function NoteSeedForm({
   const [showAdvanced, setShowAdvanced] = useState(
     !!(note?.subdomain || note?.learning_goal || note?.note_context)
   );
+  const [bodyTab, setBodyTab] = useState<BodyTab>("edit");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateNoteSeedInput>({
     resolver: zodResolver(createNoteSeedSchema),
@@ -93,6 +99,20 @@ export function NoteSeedForm({
     }
   }
 
+  const { ref: bodyRefCallback, ...bodyRegister } = register("body");
+  function setBodyTextareaRef(el: HTMLTextAreaElement | null) {
+    bodyRefCallback(el);
+    textareaRef.current = el;
+  }
+  function switchBodyTab(next: BodyTab) {
+    setBodyTab(next);
+    if (next === "edit") {
+      // hidden 解除後に focus を当てるため次フレームで実行
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    }
+  }
+  const bodyValue = useWatch({ control, name: "body" });
+
   return (
     <form
       onSubmit={onSubmit}
@@ -102,25 +122,88 @@ export function NoteSeedForm({
       aria-label={isEdit ? "メモ編集フォーム" : "メモ作成フォーム"}
     >
       <div className="space-y-1.5">
-        <label htmlFor="body" className="text-sm font-medium">
-          メモ本文 <span className="text-destructive">*</span>
-        </label>
-        <textarea
-          id="body"
-          rows={8}
-          {...register("body")}
-          className="w-full border rounded-md px-3 py-3 text-base md:text-sm min-h-40 resize-y leading-relaxed"
-          placeholder="学習中に気になった知識の断片を書き留めてください..."
-          aria-invalid={!!errors.body}
-          autoFocus
-        />
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="body" className="text-sm font-medium">
+            メモ本文 <span className="text-destructive">*</span>
+          </label>
+          <div
+            role="tablist"
+            aria-label="本文の表示モード切替"
+            className="flex border rounded-md p-0.5 bg-muted/50 text-xs"
+          >
+            <button
+              type="button"
+              role="tab"
+              id="body-tab-edit"
+              aria-selected={bodyTab === "edit"}
+              aria-controls="body-panel-edit"
+              tabIndex={bodyTab === "edit" ? 0 : -1}
+              onClick={() => switchBodyTab("edit")}
+              className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                bodyTab === "edit"
+                  ? "bg-background shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              編集
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="body-tab-preview"
+              aria-selected={bodyTab === "preview"}
+              aria-controls="body-panel-preview"
+              tabIndex={bodyTab === "preview" ? 0 : -1}
+              onClick={() => switchBodyTab("preview")}
+              className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                bodyTab === "preview"
+                  ? "bg-background shadow-sm font-medium"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              プレビュー
+            </button>
+          </div>
+        </div>
+        <div
+          id="body-panel-edit"
+          role="tabpanel"
+          aria-labelledby="body-tab-edit"
+          hidden={bodyTab !== "edit"}
+        >
+          <textarea
+            id="body"
+            rows={8}
+            {...bodyRegister}
+            ref={setBodyTextareaRef}
+            className="w-full border rounded-md px-3 py-3 text-base md:text-sm min-h-40 resize-y leading-relaxed"
+            placeholder="学習中に気になった知識の断片を書き留めてください..."
+            aria-invalid={!!errors.body}
+            autoFocus
+          />
+        </div>
+        <div
+          id="body-panel-preview"
+          role="tabpanel"
+          aria-labelledby="body-tab-preview"
+          hidden={bodyTab !== "preview"}
+          className="border rounded-md px-3 py-3 min-h-40 bg-muted/20"
+        >
+          {bodyValue ? (
+            <MarkdownText text={bodyValue} />
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              プレビューするメモがありません
+            </p>
+          )}
+        </div>
         {errors.body && (
           <p role="alert" className="text-xs text-destructive">
             {errors.body.message}
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          PC: Cmd/Ctrl + Enter で保存
+          Markdown 記法対応 / PC: Cmd/Ctrl + Enter で保存
         </p>
       </div>
 
