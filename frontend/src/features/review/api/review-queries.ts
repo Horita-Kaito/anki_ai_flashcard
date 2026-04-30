@@ -23,6 +23,10 @@ export function useTodaySession(deckId?: number) {
     queryKey: reviewKeys.today(deckId),
     queryFn: () => fetchTodaySession(deckId),
     staleTime: 0,
+    // 復習画面は「今この瞬間」の due カードを必ず使いたい。
+    // gcTime のキャッシュ (前回訪問時のスナップショット) が一瞬出て
+    // 別カードがチラつく現象を防ぐため、マウント時は必ず refetch する。
+    refetchOnMount: "always",
   });
 }
 
@@ -32,6 +36,7 @@ export function useExtraSession(enabled: boolean) {
     queryFn: fetchExtraSession,
     enabled,
     staleTime: 0,
+    refetchOnMount: "always",
   });
 }
 

@@ -42,7 +42,14 @@ const RATING_HINTS: Record<ReviewRating, string> = {
 };
 
 export function ReviewSession() {
-  const { data, isLoading, isError, refetch } = useTodaySession();
+  const todaySession = useTodaySession();
+  const { data, isError, refetch } = todaySession;
+  // gcTime (10分) で残った前回セッションのキャッシュが一瞬表示されて
+  // 別カードがチラつく現象を抑止する。マウント後の初回 fetch 完了 (=画面の
+  // データが「今この瞬間」の状態と確実に一致) までは読み込み中扱い。
+  // isLoading は data===undefined の時しか true にならないため、cache 有無に
+  // 関わらず「初回 fetch を待つ」を表現できる isFetchedAfterMount を使う。
+  const isInitialLoading = !todaySession.isFetchedAfterMount && !isError;
   const answerMutation = useAnswerReview();
   const archiveMutation = useArchiveFromReview();
 
@@ -55,10 +62,10 @@ export function ReviewSession() {
   const [extraIndex, setExtraIndex] = useState(0);
   const [extraCompleted, setExtraCompleted] = useState(0);
 
-  const {
-    data: extraData,
-    isLoading: extraLoading,
-  } = useExtraSession(extraMode);
+  const extraSession = useExtraSession(extraMode);
+  const { data: extraData } = extraSession;
+  const isExtraInitialLoading =
+    extraMode && !extraSession.isFetchedAfterMount && !extraSession.isError;
 
   const cards = data?.cards ?? [];
   const extraCards: ExtraCard[] = extraData?.cards ?? [];
@@ -69,8 +76,13 @@ export function ReviewSession() {
 
   const current = activeCards[activeIndex];
   const currentExtraCard = extraMode ? (current as ExtraCard | undefined) : undefined;
-  const isDone = !isLoading && cards.length > 0 && index >= cards.length && !extraMode;
-  const isExtraDone = extraMode && !extraLoading && extraCards.length > 0 && extraIndex >= extraCards.length;
+  const isDone =
+    !isInitialLoading && cards.length > 0 && index >= cards.length && !extraMode;
+  const isExtraDone =
+    extraMode &&
+    !isExtraInitialLoading &&
+    extraCards.length > 0 &&
+    extraIndex >= extraCards.length;
 
   const handleReveal = useCallback(() => {
     setShowAnswer(true);
@@ -155,7 +167,7 @@ export function ReviewSession() {
     return () => window.removeEventListener("keydown", handler);
   }, [showAnswer, handleReveal, handleRate, handleNextExtra, extraMode]);
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <p className="text-center text-muted-foreground py-20">読み込み中...</p>
     );
@@ -262,13 +274,13 @@ export function ReviewSession() {
     );
   }
 
-  if (extraMode && extraLoading) {
+  if (isExtraInitialLoading) {
     return (
       <p className="text-center text-muted-foreground py-20">読み込み中...</p>
     );
   }
 
-  if (extraMode && extraCards.length === 0 && !extraLoading) {
+  if (extraMode && extraCards.length === 0 && !isExtraInitialLoading) {
     return (
       <div className="flex flex-col items-center gap-4 border rounded-xl p-8 text-center bg-primary/5">
         <Sparkles className="size-10 text-primary" aria-hidden />
