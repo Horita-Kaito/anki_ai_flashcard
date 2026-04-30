@@ -60,7 +60,8 @@ final class CardService
 
         // 新規作成時のデフォルトは FSRS。既存カード (sm2) と棲み分けるため
         // DB レベルの default ('sm2') ではなくサービス層で明示的に上書きする。
-        if (! isset($attributes['scheduler']) || $attributes['scheduler'] === '') {
+        // (FormRequest で空文字は弾かれるため isset のみでよい)
+        if (! isset($attributes['scheduler'])) {
             $attributes['scheduler'] = Card::SCHEDULER_FSRS;
         }
 

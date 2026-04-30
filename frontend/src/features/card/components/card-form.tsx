@@ -292,18 +292,25 @@ export function CardForm({
         title="復習アルゴリズムを変更しますか？"
         description={
           pendingValues && card
-            ? `${SCHEDULER_LABELS[card.scheduler]} → ${SCHEDULER_LABELS[pendingValues.scheduler ?? "fsrs"]} に切替えると、学習進捗 (間隔・安定度・難度・復習回数) はすべてリセットされ、新規カードとして再スタートになります。よろしいですか？`
+            ? `${SCHEDULER_LABELS[card.scheduler]} → ${SCHEDULER_LABELS[pendingValues.scheduler ?? "fsrs"]} に切替えると、学習進捗 (間隔・安定度・難度・復習回数) はすべてリセットされ、新規カードとして再スタートになります。アーカイブ済みのカードは学習中に戻ります。よろしいですか？`
             : ""
         }
         confirmLabel="変更してリセットする"
         variant="destructive"
         onConfirm={async () => {
-          const v = pendingValues;
+          if (!pendingValues) return;
+          // ダイアログを開いたまま persist を await し、完了後に閉じる。
+          // updateMutation.isPending が true の間は ConfirmDialog のボタンが
+          // disabled になり、二重送信を防ぐ。
+          await persistValues(pendingValues);
           setPendingValues(null);
-          if (v) await persistValues(v);
         }}
-        onCancel={() => setPendingValues(null)}
-        loading={isSubmitting}
+        onCancel={() => {
+          // mutation 進行中はキャンセルさせない (バックエンド処理が走っているため)
+          if (updateMutation.isPending) return;
+          setPendingValues(null);
+        }}
+        loading={updateMutation.isPending}
       />
     </form>
   );
