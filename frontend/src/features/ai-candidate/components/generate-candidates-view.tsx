@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, RefreshCw, Plus, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -60,6 +66,7 @@ export function GenerateCandidatesView({
     addMoreMutation.isPending;
 
   const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
 
   // 進行中 → 完了 への遷移を検出して toast + 関連 query を invalidate する
   const prevStatusRef = useRef<string | null>(null);
@@ -144,60 +151,62 @@ export function GenerateCandidatesView({
         onCancel={() => setRegenerateConfirmOpen(false)}
         loading={regenerateMutation.isPending}
       />
-      {/* 生成設定 */}
-      <section className="border rounded-xl p-4 md:p-5 space-y-4">
-        <h2 className="font-medium flex items-center gap-2">
-          <Sparkles className="size-4" aria-hidden />
-          AI 生成設定
-        </h2>
-
-        <div className="space-y-1.5">
-          <label htmlFor="template" className="text-sm font-medium">
-            分野テンプレート
-          </label>
-          <select
-            id="template"
-            value={templateId ?? ""}
-            onChange={(e) =>
-              setTemplateId(
-                e.target.value === "" ? null : Number(e.target.value)
-              )
-            }
-            disabled={isInFlight}
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background disabled:opacity-60"
+      {/* AI アクションバー: 視覚的にメモ本文セクションと差別化するため、
+          border カードではなく「アクションするための場所」と分かるトーン
+          (グラデ + アクセントバー) を使う。SP では sticky な性質を持たせる。 */}
+      <section
+        aria-labelledby="ai-action"
+        className="
+          relative overflow-hidden rounded-xl
+          bg-gradient-to-br from-primary/10 via-primary/5 to-transparent
+          border-l-4 border-primary
+          p-4 md:p-5 space-y-3
+        "
+      >
+        <div className="flex items-center justify-between gap-2">
+          <h2
+            id="ai-action"
+            className="text-sm font-semibold flex items-center gap-2 text-primary"
           >
-            <option value="">指定しない</option>
-            {templates?.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            <Sparkles className="size-4" aria-hidden />
+            AI でカード化
+          </h2>
+          <button
+            type="button"
+            onClick={() => setShowOptions((v) => !v)}
+            className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 min-h-8"
+            aria-expanded={showOptions}
+            aria-controls="ai-options"
+          >
+            <ChevronDown
+              className={`size-3.5 transition-transform ${showOptions ? "rotate-180" : ""}`}
+              aria-hidden
+            />
+            オプション
+          </button>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          候補数はメモの情報量から自動で調整されます。足りなければ生成後に「さらに追加」で増やせます。
-        </p>
-
+        {/* 進行中インジケータ (常に最も目立つ位置に) */}
         {isInFlight && (
           <div
             role="status"
             aria-live="polite"
-            className="flex items-center gap-2 text-sm bg-amber-500/10 text-amber-700 dark:text-amber-300 rounded-md px-3 py-2"
+            className="flex items-center gap-2 text-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 rounded-md px-3 py-2"
           >
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            <span>
-              AI が候補を生成しています。画面を離れても続きます。完了すると自動で表示されます。
+            <Loader2 className="size-4 animate-spin shrink-0" aria-hidden />
+            <span className="leading-snug">
+              AI が候補を生成中。画面を離れても続行されます。
             </span>
           </div>
         )}
 
+        {/* メイン CTA: 大きく、肩書きが揺れない (新規生成 / 追加生成 を 1 つのボタンにまとめる) */}
         <div className="flex flex-col sm:flex-row gap-2">
           {!hasAnyCandidates ? (
             <Button
               type="button"
               size="lg"
-              className="min-h-11"
+              className="flex-1 min-h-12 text-base font-semibold"
               onClick={handleGenerate}
               disabled={isInFlight || isDispatching}
             >
@@ -217,7 +226,7 @@ export function GenerateCandidatesView({
             <Button
               type="button"
               size="lg"
-              className="min-h-11"
+              className="flex-1 min-h-12 text-base font-semibold"
               onClick={handleAddMore}
               disabled={isInFlight || isDispatching}
             >
@@ -239,7 +248,7 @@ export function GenerateCandidatesView({
               type="button"
               variant="outline"
               size="lg"
-              className="min-h-11"
+              className="min-h-12"
               onClick={() => setRegenerateConfirmOpen(true)}
               disabled={isInFlight || isDispatching}
             >
@@ -248,6 +257,36 @@ export function GenerateCandidatesView({
             </Button>
           )}
         </div>
+
+        {/* オプション (折りたたみ): 分野テンプレート選択 */}
+        {showOptions && (
+          <div id="ai-options" className="space-y-1.5 pt-1">
+            <label htmlFor="template" className="text-xs font-medium text-muted-foreground">
+              分野テンプレート
+            </label>
+            <select
+              id="template"
+              value={templateId ?? ""}
+              onChange={(e) =>
+                setTemplateId(
+                  e.target.value === "" ? null : Number(e.target.value)
+                )
+              }
+              disabled={isInFlight}
+              className="w-full border rounded-md px-3 py-2 text-sm min-h-10 bg-background disabled:opacity-60"
+            >
+              <option value="">指定しない</option>
+              {templates?.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-muted-foreground">
+              候補数はメモの情報量から自動調整。足りなければ「さらに追加」で増やせます。
+            </p>
+          </div>
+        )}
       </section>
 
       {/* 候補一覧 */}
