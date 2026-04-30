@@ -32,7 +32,8 @@ export interface CardSchedule {
   state: ScheduleState;
   repetitions: number;
   interval_days: number;
-  ease_factor: number;
+  /** SM-2 のみ。FSRS では null */
+  ease_factor: number | null;
   /** FSRS のみ。SM-2 では null */
   stability: number | null;
   /** FSRS のみ。1.0〜10.0 */

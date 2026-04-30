@@ -152,6 +152,8 @@ export interface BatchAdoptInput {
   deck_id: number;
   candidate_ids: number[];
   tag_ids?: number[];
+  /** 省略時は backend が FSRS をデフォルトに採用する */
+  scheduler?: "sm2" | "fsrs";
 }
 
 export async function batchAdoptCandidates(

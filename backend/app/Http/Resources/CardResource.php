@@ -36,7 +36,10 @@ final class CardResource extends BaseJsonResource
                 'state' => $this->schedule->state?->value,
                 'repetitions' => $this->schedule->repetitions,
                 'interval_days' => $this->schedule->interval_days,
-                'ease_factor' => (float) $this->schedule->ease_factor,
+                // FSRS では ease_factor を使わないので null で返す (フロントの誤解を防ぐ)
+                'ease_factor' => $this->scheduler === Card::SCHEDULER_FSRS
+                    ? null
+                    : (float) $this->schedule->ease_factor,
                 'stability' => $this->schedule->stability !== null ? (float) $this->schedule->stability : null,
                 'difficulty' => $this->schedule->difficulty !== null ? (float) $this->schedule->difficulty : null,
                 'due_at' => $this->toIso($this->schedule->due_at),

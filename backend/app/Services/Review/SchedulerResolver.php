@@ -19,6 +19,14 @@ use App\Models\Card;
  */
 final class SchedulerResolver implements SchedulerResolverInterface
 {
+    /**
+     * 同一リクエスト内で同じユーザーの FsrsScheduler を再利用するための memo。
+     * keys: user_id, values: FsrsScheduler。N+1 的な user_setting 読み込みを抑止する。
+     *
+     * @var array<int, FsrsScheduler>
+     */
+    private array $fsrsCache = [];
+
     public function __construct(
         private readonly Sm2Scheduler $sm2Scheduler,
         private readonly UserSettingRepositoryInterface $userSettingRepository,
@@ -28,12 +36,15 @@ final class SchedulerResolver implements SchedulerResolverInterface
     {
         $scheduler = (string) ($card->scheduler ?? Card::SCHEDULER_SM2);
 
-        return match ($scheduler) {
-            Card::SCHEDULER_FSRS => new FsrsScheduler(
-                desiredRetention: $this->loadDesiredRetention($card->user_id),
-            ),
-            default => $this->sm2Scheduler,
-        };
+        if ($scheduler === Card::SCHEDULER_FSRS) {
+            $userId = (int) $card->user_id;
+
+            return $this->fsrsCache[$userId] ??= new FsrsScheduler(
+                desiredRetention: $this->loadDesiredRetention($userId),
+            );
+        }
+
+        return $this->sm2Scheduler;
     }
 
     private function loadDesiredRetention(int $userId): float

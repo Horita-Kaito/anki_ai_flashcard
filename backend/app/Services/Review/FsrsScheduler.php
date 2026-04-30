@@ -92,12 +92,19 @@ final class FsrsScheduler implements SchedulerInterface
             $oldS = (float) $current->stability;
             $oldD = (float) ($current->difficulty ?? $this->initDifficulty(3));
             $elapsed = $this->elapsedDays($this->rawLastReviewedAt($current), $now);
-            $retrievability = $this->retrievability($elapsed, $oldS);
-
             $newD = $this->nextDifficulty($oldD, $r);
-            $newS = $r === 1
-                ? $this->postLapseStability($oldD, $oldS, $retrievability)
-                : $this->postRecallStability($oldD, $oldS, $retrievability, $r);
+
+            if ($elapsed < 1.0) {
+                // 同日内の再レビュー (Learning/Relearning 中の連続評価) は短期 stability formula。
+                // FSRS-5 仕様: S' = S * exp(w17 * (rating - 3 + w18))
+                $newS = $this->shortTermStability($oldS, $r);
+            } elseif ($r === 1) {
+                $retrievability = $this->retrievability($elapsed, $oldS);
+                $newS = $this->postLapseStability($oldD, $oldS, $retrievability);
+            } else {
+                $retrievability = $this->retrievability($elapsed, $oldS);
+                $newS = $this->postRecallStability($oldD, $oldS, $retrievability, $r);
+            }
         }
 
         $newS = max(self::MIN_STABILITY, $newS);
@@ -245,6 +252,16 @@ final class FsrsScheduler implements SchedulerInterface
             * pow($d, -self::W[12])
             * (pow($s + 1, self::W[13]) - 1)
             * exp((1 - $r) * self::W[14]);
+    }
+
+    /**
+     * 同日内の再レビュー用 short-term stability。
+     * FSRS-5 仕様: S' = S * exp(w17 * (rating - 3 + w18))
+     * Again (1) で減少、Easy (4) で大きく増加。Good (3) で w17 * w18 だけ増加。
+     */
+    private function shortTermStability(float $stability, int $rating): float
+    {
+        return $stability * exp(self::W[17] * ($rating - 3 + self::W[18]));
     }
 
     /**

@@ -95,7 +95,13 @@ return [
     |--------------------------------------------------------------------------
     */
     'review' => [
+        // SM-2 用。SM-2 は ease_factor で間隔が指数増加するため、180 日 (≒ 7 回連続 Good) で
+        // 学習完了とみなしてアーカイブ。
         'archive_interval_days' => (int) env('REVIEW_ARCHIVE_INTERVAL_DAYS', 180),
+
+        // FSRS 用。FSRS は stability と desired_retention で間隔を最適化するため、
+        // SM-2 より長期間学習を続けるのが自然。1 年で打ち切る方針。
+        'fsrs_archive_interval_days' => (int) env('REVIEW_FSRS_ARCHIVE_INTERVAL_DAYS', 365),
     ],
 
     /*

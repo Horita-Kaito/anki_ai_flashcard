@@ -63,6 +63,15 @@ final class RepositoryServiceProvider extends ServiceProvider
 
         // Services (固定バインド)
         SchedulerInterface::class => Sm2Scheduler::class, // legacy 直接注入用 (テスト・後方互換)
+    ];
+
+    /**
+     * Singleton (リクエスト内で同一インスタンスを使い回す) バインディング。
+     * SchedulerResolver は内部にユーザー単位の memo を持つので singleton で運用する。
+     *
+     * @var array<class-string, class-string>
+     */
+    public array $singletons = [
         SchedulerResolverInterface::class => SchedulerResolver::class,
     ];
 }

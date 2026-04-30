@@ -142,6 +142,7 @@ final class ReviewSessionService
         return DB::transaction(function () use (
             $userId,
             $cardId,
+            $card,
             $rating,
             $responseTimeMs,
             $schedule,
@@ -152,8 +153,11 @@ final class ReviewSessionService
         ) {
             $updatedSchedule = $this->scheduleRepository->update($schedule, $update->toArray());
 
-            // Auto-archive: interval が閾値以上なら自動アーカイブ
-            $archiveThreshold = (int) config('ai.review.archive_interval_days', 180);
+            // Auto-archive: scheduler ごとに別の閾値で判定。
+            // FSRS は長期 interval を自然に出すため SM-2 より緩めに設定。
+            $archiveThreshold = $card->scheduler === Card::SCHEDULER_FSRS
+                ? (int) config('ai.review.fsrs_archive_interval_days', 365)
+                : (int) config('ai.review.archive_interval_days', 180);
             if ($update->intervalDays >= $archiveThreshold) {
                 $updatedSchedule = $this->scheduleRepository->archive($updatedSchedule);
             }

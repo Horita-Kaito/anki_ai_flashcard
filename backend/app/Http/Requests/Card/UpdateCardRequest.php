@@ -15,7 +15,14 @@ final class UpdateCardRequest extends FormRequest
         return true;
     }
 
-    /** @return array<string, array<int, mixed>> */
+    /**
+     * NOTE: `scheduler` は意図的に rules に含めていない。
+     * カード作成後の scheduler 切替は学習進捗 (stability/difficulty/ease_factor)
+     * との不整合を起こすため禁止する。仮にリクエストに `scheduler` キーが含まれていても、
+     * `validated()` がここで定義されたフィールドのみを返すため、Card::update() に渡らない。
+     *
+     * @return array<string, array<int, mixed>>
+     */
     public function rules(): array
     {
         $userId = $this->user()->id;

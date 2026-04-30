@@ -4,6 +4,7 @@ import type { Card } from "@/entities/card/types";
 import { ClozeText } from "@/shared/ui/cloze-text";
 import { haptic } from "@/shared/lib/haptics";
 import { extractClozeAnswers } from "@/shared/utils/cloze";
+import { SchedulerBadge } from "@/shared/ui/scheduler-badge";
 
 interface ReviewCardFlipProps {
   card: Card;
@@ -50,7 +51,7 @@ export function ReviewCardFlip({
         ${!showAnswer ? "min-h-[50vh] md:min-h-[40vh] flex flex-col" : ""}
       `}
     >
-      <header className="flex items-center gap-2 mb-4">
+      <header className="flex items-center gap-2 mb-4 flex-wrap">
         {card.tags?.map((t) => (
           <span
             key={t.id}
@@ -59,6 +60,7 @@ export function ReviewCardFlip({
             {t.name}
           </span>
         ))}
+        <SchedulerBadge scheduler={card.scheduler} size="xs" />
       </header>
 
       {/* 問題 */}

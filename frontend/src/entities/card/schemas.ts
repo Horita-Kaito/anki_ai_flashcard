@@ -13,7 +13,7 @@ const cardScheduleSchema = z
     state: z.enum(SCHEDULE_STATES),
     repetitions: z.number(),
     interval_days: z.number(),
-    ease_factor: z.number(),
+    ease_factor: z.number().nullable(),
     stability: z.number().nullable().default(null),
     difficulty: z.number().nullable().default(null),
     due_at: z.string().nullable(),

@@ -5,6 +5,7 @@ import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { Card } from "@/entities/card/types";
 import { useArchiveCard, useUnarchiveCard } from "../api/card-queries";
 import { extractClozeAnswers, stripClozeMarkers } from "@/shared/utils/cloze";
+import { SchedulerBadge } from "@/shared/ui/scheduler-badge";
 
 interface CardListItemProps {
   card: Card;
@@ -70,6 +71,7 @@ export function CardListItem({ card }: CardListItemProps) {
             <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
               {CARD_TYPE_LABELS[card.card_type]}
             </span>
+            <SchedulerBadge scheduler={card.scheduler} size="xs" />
           </div>
         </div>
         <p className="text-xs text-muted-foreground line-clamp-1">

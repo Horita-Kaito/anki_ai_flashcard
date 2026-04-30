@@ -10,6 +10,7 @@ import {
 } from "@/features/card";
 import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
+import { SchedulerBadge } from "@/shared/ui/scheduler-badge";
 
 export default function CardEditPage({
   params,
@@ -62,11 +63,25 @@ export default function CardEditPage({
       <div className="max-w-2xl mx-auto space-y-6">
         <BackHeader title="カードを編集" />
         <header className="hidden md:block space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">カードを編集</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl font-bold">カードを編集</h1>
+            <SchedulerBadge scheduler={card.scheduler} />
+          </div>
           {card.schedule && (
-            <p className="text-sm text-muted-foreground">
-              状態: {card.schedule.state} / 復習回数: {card.schedule.repetitions}
-            </p>
+            <div className="text-sm text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+              <span>状態: {card.schedule.state}</span>
+              <span>復習回数: {card.schedule.repetitions}</span>
+              <span>間隔: {card.schedule.interval_days} 日</span>
+              {card.scheduler === "fsrs" && card.schedule.stability !== null && (
+                <span>安定度: {card.schedule.stability.toFixed(1)} 日</span>
+              )}
+              {card.scheduler === "fsrs" && card.schedule.difficulty !== null && (
+                <span>難度: {card.schedule.difficulty.toFixed(1)} / 10</span>
+              )}
+              {card.scheduler === "sm2" && card.schedule.ease_factor !== null && (
+                <span>EF: {card.schedule.ease_factor.toFixed(2)}</span>
+              )}
+            </div>
           )}
         </header>
 
