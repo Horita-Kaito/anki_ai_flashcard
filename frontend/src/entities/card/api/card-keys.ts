@@ -4,7 +4,7 @@
 
 export const cardKeys = {
   all: ["cards"] as const,
-  list: (page = 1, filters: object = {}) =>
-    [...cardKeys.all, "list", page, filters] as const,
+  list: (filters: object = {}) =>
+    [...cardKeys.all, "list", filters] as const,
   detail: (id: number) => [...cardKeys.all, "detail", id] as const,
 };

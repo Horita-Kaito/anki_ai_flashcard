@@ -1,4 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   createNoteSeed,
   deleteNoteSeed,
@@ -17,14 +21,23 @@ export { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 
 export const noteSeedKeys = {
   ...entityNoteSeedKeys,
-  list: (page = 1, filters: NoteSeedListFilters = {}) =>
-    [...entityNoteSeedKeys.all, "list", page, filters] as const,
+  list: (filters: NoteSeedListFilters = {}) =>
+    [...entityNoteSeedKeys.all, "list", filters] as const,
 };
 
-export function useNoteSeedList(page = 1, filters: NoteSeedListFilters = {}) {
-  return useQuery({
-    queryKey: noteSeedKeys.list(page, filters),
-    queryFn: () => fetchNoteSeedList(page, 20, filters),
+/**
+ * ページネーションを内部に隠した無限スクロール対応のメモ一覧 hook。
+ * 戻り値の `pages` を flat 化して並べ、`hasNextPage` の間 sentinel で `fetchNextPage` を呼ぶ。
+ */
+export function useNoteSeedInfiniteList(filters: NoteSeedListFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: noteSeedKeys.list(filters),
+    queryFn: ({ pageParam }) => fetchNoteSeedList(pageParam, 20, filters),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { current_page, last_page } = lastPage.meta;
+      return current_page < last_page ? current_page + 1 : undefined;
+    },
   });
 }
 

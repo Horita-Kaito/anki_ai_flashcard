@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Search, X } from "lucide-react";
-import { useCardList } from "../api/card-queries";
+import { useMemo, useState } from "react";
+import { Loader2, Search, X } from "lucide-react";
+import { useCardInfiniteList } from "../api/card-queries";
 import { CardListItem } from "./card-list-item";
 import { CardListEmpty } from "./card-list-empty";
 import { CardListSkeleton } from "./card-list-skeleton";
@@ -10,9 +10,8 @@ import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import { useTagList } from "@/entities/tag/api/tag-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { Button } from "@/shared/ui/button";
-import { VirtualList } from "@/shared/ui/virtual-list";
-import type { Card } from "@/entities/card/types";
 
 type ArchiveFilter = "active" | "archived";
 
@@ -36,10 +35,33 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
     archived: archiveFilter === "archived" ? true : false,
   };
 
-  const { data, isLoading, isError, refetch } = useCardList(1, filters);
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useCardInfiniteList(filters);
   const { data: decks } = useDeckList();
   const deckOptions = buildHierarchicalOptions(decks ?? []);
   const { data: tags } = useTagList();
+
+  const cards = useMemo(
+    () => data?.pages.flatMap((p) => p.data) ?? [],
+    [data]
+  );
+  const total = data?.pages[0]?.meta.total ?? 0;
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    enabled: !!hasNextPage && !isFetchingNextPage,
+  });
 
   const hasActiveFilter =
     keyword !== "" ||
@@ -167,7 +189,7 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
             再試行
           </button>
         </div>
-      ) : !data?.data.length ? (
+      ) : cards.length === 0 ? (
         hasActiveFilter ? (
           <p className="text-sm text-muted-foreground p-4 text-center">
             該当するカードが見つかりません
@@ -176,13 +198,35 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
           <CardListEmpty />
         )
       ) : (
-        <VirtualList<Card>
-          items={data.data}
-          estimateSize={120}
-          getItemKey={(c) => c.id}
-          renderItem={(c) => <CardListItem card={c} />}
-          listClassName="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
-        />
+        <>
+          <p
+            className="text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            {cards.length} / {total} 件
+          </p>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            {cards.map((card) => (
+              <CardListItem key={card.id} card={card} />
+            ))}
+          </ul>
+          <div ref={sentinelRef} aria-hidden className="h-1" />
+          {isFetchingNextPage && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-3"
+            >
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              読み込み中...
+            </div>
+          )}
+          {!hasNextPage && cards.length >= 20 && (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              すべて表示しました
+            </p>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 export { CardList } from "./components/card-list";
 export { CardForm } from "./components/card-form";
 export {
-  useCardList,
+  useCardInfiniteList,
   useCard,
   useCreateCard,
   useUpdateCard,

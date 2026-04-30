@@ -9,17 +9,27 @@ let mockTags: Tag[] = [];
 
 export const cardHandlers = [
   // Cards
-  http.get(`${API}/api/v1/cards`, () =>
-    HttpResponse.json({
-      data: mockCards,
+  http.get(`${API}/api/v1/cards`, ({ request }) => {
+    const url = new URL(request.url);
+    const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+    const perPage = Math.max(
+      1,
+      Math.min(100, Number(url.searchParams.get("per_page") ?? "20")),
+    );
+    const total = mockCards.length;
+    const lastPage = Math.max(1, Math.ceil(total / perPage));
+    const start = (page - 1) * perPage;
+    const slice = mockCards.slice(start, start + perPage);
+    return HttpResponse.json({
+      data: slice,
       meta: {
-        current_page: 1,
-        last_page: 1,
-        per_page: 20,
-        total: mockCards.length,
+        current_page: page,
+        last_page: lastPage,
+        per_page: perPage,
+        total,
       },
-    })
-  ),
+    });
+  }),
 
   http.get(`${API}/api/v1/cards/:id`, ({ params }) => {
     const card = mockCards.find((c) => c.id === Number(params.id));

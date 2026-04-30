@@ -6,17 +6,27 @@ const API = "http://localhost:8000";
 let mockNotes: NoteSeed[] = [];
 
 export const noteSeedHandlers = [
-  http.get(`${API}/api/v1/note-seeds`, () =>
-    HttpResponse.json({
-      data: mockNotes,
+  http.get(`${API}/api/v1/note-seeds`, ({ request }) => {
+    const url = new URL(request.url);
+    const page = Math.max(1, Number(url.searchParams.get("page") ?? "1"));
+    const perPage = Math.max(
+      1,
+      Math.min(100, Number(url.searchParams.get("per_page") ?? "20")),
+    );
+    const total = mockNotes.length;
+    const lastPage = Math.max(1, Math.ceil(total / perPage));
+    const start = (page - 1) * perPage;
+    const slice = mockNotes.slice(start, start + perPage);
+    return HttpResponse.json({
+      data: slice,
       meta: {
-        current_page: 1,
-        last_page: 1,
-        per_page: 20,
-        total: mockNotes.length,
+        current_page: page,
+        last_page: lastPage,
+        per_page: perPage,
+        total,
       },
-    })
-  ),
+    });
+  }),
 
   http.get(`${API}/api/v1/note-seeds/:id`, ({ params }) => {
     const note = mockNotes.find((n) => n.id === Number(params.id));

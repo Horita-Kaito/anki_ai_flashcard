@@ -1,7 +1,7 @@
 export { NoteSeedList } from "./components/note-seed-list";
 export { NoteSeedForm } from "./components/note-seed-form";
 export {
-  useNoteSeedList,
+  useNoteSeedInfiniteList,
   useNoteSeed,
   useCreateNoteSeed,
   useUpdateNoteSeed,

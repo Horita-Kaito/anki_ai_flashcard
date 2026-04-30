@@ -1,4 +1,5 @@
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
@@ -22,10 +23,18 @@ import { cardKeys } from "@/entities/card/api/card-keys";
 // cross-feature で参照される invalidation 用に re-export
 export { cardKeys };
 
-export function useCardList(page = 1, filters: CardListFilters = {}) {
-  return useQuery({
-    queryKey: cardKeys.list(page, filters),
-    queryFn: () => fetchCardList(page, 20, filters),
+/**
+ * 無限スクロール対応のカード一覧 hook。
+ */
+export function useCardInfiniteList(filters: CardListFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: cardKeys.list(filters),
+    queryFn: ({ pageParam }) => fetchCardList(pageParam, 20, filters),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { current_page, last_page } = lastPage.meta;
+      return current_page < last_page ? current_page + 1 : undefined;
+    },
   });
 }
 

@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Search, X } from "lucide-react";
-import { useNoteSeedList } from "../api/note-seed-queries";
+import { useMemo, useState } from "react";
+import { Loader2, Search, X } from "lucide-react";
+import { useNoteSeedInfiniteList } from "../api/note-seed-queries";
 import { NoteSeedListItem } from "./note-seed-list-item";
 import { NoteSeedListEmpty } from "./note-seed-list-empty";
 import { NoteSeedListSkeleton } from "./note-seed-list-skeleton";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
+import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { Button } from "@/shared/ui/button";
-import { VirtualList } from "@/shared/ui/virtual-list";
-import type { NoteSeed } from "@/entities/note-seed/types";
 
 export function NoteSeedList() {
   const [keyword, setKeyword] = useState("");
@@ -24,8 +23,31 @@ export function NoteSeedList() {
     generation_status: onlyNoAttempt ? ("no-attempt" as const) : undefined,
   };
 
-  const { data, isLoading, isError, refetch } = useNoteSeedList(1, filters);
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNoteSeedInfiniteList(filters);
   const { data: templates } = useDomainTemplateList();
+
+  const notes = useMemo(
+    () => data?.pages.flatMap((p) => p.data) ?? [],
+    [data]
+  );
+  const total = data?.pages[0]?.meta.total ?? 0;
+
+  const sentinelRef = useInfiniteScroll({
+    onLoadMore: () => {
+      if (hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    enabled: !!hasNextPage && !isFetchingNextPage,
+  });
 
   const hasActiveFilter = keyword !== "" || templateId !== "" || onlyNoAttempt;
 
@@ -109,7 +131,7 @@ export function NoteSeedList() {
             再試行
           </button>
         </div>
-      ) : !data?.data.length ? (
+      ) : notes.length === 0 ? (
         hasActiveFilter ? (
           <p className="text-sm text-muted-foreground p-4 text-center">
             該当するメモが見つかりません
@@ -118,13 +140,36 @@ export function NoteSeedList() {
           <NoteSeedListEmpty />
         )
       ) : (
-        <VirtualList<NoteSeed>
-          items={data.data}
-          estimateSize={120}
-          getItemKey={(note) => note.id}
-          renderItem={(note) => <NoteSeedListItem note={note} />}
-          listClassName="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
-        />
+        <>
+          <p
+            className="text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            {notes.length} / {total} 件
+          </p>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            {notes.map((note) => (
+              <NoteSeedListItem key={note.id} note={note} />
+            ))}
+          </ul>
+          {/* sentinel + 次ページ読み込みインジケータ */}
+          <div ref={sentinelRef} aria-hidden className="h-1" />
+          {isFetchingNextPage && (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-3"
+            >
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              読み込み中...
+            </div>
+          )}
+          {!hasNextPage && notes.length >= 20 && (
+            <p className="text-xs text-muted-foreground text-center py-3">
+              すべて表示しました
+            </p>
+          )}
+        </>
       )}
     </div>
   );
