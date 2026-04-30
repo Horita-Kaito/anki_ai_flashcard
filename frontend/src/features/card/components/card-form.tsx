@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
 import {
   useCreateCard,
   useUpdateCard,
@@ -16,7 +18,12 @@ import { TagPicker } from "@/shared/ui/tag-picker";
 import { useCreateTag } from "@/entities/tag/api/tag-queries";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
-import { CARD_TYPES, CARD_TYPE_LABELS } from "@/entities/card/types";
+import {
+  CARD_TYPES,
+  CARD_TYPE_LABELS,
+  SCHEDULERS,
+  SCHEDULER_LABELS,
+} from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
 import type { Card } from "@/entities/card/types";
 
@@ -38,6 +45,7 @@ export function CardForm({
   const { data: decks } = useDeckList();
   const deckOptions = buildHierarchicalOptions(decks ?? []);
   const isEdit = !!card;
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const {
     register,
@@ -52,6 +60,8 @@ export function CardForm({
       answer: card?.answer ?? "",
       explanation: card?.explanation ?? "",
       card_type: card?.card_type ?? "basic_qa",
+      // 新規作成時のデフォルトは FSRS、既存カード編集時はそのカードの値を維持
+      scheduler: card?.scheduler ?? "fsrs",
       tag_ids: card?.tags?.map((t) => t.id) ?? [],
     },
   });
@@ -188,6 +198,48 @@ export function CardForm({
           />
         )}
       />
+
+      {/* 詳細設定 (上級者向け、scheduler 選択など) */}
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground min-h-11"
+        aria-expanded={showAdvanced}
+        aria-controls="card-advanced-fields"
+      >
+        <ChevronDown
+          className={`size-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+        詳細設定 (任意)
+      </button>
+
+      {showAdvanced && (
+        <div id="card-advanced-fields" className="space-y-4 pl-6 border-l">
+          <div className="space-y-1.5">
+            <label htmlFor="scheduler" className="text-sm font-medium">
+              復習アルゴリズム
+            </label>
+            <select
+              id="scheduler"
+              {...register("scheduler")}
+              disabled={isEdit}
+              className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background disabled:opacity-60"
+            >
+              {SCHEDULERS.map((s) => (
+                <option key={s} value={s}>
+                  {SCHEDULER_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {isEdit
+                ? "作成済みカードのアルゴリズムは変更できません"
+                : "FSRS は学習履歴から間隔を自動最適化します。SM-2 はシンプルな従来方式。迷ったら FSRS のままで OK。"}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div
         className="

@@ -64,9 +64,12 @@ export function UserSettingForm() {
         default_ai_provider: setting.default_ai_provider,
         default_ai_model: setting.default_ai_model,
         default_generation_count: setting.default_generation_count,
+        desired_retention: setting.desired_retention,
       });
     }
   }, [setting, reset]);
+
+  const desiredRetention = watch("desired_retention");
 
   const onSubmit = handleSubmit(async (values) => {
     try {
@@ -173,6 +176,38 @@ export function UserSettingForm() {
             className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
             aria-invalid={!!errors.default_generation_count}
           />
+        </div>
+      </section>
+
+      <section className="space-y-4 border rounded-xl p-4 md:p-5">
+        <h2 className="font-medium">復習アルゴリズム (FSRS)</h2>
+        <p className="text-xs text-muted-foreground">
+          FSRS で復習するカードのみに影響します (SM-2 のカードは別ロジック)。
+        </p>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label htmlFor="desired_retention" className="text-sm font-medium">
+              目標想起率
+            </label>
+            <span className="text-sm font-mono tabular-nums">
+              {desiredRetention !== undefined
+                ? `${(desiredRetention * 100).toFixed(0)}%`
+                : "—"}
+            </span>
+          </div>
+          <input
+            id="desired_retention"
+            type="range"
+            min={0.7}
+            max={0.97}
+            step={0.01}
+            {...register("desired_retention", { valueAsNumber: true })}
+            className="w-full accent-primary"
+          />
+          <p className="text-xs text-muted-foreground">
+            高いほど忘れにくくなりますが、復習頻度が増えます。デフォルトは 90%。
+          </p>
         </div>
       </section>
 

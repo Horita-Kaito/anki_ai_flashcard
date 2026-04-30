@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\AiCardCandidate;
 
+use App\Models\Card;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,6 +32,7 @@ final class BatchAdoptRequest extends FormRequest
                 'distinct',
                 Rule::exists('ai_card_candidates', 'id')->where('user_id', $userId),
             ],
+            'scheduler' => ['sometimes', Rule::in(Card::schedulers())],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => [
                 'integer',

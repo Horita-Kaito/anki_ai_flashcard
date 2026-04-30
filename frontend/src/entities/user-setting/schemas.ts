@@ -6,6 +6,7 @@ export const userSettingResponseSchema = z
     default_ai_provider: z.enum(["openai", "anthropic", "google"]),
     default_ai_model: z.string(),
     default_generation_count: z.number(),
+    desired_retention: z.number(),
   })
   .passthrough();
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Card;
 
 use App\Enums\CardType;
+use App\Models\Card;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,6 +32,7 @@ final class StoreCardRequest extends FormRequest
             'explanation' => ['nullable', 'string', 'max:5000'],
             'card_type' => ['required', Rule::in(CardType::values())],
             'is_suspended' => ['sometimes', 'boolean'],
+            'scheduler' => ['sometimes', Rule::in(Card::schedulers())],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => [
                 'integer',

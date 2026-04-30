@@ -16,6 +16,7 @@ use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Contracts\Services\Review\SchedulerInterface;
+use App\Contracts\Services\Review\SchedulerResolverInterface;
 use App\Repositories\EloquentAiCardCandidateRepository;
 use App\Repositories\EloquentAiGenerationLogRepository;
 use App\Repositories\EloquentCardRepository;
@@ -27,6 +28,7 @@ use App\Repositories\EloquentNoteSeedRepository;
 use App\Repositories\EloquentTagRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
+use App\Services\Review\SchedulerResolver;
 use App\Services\Review\Sm2Scheduler;
 use Illuminate\Support\ServiceProvider;
 
@@ -60,6 +62,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         CardReviewRepositoryInterface::class => EloquentCardReviewRepository::class,
 
         // Services (固定バインド)
-        SchedulerInterface::class => Sm2Scheduler::class,
+        SchedulerInterface::class => Sm2Scheduler::class, // legacy 直接注入用 (テスト・後方互換)
+        SchedulerResolverInterface::class => SchedulerResolver::class,
     ];
 }

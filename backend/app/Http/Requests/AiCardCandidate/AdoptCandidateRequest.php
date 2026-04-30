@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\AiCardCandidate;
 
+use App\Models\Card;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,6 +29,7 @@ final class AdoptCandidateRequest extends FormRequest
             'question' => ['sometimes', 'string', 'max:2000'],
             'answer' => ['sometimes', 'string', 'max:2000'],
             'explanation' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'scheduler' => ['sometimes', Rule::in(Card::schedulers())],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => [
                 'integer',

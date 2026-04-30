@@ -8,7 +8,7 @@ use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardReviewRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
-use App\Contracts\Services\Review\SchedulerInterface;
+use App\Contracts\Services\Review\SchedulerResolverInterface;
 use App\Enums\ReviewRating;
 use App\Exceptions\Domain\CardNotFoundException;
 use App\Models\Card;
@@ -30,7 +30,7 @@ final class ReviewSessionService
         private readonly CardReviewRepositoryInterface $reviewRepository,
         private readonly CardRepositoryInterface $cardRepository,
         private readonly DeckRepositoryInterface $deckRepository,
-        private readonly SchedulerInterface $scheduler,
+        private readonly SchedulerResolverInterface $schedulerResolver,
     ) {}
 
     /**
@@ -127,13 +127,17 @@ final class ReviewSessionService
             'repetitions' => $schedule->repetitions,
             'interval_days' => $schedule->interval_days,
             'ease_factor' => (float) $schedule->ease_factor,
+            'stability' => $schedule->stability !== null ? (float) $schedule->stability : null,
+            'difficulty' => $schedule->difficulty !== null ? (float) $schedule->difficulty : null,
             'lapse_count' => $schedule->lapse_count,
             'state' => $schedule->state instanceof \BackedEnum
                 ? $schedule->state->value
                 : (string) $schedule->state,
+            'scheduler' => $card->scheduler,
         ];
 
-        $update = $this->scheduler->next($schedule, $rating, $now->toDateTime());
+        $scheduler = $this->schedulerResolver->resolveForCard($card);
+        $update = $scheduler->next($schedule, $rating, $now->toDateTime());
 
         return DB::transaction(function () use (
             $userId,

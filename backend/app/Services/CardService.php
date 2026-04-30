@@ -57,6 +57,12 @@ final class CardService
         $tagIds = $attributes['tag_ids'] ?? [];
         unset($attributes['tag_ids']);
 
+        // 新規作成時のデフォルトは FSRS。既存カード (sm2) と棲み分けるため
+        // DB レベルの default ('sm2') ではなくサービス層で明示的に上書きする。
+        if (! isset($attributes['scheduler']) || $attributes['scheduler'] === '') {
+            $attributes['scheduler'] = Card::SCHEDULER_FSRS;
+        }
+
         $this->assertTagsOwnedByUser($userId, $tagIds);
 
         return DB::transaction(function () use ($userId, $attributes, $tagIds) {

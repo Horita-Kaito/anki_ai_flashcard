@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CARD_TYPES, SCHEDULE_STATES } from "./types";
+import { CARD_TYPES, SCHEDULE_STATES, SCHEDULERS } from "./types";
 
 const cardTagSummarySchema = z
   .object({
@@ -14,6 +14,8 @@ const cardScheduleSchema = z
     repetitions: z.number(),
     interval_days: z.number(),
     ease_factor: z.number(),
+    stability: z.number().nullable().default(null),
+    difficulty: z.number().nullable().default(null),
     due_at: z.string().nullable(),
     lapse_count: z.number(),
     archived_at: z.string().nullable().default(null),
@@ -32,6 +34,7 @@ export const cardResponseSchema = z
     explanation: z.string().nullable(),
     card_type: z.enum(CARD_TYPES),
     is_suspended: z.boolean(),
+    scheduler: z.enum(SCHEDULERS).default("sm2"),
     is_archived: z.boolean().optional(),
     tags: z.array(cardTagSummarySchema).optional(),
     schedule: cardScheduleSchema.nullable().optional(),

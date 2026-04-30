@@ -171,6 +171,7 @@ final class AiCardCandidateController extends Controller
             candidateIds: $validated['candidate_ids'],
             deckId: (int) $validated['deck_id'],
             tagIds: $validated['tag_ids'] ?? [],
+            scheduler: $validated['scheduler'] ?? null,
         );
 
         return response()->json([

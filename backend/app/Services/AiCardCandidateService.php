@@ -115,6 +115,8 @@ final class AiCardCandidateService
                 'card_type' => $candidate->card_type?->value ?? 'basic_qa',
                 'source_note_seed_id' => $candidate->note_seed_id,
                 'source_ai_candidate_id' => $candidate->id,
+                // 採用時に scheduler 指定が無ければ FSRS をデフォルトに
+                'scheduler' => $overrides['scheduler'] ?? Card::SCHEDULER_FSRS,
             ]);
 
             $this->scheduleRepository->createInitial($card);
@@ -153,6 +155,7 @@ final class AiCardCandidateService
         array $candidateIds,
         int $deckId,
         array $tagIds = [],
+        ?string $scheduler = null,
     ): array {
         $cards = [];
         foreach ($this->uniqueIds($candidateIds) as $id) {
@@ -160,6 +163,7 @@ final class AiCardCandidateService
                 $cards[] = $this->adoptForUser($userId, $id, [
                     'deck_id' => $deckId,
                     'tag_ids' => $tagIds,
+                    'scheduler' => $scheduler ?? Card::SCHEDULER_FSRS,
                 ]);
             } catch (AiCardCandidateNotAdoptableException|AiCardCandidateNotFoundException) {
                 continue;

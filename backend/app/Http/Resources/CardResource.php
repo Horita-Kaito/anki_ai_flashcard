@@ -26,6 +26,7 @@ final class CardResource extends BaseJsonResource
             'explanation' => $this->explanation,
             'card_type' => $this->card_type?->value,
             'is_suspended' => $this->is_suspended,
+            'scheduler' => $this->scheduler,
             'tags' => $this->whenLoaded('tags', fn () => $this->tags->map(fn ($t) => [
                 'id' => $t->id,
                 'name' => $t->name,
@@ -36,6 +37,8 @@ final class CardResource extends BaseJsonResource
                 'repetitions' => $this->schedule->repetitions,
                 'interval_days' => $this->schedule->interval_days,
                 'ease_factor' => (float) $this->schedule->ease_factor,
+                'stability' => $this->schedule->stability !== null ? (float) $this->schedule->stability : null,
+                'difficulty' => $this->schedule->difficulty !== null ? (float) $this->schedule->difficulty : null,
                 'due_at' => $this->toIso($this->schedule->due_at),
                 'lapse_count' => $this->schedule->lapse_count,
                 'archived_at' => $this->toIso($this->schedule->archived_at),

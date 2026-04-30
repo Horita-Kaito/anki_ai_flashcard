@@ -20,11 +20,23 @@ export const CARD_TYPE_LABELS: Record<CardType, string> = {
 export const SCHEDULE_STATES = ["new", "learning", "review", "relearning"] as const;
 export type ScheduleState = (typeof SCHEDULE_STATES)[number];
 
+export const SCHEDULERS = ["sm2", "fsrs"] as const;
+export type Scheduler = (typeof SCHEDULERS)[number];
+
+export const SCHEDULER_LABELS: Record<Scheduler, string> = {
+  sm2: "SM-2 (シンプル)",
+  fsrs: "FSRS (推奨)",
+};
+
 export interface CardSchedule {
   state: ScheduleState;
   repetitions: number;
   interval_days: number;
   ease_factor: number;
+  /** FSRS のみ。SM-2 では null */
+  stability: number | null;
+  /** FSRS のみ。1.0〜10.0 */
+  difficulty: number | null;
   due_at: string | null;
   lapse_count: number;
   archived_at: string | null;
@@ -46,6 +58,7 @@ export interface Card {
   explanation: string | null;
   card_type: CardType;
   is_suspended: boolean;
+  scheduler: Scheduler;
   is_archived?: boolean;
   tags?: CardTagSummary[];
   schedule?: CardSchedule | null;

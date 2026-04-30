@@ -29,6 +29,7 @@ class Card extends Model
         'explanation',
         'card_type',
         'is_suspended',
+        'scheduler',
     ];
 
     /** @var array<string, string> */
@@ -36,6 +37,16 @@ class Card extends Model
         'card_type' => CardType::class,
         'is_suspended' => 'boolean',
     ];
+
+    public const SCHEDULER_SM2 = 'sm2';
+
+    public const SCHEDULER_FSRS = 'fsrs';
+
+    /** @return array<int, string> */
+    public static function schedulers(): array
+    {
+        return [self::SCHEDULER_SM2, self::SCHEDULER_FSRS];
+    }
 
     /** @return BelongsTo<User, self> */
     public function user(): BelongsTo
