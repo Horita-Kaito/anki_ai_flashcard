@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Models\Card;
+use App\Models\CardSchedule;
 use App\Models\Deck;
 use App\Models\Tag;
 use App\Models\User;
@@ -171,6 +172,74 @@ final class CardControllerTest extends TestCase
             ->putJson("/api/v1/cards/{$card->id}", ['question' => 'after'])
             ->assertOk()
             ->assertJsonPath('data.question', 'after');
+    }
+
+    public function test_scheduler_を変更すると学習進捗がリセットされる(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+
+        // sm2 のカードを作って、いくらか進捗があるようにスケジュールをセットアップ
+        $response = $this->actingAs($user)->postJson('/api/v1/cards', [
+            'deck_id' => $deck->id,
+            'question' => 'Q',
+            'answer' => 'A',
+            'card_type' => 'basic_qa',
+            'scheduler' => 'sm2',
+        ]);
+        $cardId = $response->json('data.id');
+
+        // 進捗があるかのように schedule を直接書き換え (review state、interval=14、ease=2.3)
+        CardSchedule::where('card_id', $cardId)->update([
+            'state' => 'review',
+            'repetitions' => 5,
+            'interval_days' => 14,
+            'ease_factor' => 2.30,
+            'lapse_count' => 1,
+        ]);
+
+        // scheduler を fsrs に切替
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$cardId}", ['scheduler' => 'fsrs'])
+            ->assertOk()
+            ->assertJsonPath('data.scheduler', 'fsrs')
+            ->assertJsonPath('data.schedule.state', 'new')
+            ->assertJsonPath('data.schedule.repetitions', 0)
+            ->assertJsonPath('data.schedule.interval_days', 0)
+            ->assertJsonPath('data.schedule.lapse_count', 0)
+            ->assertJsonPath('data.schedule.stability', null)
+            ->assertJsonPath('data.schedule.difficulty', null);
+    }
+
+    public function test_scheduler_を変えない更新ではスケジュールはリセットされない(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+
+        $response = $this->actingAs($user)->postJson('/api/v1/cards', [
+            'deck_id' => $deck->id,
+            'question' => 'Q',
+            'answer' => 'A',
+            'card_type' => 'basic_qa',
+            'scheduler' => 'fsrs',
+        ]);
+        $cardId = $response->json('data.id');
+
+        CardSchedule::where('card_id', $cardId)->update([
+            'state' => 'review',
+            'repetitions' => 3,
+            'interval_days' => 7,
+            'stability' => 7.5,
+            'difficulty' => 5.5,
+        ]);
+
+        // question だけ変更
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$cardId}", ['question' => 'updated'])
+            ->assertOk()
+            ->assertJsonPath('data.schedule.repetitions', 3)
+            ->assertJsonPath('data.schedule.interval_days', 7)
+            ->assertJsonPath('data.schedule.stability', 7.5);
     }
 
     public function test_カード削除でスケジュールも消える(): void

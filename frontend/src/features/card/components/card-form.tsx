@@ -25,6 +25,7 @@ import {
   SCHEDULER_LABELS,
 } from "@/entities/card/types";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import type { Card } from "@/entities/card/types";
 
 interface CardFormProps {
@@ -66,7 +67,11 @@ export function CardForm({
     },
   });
 
-  const onSubmit = handleSubmit(async (values) => {
+  const [pendingValues, setPendingValues] = useState<CreateCardInput | null>(
+    null
+  );
+
+  async function persistValues(values: CreateCardInput): Promise<void> {
     try {
       if (isEdit) {
         await updateMutation.mutateAsync(values);
@@ -79,6 +84,20 @@ export function CardForm({
     } catch {
       toast.error("保存に失敗しました");
     }
+  }
+
+  const onSubmit = handleSubmit(async (values) => {
+    // 編集時で scheduler が変わっている場合は、確認ダイアログで進捗リセットを警告
+    if (
+      isEdit &&
+      card &&
+      values.scheduler !== undefined &&
+      values.scheduler !== card.scheduler
+    ) {
+      setPendingValues(values);
+      return;
+    }
+    await persistValues(values);
   });
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -223,8 +242,7 @@ export function CardForm({
             <select
               id="scheduler"
               {...register("scheduler")}
-              disabled={isEdit}
-              className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background disabled:opacity-60"
+              className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
             >
               {SCHEDULERS.map((s) => (
                 <option key={s} value={s}>
@@ -234,7 +252,7 @@ export function CardForm({
             </select>
             <p className="text-xs text-muted-foreground">
               {isEdit
-                ? "作成済みカードのアルゴリズムは変更できません"
+                ? "変更すると学習進捗 (間隔・安定度・難度) はリセットされ、新規カードと同じ状態から再スタートになります"
                 : "FSRS は学習履歴から間隔を自動最適化します。SM-2 はシンプルな従来方式。迷ったら FSRS のままで OK。"}
             </p>
           </div>
@@ -268,6 +286,25 @@ export function CardForm({
           キャンセル
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={pendingValues !== null}
+        title="復習アルゴリズムを変更しますか？"
+        description={
+          pendingValues && card
+            ? `${SCHEDULER_LABELS[card.scheduler]} → ${SCHEDULER_LABELS[pendingValues.scheduler ?? "fsrs"]} に切替えると、学習進捗 (間隔・安定度・難度・復習回数) はすべてリセットされ、新規カードとして再スタートになります。よろしいですか？`
+            : ""
+        }
+        confirmLabel="変更してリセットする"
+        variant="destructive"
+        onConfirm={async () => {
+          const v = pendingValues;
+          setPendingValues(null);
+          if (v) await persistValues(v);
+        }}
+        onCancel={() => setPendingValues(null)}
+        loading={isSubmitting}
+      />
     </form>
   );
 }

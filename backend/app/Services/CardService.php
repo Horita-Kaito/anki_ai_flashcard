@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Enums\ScheduleState;
 use App\Exceptions\Domain\CardNotFoundException;
 use App\Models\Card;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -93,10 +94,36 @@ final class CardService
             $this->assertTagsOwnedByUser($userId, $tagIds);
         }
 
-        return DB::transaction(function () use ($card, $attributes, $tagIds) {
+        // scheduler を変更する場合は学習進捗の初期化が必要 (SM-2 と FSRS で
+        // 状態変数が互換でないため、書き換えるとアルゴリズムが壊れる)。
+        $shouldResetSchedule = isset($attributes['scheduler'])
+            && $attributes['scheduler'] !== $card->scheduler;
+
+        return DB::transaction(function () use ($card, $attributes, $tagIds, $shouldResetSchedule) {
             $updated = $this->cardRepository->update($card, $attributes);
             if ($tagIds !== null) {
                 $this->cardRepository->syncTags($updated, $tagIds);
+            }
+
+            if ($shouldResetSchedule) {
+                $schedule = $this->scheduleRepository->findByCardForUser(
+                    $updated->user_id,
+                    $updated->id,
+                );
+                if ($schedule !== null) {
+                    $this->scheduleRepository->update($schedule, [
+                        'state' => ScheduleState::New->value,
+                        'repetitions' => 0,
+                        'interval_days' => 0,
+                        'ease_factor' => 2.50,
+                        'stability' => null,
+                        'difficulty' => null,
+                        'lapse_count' => 0,
+                        'due_at' => now(),
+                        'last_reviewed_at' => null,
+                        'archived_at' => null,
+                    ]);
+                }
             }
 
             return $updated->refresh()->load(['schedule', 'tags']);
