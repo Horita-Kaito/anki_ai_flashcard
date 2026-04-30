@@ -37,7 +37,8 @@ export function DesktopSidebar() {
   return (
     <aside
       aria-label="主要ナビゲーション"
-      className="hidden md:flex md:w-56 lg:w-64 border-r flex-col p-3 gap-1"
+      className="hidden md:flex md:w-56 lg:w-64 border-r flex-col p-3 gap-1
+                 md:sticky md:top-0 md:self-start md:h-dvh md:overflow-y-auto"
     >
       <div className="px-3 py-4 font-bold text-lg tracking-tight">
         Anki AI Flashcard
