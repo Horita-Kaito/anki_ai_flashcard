@@ -42,6 +42,18 @@ describe("createAdminUserSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("前後の空白は trim される", () => {
+    const result = createAdminUserSchema.safeParse({
+      name: "  k-yamamoto  ",
+      email: "  k-yamamoto@wown.co.jp\n",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.email).toBe("k-yamamoto@wown.co.jp");
+      expect(result.data.name).toBe("k-yamamoto");
+    }
+  });
+
   it("email が 256 文字以上で失敗する", () => {
     const longLocal = "a".repeat(251);
     const result = createAdminUserSchema.safeParse({
