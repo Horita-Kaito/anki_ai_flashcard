@@ -10,6 +10,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 interface UserRepositoryInterface
 {
+    /**
+     * @param  array{name: string, email: string, password: string}  $attributes
+     */
+    public function create(array $attributes): User;
+
     public function findByEmail(string $email): ?User;
 
     /**

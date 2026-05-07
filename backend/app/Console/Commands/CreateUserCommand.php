@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Models\User;
+use App\Contracts\Services\UserCreationServiceInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 
@@ -16,7 +16,7 @@ final class CreateUserCommand extends Command
 
     protected $description = '新規ユーザーを作成する (新規登録フローは廃止されているため、管理者はこのコマンドを使う)';
 
-    public function handle(): int
+    public function handle(UserCreationServiceInterface $userCreation): int
     {
         $name = (string) $this->argument('name');
         $email = (string) $this->argument('email');
@@ -44,11 +44,7 @@ final class CreateUserCommand extends Command
             return self::FAILURE;
         }
 
-        $user = User::create([
-            'name' => $name,
-            'email' => $email,
-            'password' => $password,
-        ]);
+        $user = $userCreation->create($name, $email, (string) $password);
 
         $this->info("ユーザーを作成しました (id={$user->id}, email={$user->email})");
 

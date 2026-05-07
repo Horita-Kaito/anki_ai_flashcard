@@ -16,6 +16,7 @@ use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Contracts\Services\Review\SchedulerResolverInterface;
+use App\Contracts\Services\UserCreationServiceInterface;
 use App\Repositories\EloquentAiCardCandidateRepository;
 use App\Repositories\EloquentAiGenerationLogRepository;
 use App\Repositories\EloquentCardRepository;
@@ -28,6 +29,7 @@ use App\Repositories\EloquentTagRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
 use App\Services\Review\SchedulerResolver;
+use App\Services\UserCreationService;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -58,6 +60,9 @@ final class RepositoryServiceProvider extends ServiceProvider
         AiCardCandidateRepositoryInterface::class => EloquentAiCardCandidateRepository::class,
         AiGenerationLogRepositoryInterface::class => EloquentAiGenerationLogRepository::class,
         CardReviewRepositoryInterface::class => EloquentCardReviewRepository::class,
+
+        // Services (差し替え可能性低め、Interface First 規約に従い bind)
+        UserCreationServiceInterface::class => UserCreationService::class,
     ];
 
     /**

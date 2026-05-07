@@ -14,10 +14,12 @@ import {
   Tag,
   BarChart3,
   Settings,
+  ShieldCheck,
 } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";
 import { cn } from "@/shared/lib/utils";
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
+import { useCurrentUser } from "@/features/auth/api/auth-queries";
 
 const tabs = [
   { href: "/dashboard", label: "ホーム", icon: LayoutDashboard },
@@ -34,6 +36,12 @@ const moreItems = [
   { href: "/settings", label: "設定", icon: Settings },
 ] as const;
 
+const adminMoreItem = {
+  href: "/admin/users",
+  label: "管理",
+  icon: ShieldCheck,
+} as const;
+
 /**
  * モバイル向け下部固定タブバー (md 未満で表示)
  * ネイティブアプリ的な操作感を出す。safe-area 対応。
@@ -41,8 +49,14 @@ const moreItems = [
 export function BottomTabBar() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const { data: me } = useCurrentUser();
+  const visibleMoreItems = me?.is_admin
+    ? [...moreItems, adminMoreItem]
+    : moreItems;
 
-  const moreActive = moreItems.some((item) => pathname.startsWith(item.href));
+  const moreActive = visibleMoreItems.some((item) =>
+    pathname.startsWith(item.href)
+  );
 
   return (
     <nav
@@ -91,7 +105,7 @@ export function BottomTabBar() {
               <Popover.Positioner side="top" align="end" sideOffset={8} className="z-[70]">
                 <Popover.Popup className="min-w-48 rounded-lg border bg-background p-1 shadow-lg">
                   <ul>
-                    {moreItems.map((item) => {
+                    {visibleMoreItems.map((item) => {
                       const active = pathname.startsWith(item.href);
                       const Icon = item.icon;
                       return (

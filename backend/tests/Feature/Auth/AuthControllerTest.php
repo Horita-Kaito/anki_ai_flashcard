@@ -72,4 +72,24 @@ final class AuthControllerTest extends TestCase
             ->assertJsonPath('data.id', $user->id)
             ->assertJsonPath('data.email', $user->email);
     }
+
+    public function test_meは管理者でない場合_is_admin_がfalse(): void
+    {
+        config()->set('admin.emails', ['admin@example.com']);
+        $user = User::factory()->create(['email' => 'normal@example.com']);
+
+        $this->actingAs($user)->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.is_admin', false);
+    }
+
+    public function test_meは管理者の場合_is_admin_がtrue(): void
+    {
+        config()->set('admin.emails', ['admin@example.com']);
+        $admin = User::factory()->create(['email' => 'admin@example.com']);
+
+        $this->actingAs($admin)->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.is_admin', true);
+    }
 }

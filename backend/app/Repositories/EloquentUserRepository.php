@@ -11,6 +11,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 final class EloquentUserRepository implements UserRepositoryInterface
 {
+    public function create(array $attributes): User
+    {
+        return User::create($attributes);
+    }
+
     public function findByEmail(string $email): ?User
     {
         /** @var User|null */

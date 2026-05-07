@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\Services\AI\AiProviderInterface;
+use App\Models\User;
 use App\Services\AI\CandidateParser;
 use App\Services\AI\FakeAiProvider;
 use App\Services\AI\GoogleAiProvider;
@@ -13,6 +14,7 @@ use App\Services\AI\PricingCalculator;
 use App\Services\AI\PromptBuilder;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,6 +45,18 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiters();
+        $this->configureGates();
+    }
+
+    private function configureGates(): void
+    {
+        Gate::define('access-admin', static function (User $user): bool {
+            $email = strtolower((string) $user->email);
+            /** @var array<int, string> $allowed */
+            $allowed = config('admin.emails', []);
+
+            return in_array($email, $allowed, true);
+        });
     }
 
     private function configureRateLimiters(): void

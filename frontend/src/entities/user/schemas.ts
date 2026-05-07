@@ -5,6 +5,7 @@ export const userResponseSchema = z
     id: z.number(),
     name: z.string(),
     email: z.string(),
+    is_admin: z.boolean().optional().default(false),
   })
   .passthrough();
 

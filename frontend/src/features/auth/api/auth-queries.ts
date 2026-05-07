@@ -1,25 +1,16 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchCurrentUser, loginUser, logoutUser } from "./endpoints";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { loginUser, logoutUser } from "./endpoints";
+import { currentUserKeys, useCurrentUser } from "@/entities/user/api/queries";
 
-export const authKeys = {
-  me: ["auth", "me"] as const,
-};
-
-export function useCurrentUser() {
-  return useQuery({
-    queryKey: authKeys.me,
-    queryFn: fetchCurrentUser,
-    staleTime: Infinity,
-    retry: false,
-  });
-}
+export { useCurrentUser };
+export const authKeys = currentUserKeys;
 
 export function useLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: loginUser,
     onSuccess: (user) => {
-      qc.setQueryData(authKeys.me, user);
+      qc.setQueryData(currentUserKeys.me, user);
     },
   });
 }
@@ -29,7 +20,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
-      qc.setQueryData(authKeys.me, null);
+      qc.setQueryData(currentUserKeys.me, null);
       qc.clear();
     },
   });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\AiCardCandidateController;
 use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -92,6 +93,12 @@ Route::prefix('v1')->group(function () {
         Route::get('review-sessions/extra', [ReviewSessionController::class, 'extra']);
         Route::post('review-sessions/answer', [ReviewSessionController::class, 'answer']);
         Route::get('review-stats', [ReviewSessionController::class, 'stats']);
+
+        // === 管理者専用 (config('admin.emails') に含まれる email のみ) ===
+        Route::middleware('can:access-admin')->prefix('admin')->group(function () {
+            Route::post('users', [AdminUserController::class, 'store'])
+                ->middleware('throttle:10,60');
+        });
     });
 });
 

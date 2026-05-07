@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Laravel\Sanctum\PersonalAccessToken;
 
 final class AuthController extends Controller
@@ -27,7 +29,10 @@ final class AuthController extends Controller
 
         $this->regenerateSession($request);
 
-        return response()->json(['data' => Auth::user()]);
+        /** @var User $user */
+        $user = Auth::user();
+
+        return response()->json(['data' => $this->serializeUser($user)]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -46,7 +51,21 @@ final class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()]);
+        /** @var User $user */
+        $user = $request->user();
+
+        return response()->json(['data' => $this->serializeUser($user)]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function serializeUser(User $user): array
+    {
+        return [
+            ...$user->toArray(),
+            'is_admin' => Gate::forUser($user)->allows('access-admin'),
+        ];
     }
 
     /**

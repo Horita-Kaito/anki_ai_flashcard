@@ -12,9 +12,11 @@ import {
   Tag,
   BookOpen,
   BarChart3,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
+import { useCurrentUser } from "@/features/auth/api/auth-queries";
 
 const items = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
@@ -28,11 +30,19 @@ const items = [
   { href: "/settings", label: "設定", icon: Settings },
 ] as const;
 
+const adminItem = {
+  href: "/admin/users",
+  label: "管理",
+  icon: ShieldCheck,
+} as const;
+
 /**
  * PC 向け左サイドバー (md 以上で表示)
  */
 export function DesktopSidebar() {
   const pathname = usePathname();
+  const { data: me } = useCurrentUser();
+  const navItems = me?.is_admin ? [...items, adminItem] : items;
 
   return (
     <aside
@@ -45,7 +55,7 @@ export function DesktopSidebar() {
       </div>
       <nav>
         <ul className="space-y-0.5">
-          {items.map((item) => {
+          {navItems.map((item) => {
             const active = pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
