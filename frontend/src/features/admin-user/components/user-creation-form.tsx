@@ -24,7 +24,7 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<CreateAdminUserInput>({
     resolver: zodResolver(createAdminUserSchema),
-    defaultValues: { name: "", email: "" },
+    defaultValues: { displayName: "", contactEmail: "" },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -47,6 +47,43 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
       autoComplete="off"
       aria-label="ユーザー新規作成フォーム"
     >
+      {/*
+        パスワードマネージャ (Chrome / 1Password / LastPass 等) は
+        フォーム内に最初に登場する text + password input を「ログイン」と認識して
+        オートフィルを試みる。実フィールドへの誤入力を防ぐため、
+        画面外に隠したデコイ input を最前に置いて PWM の認識をそちらへ吸収させる。
+        suppressHydrationWarning は PWM が hydrate 直後に value を書き換えても
+        エラーが出ないようにする保険。
+      */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "-9999px",
+          width: "1px",
+          height: "1px",
+          overflow: "hidden",
+        }}
+      >
+        <input
+          type="text"
+          name="username"
+          tabIndex={-1}
+          autoComplete="username"
+          defaultValue=""
+          suppressHydrationWarning
+        />
+        <input
+          type="password"
+          name="password"
+          tabIndex={-1}
+          autoComplete="new-password"
+          defaultValue=""
+          suppressHydrationWarning
+        />
+      </div>
+
       {errorMessage && (
         <div
           role="alert"
@@ -67,14 +104,16 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
           data-1p-ignore
           data-lpignore="true"
           data-form-type="other"
-          {...register("name")}
+          {...register("displayName")}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? "admin-user-name-error" : undefined}
+          aria-invalid={!!errors.displayName}
+          aria-describedby={
+            errors.displayName ? "admin-user-name-error" : undefined
+          }
         />
-        {errors.name && (
+        {errors.displayName && (
           <p id="admin-user-name-error" className="text-xs text-red-600">
-            {errors.name.message}
+            {errors.displayName.message}
           </p>
         )}
       </div>
@@ -85,19 +124,25 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
         </label>
         <input
           id="admin-user-email"
-          type="email"
+          type="text"
+          inputMode="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           autoComplete="off"
           data-1p-ignore
           data-lpignore="true"
           data-form-type="other"
-          {...register("email")}
+          {...register("contactEmail")}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "admin-user-email-error" : undefined}
+          aria-invalid={!!errors.contactEmail}
+          aria-describedby={
+            errors.contactEmail ? "admin-user-email-error" : undefined
+          }
         />
-        {errors.email && (
+        {errors.contactEmail && (
           <p id="admin-user-email-error" className="text-xs text-red-600">
-            {errors.email.message}
+            {errors.contactEmail.message}
           </p>
         )}
       </div>
