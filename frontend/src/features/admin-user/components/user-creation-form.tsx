@@ -1,13 +1,11 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useState, type FormEvent } from "react";
 import { isAxiosError } from "axios";
 import { useCreateAdminUser } from "../api/admin-user-queries";
 import {
   createAdminUserSchema,
   type AdminCreatedUserResponse,
-  type CreateAdminUserInput,
 } from "../schemas/admin-user-schemas";
 import { Button } from "@/shared/ui/button";
 
@@ -15,27 +13,46 @@ interface UserCreationFormProps {
   onSuccess: (result: AdminCreatedUserResponse) => void;
 }
 
+interface FieldErrors {
+  displayName?: string;
+  contactEmail?: string;
+}
+
 export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
   const createUser = useCreateAdminUser();
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<CreateAdminUserInput>({
-    resolver: zodResolver(createAdminUserSchema),
-    defaultValues: { displayName: "", contactEmail: "" },
-  });
+  const [displayName, setDisplayName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrors({});
+
+    // Chrome / PWM が DOM input.value を上書きするケースに備え、
+    // 検証/送信は DOM ではなく React state を信頼する。
+    const parsed = createAdminUserSchema.safeParse({ displayName, contactEmail });
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      setErrors({
+        displayName: fieldErrors.displayName?.[0],
+        contactEmail: fieldErrors.contactEmail?.[0],
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const result = await createUser.mutateAsync(values);
-      reset();
+      const result = await createUser.mutateAsync(parsed.data);
+      setDisplayName("");
+      setContactEmail("");
       onSuccess(result);
     } catch {
-      // エラー表示は下部の createUser.error で行う
+      // エラー表示は createUser.error から resolveErrorMessage で
+    } finally {
+      setIsSubmitting(false);
     }
-  });
+  };
 
   const errorMessage = resolveErrorMessage(createUser.error);
 
@@ -47,14 +64,7 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
       autoComplete="off"
       aria-label="ユーザー新規作成フォーム"
     >
-      {/*
-        パスワードマネージャ (Chrome / 1Password / LastPass 等) は
-        フォーム内に最初に登場する text + password input を「ログイン」と認識して
-        オートフィルを試みる。実フィールドへの誤入力を防ぐため、
-        画面外に隠したデコイ input を最前に置いて PWM の認識をそちらへ吸収させる。
-        suppressHydrationWarning は PWM が hydrate 直後に value を書き換えても
-        エラーが出ないようにする保険。
-      */}
+      {/* PWM / Chrome native autofill のデコイ (画面外) */}
       <div
         aria-hidden="true"
         style={{
@@ -99,21 +109,24 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
         </label>
         <input
           id="admin-user-name"
+          name="displayName"
           type="text"
           autoComplete="off"
           data-1p-ignore
           data-lpignore="true"
           data-form-type="other"
-          {...register("displayName")}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           aria-invalid={!!errors.displayName}
           aria-describedby={
             errors.displayName ? "admin-user-name-error" : undefined
           }
+          suppressHydrationWarning
         />
         {errors.displayName && (
           <p id="admin-user-name-error" className="text-xs text-red-600">
-            {errors.displayName.message}
+            {errors.displayName}
           </p>
         )}
       </div>
@@ -124,6 +137,7 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
         </label>
         <input
           id="admin-user-email"
+          name="contactEmail"
           type="text"
           inputMode="email"
           autoCapitalize="none"
@@ -133,16 +147,18 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
           data-1p-ignore
           data-lpignore="true"
           data-form-type="other"
-          {...register("contactEmail")}
+          value={contactEmail}
+          onChange={(e) => setContactEmail(e.target.value)}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           aria-invalid={!!errors.contactEmail}
           aria-describedby={
             errors.contactEmail ? "admin-user-email-error" : undefined
           }
+          suppressHydrationWarning
         />
         {errors.contactEmail && (
           <p id="admin-user-email-error" className="text-xs text-red-600">
-            {errors.contactEmail.message}
+            {errors.contactEmail}
           </p>
         )}
       </div>
@@ -177,6 +193,7 @@ function resolveErrorMessage(error: unknown): string | null {
       : undefined;
     return firstError ?? data?.message ?? "入力内容を確認してください";
   }
-  if (status === 429) return "短時間に作成しすぎです。少し待ってから再度試してください";
+  if (status === 429)
+    return "短時間に作成しすぎです。少し待ってから再度試してください";
   return error.response?.data?.message ?? "ユーザー作成に失敗しました";
 }
