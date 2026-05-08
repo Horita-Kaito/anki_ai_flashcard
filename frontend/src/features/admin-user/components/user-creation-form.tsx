@@ -44,6 +44,7 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
       onSubmit={onSubmit}
       className="space-y-4"
       noValidate
+      autoComplete="off"
       aria-label="ユーザー新規作成フォーム"
     >
       {errorMessage && (
@@ -56,40 +57,46 @@ export function UserCreationForm({ onSuccess }: UserCreationFormProps) {
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="name" className="text-sm font-medium">
+        <label htmlFor="admin-user-name" className="text-sm font-medium">
           ユーザー名
         </label>
         <input
-          id="name"
+          id="admin-user-name"
           type="text"
           autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           {...register("name")}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           aria-invalid={!!errors.name}
-          aria-describedby={errors.name ? "name-error" : undefined}
+          aria-describedby={errors.name ? "admin-user-name-error" : undefined}
         />
         {errors.name && (
-          <p id="name-error" className="text-xs text-red-600">
+          <p id="admin-user-name-error" className="text-xs text-red-600">
             {errors.name.message}
           </p>
         )}
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="email" className="text-sm font-medium">
+        <label htmlFor="admin-user-email" className="text-sm font-medium">
           メールアドレス
         </label>
         <input
-          id="email"
+          id="admin-user-email"
           type="email"
           autoComplete="off"
+          data-1p-ignore
+          data-lpignore="true"
+          data-form-type="other"
           {...register("email")}
           className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? "email-error" : undefined}
+          aria-describedby={errors.email ? "admin-user-email-error" : undefined}
         />
         {errors.email && (
-          <p id="email-error" className="text-xs text-red-600">
+          <p id="admin-user-email-error" className="text-xs text-red-600">
             {errors.email.message}
           </p>
         )}
