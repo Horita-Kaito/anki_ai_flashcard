@@ -33,6 +33,9 @@ jobs:
             APP_ROOT="$HOME/srv/apps/anki-ai-flashcard"
             REPO_DIR="${APP_ROOT}/repo"
             COMPOSE_FILE="${REPO_DIR}/docker-compose.staging.yml"
+            # 同サーバの他プロジェクト (yutaka-admin 等) と project 名が衝突して
+            # コンテナを上書きされる事故を防ぐため、project 名は anki で固定する。
+            COMPOSE_PROJECT=anki
 
             cd "$REPO_DIR"
 
@@ -45,18 +48,18 @@ jobs:
 
             # ghcr.io ログイン & イメージ pull
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker compose -f "$COMPOSE_FILE" pull
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" pull
 
             # 起動 (--force-recreate で古いイメージのコンテナを確実に入れ替え)
             # backend image は Dockerfile.prod でビルドされ vendor/ も baked-in 済みのため
             # composer install ステップは不要。
-            docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --force-recreate
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" up -d --remove-orphans --force-recreate
 
             # マイグレーション & キャッシュ
-            docker compose -f "$COMPOSE_FILE" exec -T backend php artisan migrate --force
-            docker compose -f "$COMPOSE_FILE" exec -T backend php artisan config:cache
-            docker compose -f "$COMPOSE_FILE" exec -T backend php artisan route:cache
-            docker compose -f "$COMPOSE_FILE" exec -T backend php artisan view:cache
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan migrate --force
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan config:cache
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan route:cache
+            docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan view:cache
 
             echo "Deploy completed successfully"
 

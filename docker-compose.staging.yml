@@ -26,6 +26,12 @@
 #       ├── mysql/     <- DBデータ
 #       └── redis/     <- Redisデータ
 #
+# Compose project 名は `anki` で固定する。同サーバで複数プロジェクト
+# (yutaka-admin 等) が動いており、デフォルト project 名 (親ディレクトリ名 `repo`)
+# が衝突して nginx/queue/redis 等の同名サービスが他プロジェクトに上書きされる
+# 事故を防ぐため明示する。
+
+name: anki
 
 services:
   # ----------------------------------------
