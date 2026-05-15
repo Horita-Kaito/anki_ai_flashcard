@@ -105,4 +105,84 @@ describe("NoteSeedForm", () => {
       screen.getByText("プレビューするメモがありません")
     ).toBeInTheDocument();
   });
+
+  it("onSaveAndGenerate が渡されると「保存して候補生成」ボタンが追加表示される", () => {
+    renderWithProviders(<NoteSeedForm onSaveAndGenerate={vi.fn()} />);
+    expect(
+      screen.getByRole("button", { name: /保存して候補生成/ })
+    ).toBeInTheDocument();
+    // 通常の「保存」も同時にある
+    expect(
+      screen.getByRole("button", { name: /^保存$/ })
+    ).toBeInTheDocument();
+  });
+
+  it("「保存して候補生成」を押すと onSaveAndGenerate が保存後の note と共に呼ばれる", async () => {
+    const user = userEvent.setup();
+    const onSaveAndGenerate = vi.fn();
+    renderWithProviders(
+      <NoteSeedForm onSaveAndGenerate={onSaveAndGenerate} />
+    );
+
+    await user.type(screen.getByLabelText(/メモ本文/), "連続生成テスト本文");
+    await user.click(
+      screen.getByRole("button", { name: /保存して候補生成/ })
+    );
+
+    await waitFor(() => {
+      expect(onSaveAndGenerate).toHaveBeenCalledTimes(1);
+    });
+    const arg = onSaveAndGenerate.mock.calls[0][0];
+    expect(arg.body).toBe("連続生成テスト本文");
+    expect(typeof arg.id).toBe("number");
+    // 通常の onSuccess は呼ばれず、router.push も走らない
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("shouldResetAfterSave=true では「保存」単独ボタンが非表示で「保存して候補生成」のみ表示される", () => {
+    renderWithProviders(
+      <NoteSeedForm onSaveAndGenerate={vi.fn()} shouldResetAfterSave />
+    );
+    expect(
+      screen.getByRole("button", { name: /保存して候補生成/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^保存$/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("shouldResetAfterSave=true で送信すると本文がクリアされ、詳細設定は保持される", async () => {
+    const user = userEvent.setup();
+    const onSaveAndGenerate = vi.fn();
+    renderWithProviders(
+      <NoteSeedForm
+        onSaveAndGenerate={onSaveAndGenerate}
+        shouldResetAfterSave
+      />
+    );
+
+    // 詳細設定を開いてサブ分野に値を入れる
+    await user.click(screen.getByRole("button", { name: /詳細設定/ }));
+    await user.type(screen.getByLabelText("サブ分野"), "ネットワーク");
+
+    const body = screen.getByLabelText(/メモ本文/) as HTMLTextAreaElement;
+    await user.type(body, "1 件目のメモ");
+    await user.click(
+      screen.getByRole("button", { name: /保存して候補生成/ })
+    );
+
+    await waitFor(() => expect(onSaveAndGenerate).toHaveBeenCalled());
+
+    // 本文は空に戻り、サブ分野は引き継がれている
+    await waitFor(() => {
+      expect((screen.getByLabelText(/メモ本文/) as HTMLTextAreaElement).value).toBe(
+        ""
+      );
+    });
+    expect(
+      (screen.getByLabelText("サブ分野") as HTMLInputElement).value
+    ).toBe("ネットワーク");
+    // router.push は走らない (連続モードのため)
+    expect(pushMock).not.toHaveBeenCalled();
+  });
 });

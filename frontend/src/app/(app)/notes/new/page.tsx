@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { NoteSeedForm } from "@/features/note-seed";
+import { NewNotePageClient } from "./new-note-page-client";
 
 export const metadata: Metadata = {
   title: "メモを書く | Anki AI Flashcard",
@@ -12,10 +12,10 @@ export default function NewNotePage() {
         <header className="space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold">メモを書く</h1>
           <p className="text-sm text-muted-foreground">
-            短い断片でOK。あとで AI がカード候補に変換します。
+            短い断片でOK。AI がカード候補に変換します。
           </p>
         </header>
-        <NoteSeedForm />
+        <NewNotePageClient />
       </div>
     </main>
   );

@@ -34,6 +34,19 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('冗長性', $prompt);
     }
 
+    public function test_システムプロンプトにメモ構造の2視点同時解釈が含まれる(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('メモ構造の 2 視点同時解釈', $prompt);
+        $this->assertStringContainsString('視点 A: 単一トピック多角的視点', $prompt);
+        $this->assertStringContainsString('視点 B: 複数知識点並列視点', $prompt);
+        $this->assertStringContainsString('バランスよく', $prompt);
+        // rationale に視点ラベルを明記させる指示
+        $this->assertStringContainsString('「視点A: ...」', $prompt);
+        $this->assertStringContainsString('「視点B: ...」', $prompt);
+    }
+
     public function test_システムプロンプトに冗長性の多角度ルールが含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);

@@ -21,25 +21,48 @@ import type { NoteSeed } from "@/entities/note-seed/types";
 
 type BodyTab = "edit" | "preview";
 
+type SubmitAction = "save" | "save-and-generate";
+
 interface NoteSeedFormProps {
   note?: NoteSeed;
   redirectTo?: string;
-  /** 保存成功時のコールバック。指定時は redirectTo へのリダイレクトをスキップする。 */
-  onSuccess?: () => void;
+  /**
+   * 保存成功時のコールバック。指定時は redirectTo へのリダイレクトをスキップする。
+   * 引数として作成/更新された NoteSeed を受け取る。
+   */
+  onSuccess?: (note: NoteSeed) => void | Promise<void>;
   /** キャンセルボタンのハンドラ。指定時は router.back() の代わりに呼ばれる。 */
   onCancel?: () => void;
+  /**
+   * 「保存して候補生成」アクションのハンドラ。
+   * 渡された場合のみ create モードで対応ボタンが追加表示される。
+   * 通常 page 側で AI 候補生成 dispatch + 遷移をハンドルする。
+   */
+  onSaveAndGenerate?: (note: NoteSeed) => void | Promise<void>;
+  /**
+   * true の時、保存後に redirect/onSuccess の代わりに本文だけ空にして
+   * 同じフォームから連続でメモを書けるようにする。
+   * 詳細設定 (テンプレート/サブ分野/学習目的/コンテキスト) は保持する。
+   * このモードでは「保存」単体ボタンは非表示にし、「保存して候補生成」だけを残す。
+   */
+  shouldResetAfterSave?: boolean;
 }
 
 /**
  * メモ入力フォーム。
  * モバイル: 本文 textarea を大きく、保存ボタンは下部 sticky + safe-area。
  * PC: Cmd/Ctrl+Enter で送信。
+ *
+ * create モードでは onSaveAndGenerate を渡すと「保存して候補生成」ボタンが現れ、
+ * shouldResetAfterSave を ON にすると保存後フォーム reset で連続作成できる。
  */
 export function NoteSeedForm({
   note,
   redirectTo = "/notes",
   onSuccess,
   onCancel,
+  onSaveAndGenerate,
+  shouldResetAfterSave = false,
 }: NoteSeedFormProps) {
   const router = useRouter();
   const createMutation = useCreateNoteSeed();
@@ -51,11 +74,18 @@ export function NoteSeedForm({
   );
   const [bodyTab, setBodyTab] = useState<BodyTab>("edit");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // どのボタンで submit したかを onSubmit 側で判別するためのフラグ。
+  // ref を使うのは render を引き起こさず、かつ submit イベントと同期させたいため。
+  const submitActionRef = useRef<SubmitAction>("save");
+
+  const showSaveAndGenerate = !isEdit && !!onSaveAndGenerate;
+  const showSaveOnly = !shouldResetAfterSave;
 
   const {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateNoteSeedInput>({
     resolver: zodResolver(createNoteSeedSchema),
@@ -73,28 +103,48 @@ export function NoteSeedForm({
       ...values,
       domain_template_id: values.domain_template_id || null,
     };
+    const action = submitActionRef.current;
     try {
-      if (isEdit) {
-        await updateMutation.mutateAsync(payload);
-        toast.success("メモを更新しました");
-      } else {
-        await createMutation.mutateAsync(payload);
-        toast.success("メモを保存しました");
-      }
-      if (onSuccess) {
-        onSuccess();
-      } else {
+      const saved = isEdit
+        ? await updateMutation.mutateAsync(payload)
+        : await createMutation.mutateAsync(payload);
+      toast.success(isEdit ? "メモを更新しました" : "メモを保存しました");
+
+      if (action === "save-and-generate" && onSaveAndGenerate) {
+        await onSaveAndGenerate(saved);
+      } else if (onSuccess) {
+        await onSuccess(saved);
+      } else if (!shouldResetAfterSave) {
         router.push(redirectTo);
+      }
+
+      if (shouldResetAfterSave) {
+        // 本文だけクリアし、詳細設定 (テンプレート/サブ分野/学習目的/コンテキスト) は保持。
+        reset({
+          body: "",
+          domain_template_id: values.domain_template_id,
+          subdomain: values.subdomain,
+          learning_goal: values.learning_goal,
+          note_context: values.note_context,
+        });
+        setBodyTab("edit");
+        requestAnimationFrame(() => textareaRef.current?.focus());
       }
     } catch {
       toast.error("保存に失敗しました");
+    } finally {
+      // 次回 submit でフラグが残らないようリセット
+      submitActionRef.current = "save";
     }
   });
 
-  // PC 向け: Cmd/Ctrl+Enter で送信
+  // PC 向け: Cmd/Ctrl+Enter で送信 (デフォルトの primary ボタン動作)
   function handleKeyDown(e: React.KeyboardEvent) {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
+      // 連続モード時は primary が save-and-generate なのでそちらを発火
+      submitActionRef.current =
+        shouldResetAfterSave && showSaveAndGenerate ? "save-and-generate" : "save";
       onSubmit();
     }
   }
@@ -291,17 +341,36 @@ export function NoteSeedForm({
           md:p-0 md:pb-0 md:justify-end md:flex-row-reverse
         "
       >
-        <Button
-          type="submit"
-          size="lg"
-          className="flex-1 md:flex-none min-h-11"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "保存中..." : isEdit ? "更新" : "保存"}
-        </Button>
+        {showSaveAndGenerate && (
+          <Button
+            type="submit"
+            size="lg"
+            className="flex-1 md:flex-none min-h-11"
+            disabled={isSubmitting}
+            onClick={() => {
+              submitActionRef.current = "save-and-generate";
+            }}
+          >
+            {isSubmitting ? "処理中..." : "保存して候補生成"}
+          </Button>
+        )}
+        {showSaveOnly && (
+          <Button
+            type="submit"
+            size="lg"
+            variant={showSaveAndGenerate ? "outline" : "default"}
+            className="flex-1 md:flex-none min-h-11"
+            disabled={isSubmitting}
+            onClick={() => {
+              submitActionRef.current = "save";
+            }}
+          >
+            {isSubmitting ? "保存中..." : isEdit ? "更新" : "保存"}
+          </Button>
+        )}
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="lg"
           className="min-h-11"
           onClick={() => (onCancel ? onCancel() : router.back())}
