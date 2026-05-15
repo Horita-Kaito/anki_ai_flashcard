@@ -50,7 +50,7 @@ final class CardGenerationService
     /**
      * 生成ジョブをディスパッチして queued log を返す (同期実行はしない)。
      *
-     * @param  array{count?: int|null, preferred_card_types?: array<int, string>, domain_template_id?: int|null, regenerate?: bool, additional?: bool}  $options
+     * @param  array{count?: int|null, domain_template_id?: int|null, regenerate?: bool, additional?: bool}  $options
      *
      * @throws AiUsageLimitExceededException
      * @throws GenerationAlreadyInFlightException
@@ -78,7 +78,6 @@ final class CardGenerationService
         // options から不要キーを削ぎ落として serialize しやすくする
         $payload = [
             'count' => $options['count'] ?? null,
-            'preferred_card_types' => $options['preferred_card_types'] ?? null,
             'domain_template_id' => $options['domain_template_id'] ?? null,
             'regenerate' => (bool) ($options['regenerate'] ?? false),
             'additional' => (bool) ($options['additional'] ?? false),
@@ -92,7 +91,7 @@ final class CardGenerationService
     /**
      * Job から呼ばれる本処理。queued log を受け取り、AI 呼び出し → 候補保存 → log 完了マークまで行う。
      *
-     * @param  array{count?: int|null, preferred_card_types?: array<int, string>|null, domain_template_id?: int|null, regenerate?: bool, additional?: bool}  $options
+     * @param  array{count?: int|null, domain_template_id?: int|null, regenerate?: bool, additional?: bool}  $options
      * @return array<int, AiCardCandidate>
      *
      * @throws AiGenerationFailedException
@@ -126,7 +125,6 @@ final class CardGenerationService
             systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, [
                 'count' => $count,
-                'preferred_card_types' => $options['preferred_card_types'] ?? null,
                 'existing_questions' => $existingQuestions,
                 'additional' => $additional,
             ]),

@@ -19,17 +19,27 @@ class DomainTemplate extends Model
         'user_id',
         'name',
         'description',
-        'instruction_json',
-    ];
-
-    /** @var array<string, string> */
-    protected $casts = [
-        'instruction_json' => 'array',
+        'domain_hint',
     ];
 
     /** @return BelongsTo<User, self> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * 前後空白を除去し、空文字なら null として保存する。
+     * 「空白だけ入力されたテンプレ」が list-item 等で『設定済み』に見えるのを防ぐ。
+     */
+    protected function setDomainHintAttribute(?string $value): void
+    {
+        if ($value === null) {
+            $this->attributes['domain_hint'] = null;
+
+            return;
+        }
+        $trimmed = trim($value);
+        $this->attributes['domain_hint'] = $trimmed === '' ? null : $trimmed;
     }
 }

@@ -118,7 +118,7 @@ erDiagram
         bigint user_id FK
         varchar name
         text description
-        json instruction_json
+        text domain_hint
         timestamp created_at
         timestamp updated_at
     }
@@ -293,22 +293,19 @@ erDiagram
 | id | BIGINT UNSIGNED | PK, AUTO_INCREMENT | |
 | user_id | BIGINT UNSIGNED | FK(users.id), NOT NULL | 所有者 |
 | name | VARCHAR(255) | NOT NULL | テンプレート名 |
-| description | TEXT | NULLABLE | 説明 |
-| instruction_json | JSON | NOT NULL | 策問ポリシー定義 |
+| description | TEXT | NULLABLE | 自分用の説明メモ (AI には渡さない) |
+| domain_hint | TEXT | NULLABLE | AI に渡す分野ヒント (1〜2 文)。空なら分野ポリシーブロックを省略 |
 | created_at | TIMESTAMP | | |
 | updated_at | TIMESTAMP | | |
 
-**instruction_json スキーマ例**:
-```json
-{
-  "goal": "Web開発の基礎知識を定着させる",
-  "priorities": ["定義を短く問う", "なぜ必要かを問う", "類似概念との違いを問う"],
-  "avoid": ["長文回答を求める問い", "Yes/Noだけで答えられる問い"],
-  "preferred_card_types": ["basic_qa", "comparison"],
-  "answer_style": "1-2文で簡潔に",
-  "difficulty_policy": "初学者向け",
-  "note_interpretation_policy": "メモにない内容を過剰に補完しない"
-}
+**domain_hint の使われ方**:
+AI 候補生成時に `PromptBuilder` が `【分野ポリシー: <name>】\n<domain_hint>` の形でシステムプロンプトに差し込む。
+かつては `instruction_json` で 7 フィールドの JSON を持っていたが、AI への効果が曖昧で入力負荷だけが大きかったため、
+共通 system prompt 側で扱える内容 (策問の原則・2 視点同時解釈) を引き上げ、分野固有のニュアンスだけを 1 行で渡す形に簡素化した。
+
+例:
+```
+プログラミングの概念・構文・設計パターンの定着が目的。設計意図やトレードオフ、よくある落とし穴を軸にし、コード片は最小限にする。
 ```
 
 ### card_schedules

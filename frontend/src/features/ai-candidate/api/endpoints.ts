@@ -1,13 +1,12 @@
 import { apiClient, fetchCsrfCookie } from "@/shared/api/client";
 import type { AiCardCandidate, CandidateStatus } from "@/entities/ai-candidate/types";
-import type { Card, CardType } from "@/entities/card/types";
+import type { Card } from "@/entities/card/types";
 import { aiCardCandidateResponseSchema } from "@/entities/ai-candidate/schemas";
 import { parseApiListResponse } from "@/shared/api/parse-response";
 
 export interface GenerateOptions {
   count?: number;
   domain_template_id?: number | null;
-  preferred_card_types?: CardType[];
 }
 
 export type GenerationStatusValue =

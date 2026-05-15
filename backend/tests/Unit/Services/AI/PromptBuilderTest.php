@@ -132,28 +132,35 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('ID:2 「Python基礎」', $prompt);
     }
 
-    public function test_分野テンプレートが渡されるとシステムプロンプトに含まれる(): void
+    public function test_分野テンプレートが渡されるとdomain_hintがそのままプロンプトに埋め込まれる(): void
     {
         $template = new DomainTemplate([
             'user_id' => 1,
             'name' => '情報処理試験',
-            'instruction_json' => [
-                'goal' => '用語の定義を正確に答えられるようにする',
-                'priorities' => ['定義', '略語の正式名称'],
-                'avoid' => ['長文説明'],
-                'answer_style' => '用語1語で答える',
-                'difficulty_policy' => '基本情報レベル',
-                'note_interpretation_policy' => 'メモ内の太字を優先',
-            ],
+            'domain_hint' => '用語の定義を正確に答えられるようにする学習。略語は正式名称も併記。',
         ]);
 
         $prompt = $this->builder->systemPrompt($template);
 
-        $this->assertStringContainsString('分野ポリシー: 情報処理試験', $prompt);
-        $this->assertStringContainsString('目的: 用語の定義を正確に答えられるようにする', $prompt);
-        $this->assertStringContainsString('優先観点: 定義 / 略語の正式名称', $prompt);
-        $this->assertStringContainsString('避けたい問い方: 長文説明', $prompt);
-        $this->assertStringContainsString('回答スタイル: 用語1語で答える', $prompt);
+        $this->assertStringContainsString('【分野ポリシー: 情報処理試験】', $prompt);
+        $this->assertStringContainsString('用語の定義を正確に答えられるようにする学習。略語は正式名称も併記。', $prompt);
+    }
+
+    public function test_domain_hintが空のテンプレートはポリシーブロックを出さない(): void
+    {
+        $emptyHint = new DomainTemplate([
+            'user_id' => 1,
+            'name' => '空テンプレ',
+            'domain_hint' => '   ',
+        ]);
+        $nullHint = new DomainTemplate([
+            'user_id' => 1,
+            'name' => 'null テンプレ',
+            'domain_hint' => null,
+        ]);
+
+        $this->assertStringNotContainsString('【分野ポリシー:', $this->builder->systemPrompt($emptyHint));
+        $this->assertStringNotContainsString('【分野ポリシー:', $this->builder->systemPrompt($nullHint));
     }
 
     public function test_ユーザープロンプトにメモ本文と生成指示が含まれる(): void
@@ -197,21 +204,6 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('- DI とは何か?', $prompt);
         $this->assertStringContainsString('- DI のメリットは?', $prompt);
         $this->assertStringContainsString('追加生成モード', $prompt);
-    }
-
-    public function test_優先カード種別がユーザープロンプトに含まれる(): void
-    {
-        $note = new NoteSeed([
-            'user_id' => 1,
-            'body' => 'テストメモ',
-        ]);
-
-        $prompt = $this->builder->userPrompt($note, [
-            'count' => 3,
-            'preferred_card_types' => ['cloze_like', 'basic_qa'],
-        ]);
-
-        $this->assertStringContainsString('優先するカード種別: cloze_like, basic_qa', $prompt);
     }
 
     public function test_プロンプトバージョンを取得できる(): void

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\AiCardCandidate;
 
-use App\Enums\CardType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -27,8 +26,6 @@ final class GenerateCandidatesRequest extends FormRequest
                 Rule::exists('domain_templates', 'id')
                     ->where('user_id', $this->user()->id),
             ],
-            'preferred_card_types' => ['sometimes', 'array'],
-            'preferred_card_types.*' => ['string', Rule::in(CardType::values())],
         ];
     }
 }

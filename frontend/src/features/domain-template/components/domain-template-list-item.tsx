@@ -9,7 +9,10 @@ interface DomainTemplateListItemProps {
 export function DomainTemplateListItem({
   template,
 }: DomainTemplateListItemProps) {
-  const priorityCount = template.instruction_json.priorities?.length ?? 0;
+  const hint = template.domain_hint?.trim();
+  const subText = hint && hint.length > 0
+    ? hint
+    : template.description?.trim() || "(分野ヒント未設定)";
 
   return (
     <li>
@@ -27,10 +30,7 @@ export function DomainTemplateListItem({
         <span className="flex-1 min-w-0 space-y-1">
           <span className="block font-medium truncate">{template.name}</span>
           <span className="block text-sm text-muted-foreground line-clamp-2">
-            {template.instruction_json.goal}
-          </span>
-          <span className="block text-xs text-muted-foreground">
-            優先観点 {priorityCount} 件
+            {subText}
           </span>
         </span>
       </Link>

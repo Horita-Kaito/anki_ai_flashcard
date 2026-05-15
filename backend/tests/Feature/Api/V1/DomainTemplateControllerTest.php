@@ -13,21 +13,16 @@ final class DomainTemplateControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
     private function validPayload(array $overrides = []): array
     {
-        return array_replace_recursive([
+        return array_replace([
             'name' => 'Web開発',
             'description' => 'Web開発用の策問テンプレート',
-            'instruction_json' => [
-                'goal' => 'Web開発の基礎を定着させる',
-                'priorities' => ['定義を問う', 'なぜ必要かを問う'],
-                'avoid' => ['長文回答を求める'],
-                'preferred_card_types' => ['basic_qa', 'comparison'],
-                'answer_style' => '1-2文で簡潔に',
-                'difficulty_policy' => '初学者向け',
-                'note_interpretation_policy' => 'メモにない内容を補完しない',
-            ],
+            'domain_hint' => 'Web開発の基礎を定着させる。定義と「なぜ必要か」を軸に簡潔に。',
         ], $overrides);
     }
 
@@ -68,12 +63,24 @@ final class DomainTemplateControllerTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('data.name', 'Web開発')
-            ->assertJsonPath('data.instruction_json.goal', 'Web開発の基礎を定着させる');
+            ->assertJsonPath('data.domain_hint', 'Web開発の基礎を定着させる。定義と「なぜ必要か」を軸に簡潔に。');
 
         $this->assertDatabaseHas('domain_templates', [
             'user_id' => $user->id,
             'name' => 'Web開発',
         ]);
+    }
+
+    public function test_domain_hint未指定でも作成できる(): void
+    {
+        $user = User::factory()->create();
+        $payload = $this->validPayload();
+        unset($payload['domain_hint']);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/domain-templates', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.domain_hint', null);
     }
 
     public function test_name未指定で422を返す(): void
@@ -86,39 +93,15 @@ final class DomainTemplateControllerTest extends TestCase
             ->assertJsonValidationErrors(['name']);
     }
 
-    public function test_goal未指定で422を返す(): void
+    public function test_domain_hintが500字超で422を返す(): void
     {
         $user = User::factory()->create();
-        $payload = $this->validPayload();
-        $payload['instruction_json']['goal'] = '';
+        $payload = $this->validPayload(['domain_hint' => str_repeat('あ', 501)]);
 
         $this->actingAs($user)
             ->postJson('/api/v1/domain-templates', $payload)
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['instruction_json.goal']);
-    }
-
-    public function test_優先観点が空配列で422を返す(): void
-    {
-        $user = User::factory()->create();
-        $payload = $this->validPayload();
-        $payload['instruction_json']['priorities'] = [];
-
-        $this->actingAs($user)
-            ->postJson('/api/v1/domain-templates', $payload)
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['instruction_json.priorities']);
-    }
-
-    public function test_無効なcard_typeで422を返す(): void
-    {
-        $user = User::factory()->create();
-        $payload = $this->validPayload();
-        $payload['instruction_json']['preferred_card_types'] = ['invalid_type'];
-
-        $this->actingAs($user)
-            ->postJson('/api/v1/domain-templates', $payload)
-            ->assertStatus(422);
+            ->assertJsonValidationErrors(['domain_hint']);
     }
 
     public function test_他ユーザーのテンプレート詳細は404(): void

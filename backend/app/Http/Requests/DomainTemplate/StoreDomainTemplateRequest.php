@@ -19,20 +19,9 @@ final class StoreDomainTemplateRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'instruction_json' => ['required', 'array'],
-            'instruction_json.goal' => ['required', 'string', 'max:500'],
-            'instruction_json.priorities' => ['required', 'array', 'min:1'],
-            'instruction_json.priorities.*' => ['string', 'max:200'],
-            'instruction_json.avoid' => ['sometimes', 'array'],
-            'instruction_json.avoid.*' => ['string', 'max:200'],
-            'instruction_json.preferred_card_types' => ['sometimes', 'array'],
-            'instruction_json.preferred_card_types.*' => [
-                'string',
-                'in:basic_qa,comparison,practical_case,cloze_like',
-            ],
-            'instruction_json.answer_style' => ['sometimes', 'string', 'max:200'],
-            'instruction_json.difficulty_policy' => ['sometimes', 'string', 'max:200'],
-            'instruction_json.note_interpretation_policy' => ['sometimes', 'string', 'max:500'],
+            // AI に渡す分野ヒント 1 行 (旧 instruction_json.goal の後継)。
+            // 未入力の場合は AI には「分野ポリシー」ブロック自体が付与されない。
+            'domain_hint' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -42,10 +31,7 @@ final class StoreDomainTemplateRequest extends FormRequest
         return [
             'name.required' => 'テンプレート名を入力してください',
             'name.max' => 'テンプレート名は255文字以内で入力してください',
-            'instruction_json.required' => '策問ポリシーを入力してください',
-            'instruction_json.goal.required' => '学習目的を入力してください',
-            'instruction_json.priorities.required' => '優先観点を1つ以上入力してください',
-            'instruction_json.priorities.min' => '優先観点を1つ以上入力してください',
+            'domain_hint.max' => '分野ヒントは500文字以内で入力してください',
         ];
     }
 }

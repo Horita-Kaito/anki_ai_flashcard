@@ -91,41 +91,17 @@ final class DevelopmentSeeder extends Seeder
             'programming' => [
                 'name' => 'プログラミング',
                 'description' => 'プログラミング全般の学習用テンプレート',
-                'instruction_json' => [
-                    'goal' => 'プログラミングの概念・構文・設計パターンを定着させる',
-                    'priorities' => ['定義を問う', 'コード例を示す', '使い分けを問う'],
-                    'avoid' => ['長文コードの丸暗記'],
-                    'preferred_card_types' => ['basic_qa', 'comparison'],
-                    'answer_style' => '1-3文で簡潔に。コード片は最小限',
-                    'difficulty_policy' => '初中級者向け',
-                    'note_interpretation_policy' => 'メモの技術用語を正確に扱う',
-                ],
+                'domain_hint' => 'プログラミングの概念・構文・設計パターンの定着が目的。設計意図やトレードオフを軸に、コード片は最小限にする。',
             ],
             'english' => [
                 'name' => '英語学習',
                 'description' => '英単語・表現の暗記用テンプレート',
-                'instruction_json' => [
-                    'goal' => '英単語・熟語・表現を定着させる',
-                    'priorities' => ['日本語訳を問う', '例文で文脈を示す', '類義語を比較'],
-                    'avoid' => ['文法の体系的解説'],
-                    'preferred_card_types' => ['basic_qa', 'cloze_like'],
-                    'answer_style' => '単語+意味+短い例文',
-                    'difficulty_policy' => 'TOEIC 600-800レベル',
-                    'note_interpretation_policy' => 'メモ中の英単語リストから個別カードを生成',
-                ],
+                'domain_hint' => '英単語・熟語・表現の定着が目的。日本語訳と短い例文 1 つを軸に、類義語の違いも問う。',
             ],
             'math' => [
                 'name' => '数学',
                 'description' => '数学の公式・定理・証明の学習用',
-                'instruction_json' => [
-                    'goal' => '公式・定理とその適用場面を定着させる',
-                    'priorities' => ['公式の意味を問う', '適用条件を確認', '具体的な計算例'],
-                    'avoid' => ['複雑な証明の丸暗記'],
-                    'preferred_card_types' => ['basic_qa', 'practical_case'],
-                    'answer_style' => '公式 + 一行説明',
-                    'difficulty_policy' => '大学初年度レベル',
-                    'note_interpretation_policy' => '数式はLaTeX記法で保持',
-                ],
+                'domain_hint' => '公式・定理とその適用場面の定着が目的。適用条件と具体例を軸に、複雑な証明の丸暗記は避ける。',
             ],
         ];
 
@@ -135,7 +111,7 @@ final class DevelopmentSeeder extends Seeder
                 'user_id' => $user->id,
                 'name' => $def['name'],
                 'description' => $def['description'],
-                'instruction_json' => $def['instruction_json'],
+                'domain_hint' => $def['domain_hint'],
             ]);
         }
 

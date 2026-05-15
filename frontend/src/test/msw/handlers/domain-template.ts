@@ -8,11 +8,7 @@ let mockTemplates: DomainTemplate[] = [
     id: 1,
     name: "Web開発",
     description: null,
-    instruction_json: {
-      goal: "Web開発の基礎を定着させる",
-      priorities: ["定義を問う"],
-      preferred_card_types: ["basic_qa"],
-    },
+    domain_hint: "Web開発の基礎を定着させる学習。定義と「なぜ必要か」を軸に簡潔に。",
     created_at: "2026-04-13T00:00:00+00:00",
     updated_at: "2026-04-13T00:00:00+00:00",
   },
@@ -35,8 +31,7 @@ export const domainTemplateHandlers = [
       id: mockTemplates.length + 1,
       name: body.name ?? "",
       description: body.description ?? null,
-      instruction_json:
-        body.instruction_json ?? { goal: "", priorities: [] },
+      domain_hint: body.domain_hint ?? null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

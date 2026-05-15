@@ -95,7 +95,6 @@ final class AiCardCandidateController extends Controller
 
         $sharedOptions = [
             'count' => $validated['count'] ?? null,
-            'preferred_card_types' => $validated['preferred_card_types'] ?? null,
             'domain_template_id' => $validated['domain_template_id'] ?? null,
             'regenerate' => false,
             'additional' => false,

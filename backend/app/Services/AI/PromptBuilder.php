@@ -216,20 +216,23 @@ PROMPT;
         }
 
         if ($template !== null) {
-            $base .= "\n\n【分野ポリシー: {$template->name}】\n";
-            $base .= $this->formatInstruction($template->instruction_json ?? []);
+            $hint = is_string($template->domain_hint) ? trim($template->domain_hint) : '';
+            // 分野ヒントが空のテンプレートは AI に渡しても無価値なのでブロックごと省略する。
+            if ($hint !== '') {
+                $base .= "\n\n【分野ポリシー: {$template->name}】\n";
+                $base .= $hint;
+            }
         }
 
         return $base;
     }
 
     /**
-     * @param  array{count?: int, preferred_card_types?: array<int, string>|null, existing_questions?: array<int, string>, additional?: bool}  $options
+     * @param  array{count?: int, existing_questions?: array<int, string>, additional?: bool}  $options
      */
     public function userPrompt(NoteSeed $note, array $options = []): string
     {
         $count = (int) ($options['count'] ?? 3);
-        $preferredTypes = $options['preferred_card_types'] ?? null;
         $existingQuestions = $options['existing_questions'] ?? [];
         $additional = (bool) ($options['additional'] ?? false);
 
@@ -260,39 +263,8 @@ PROMPT;
         if ($additional) {
             $parts[] = '- 追加生成モード: 既存候補と問い方・切り口が被らないように、異なる角度 (別の用語、反例、具体例、cloze 位置違い等) から生成すること。';
         }
-        if (is_array($preferredTypes) && $preferredTypes !== []) {
-            $parts[] = '- 優先するカード種別: '.implode(', ', $preferredTypes);
-        }
         $parts[] = '- 必ず上記の JSON 形式で返すこと';
 
         return implode("\n", $parts);
-    }
-
-    /**
-     * @param  array<string, mixed>  $instruction
-     */
-    private function formatInstruction(array $instruction): string
-    {
-        $lines = [];
-        if (! empty($instruction['goal'])) {
-            $lines[] = '目的: '.$instruction['goal'];
-        }
-        if (! empty($instruction['priorities']) && is_array($instruction['priorities'])) {
-            $lines[] = '優先観点: '.implode(' / ', $instruction['priorities']);
-        }
-        if (! empty($instruction['avoid']) && is_array($instruction['avoid'])) {
-            $lines[] = '避けたい問い方: '.implode(' / ', $instruction['avoid']);
-        }
-        if (! empty($instruction['answer_style'])) {
-            $lines[] = '回答スタイル: '.$instruction['answer_style'];
-        }
-        if (! empty($instruction['difficulty_policy'])) {
-            $lines[] = '難易度方針: '.$instruction['difficulty_policy'];
-        }
-        if (! empty($instruction['note_interpretation_policy'])) {
-            $lines[] = 'メモ解釈方針: '.$instruction['note_interpretation_policy'];
-        }
-
-        return implode("\n", $lines);
     }
 }

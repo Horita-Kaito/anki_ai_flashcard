@@ -19,7 +19,7 @@ final class DomainTemplateResource extends BaseJsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'instruction_json' => $this->instruction_json,
+            'domain_hint' => $this->domain_hint,
             ...$this->timestamps(),
         ];
     }

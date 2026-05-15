@@ -35,7 +35,7 @@ final class GenerateCardCandidatesJob implements ShouldQueue
     public int $tries = 1;
 
     /**
-     * @param  array<string, mixed>  $options  生成オプション (count / preferred_card_types / domain_template_id / regenerate / additional)
+     * @param  array<string, mixed>  $options  生成オプション (count / domain_template_id / regenerate / additional)
      */
     public function __construct(
         public readonly int $logId,
