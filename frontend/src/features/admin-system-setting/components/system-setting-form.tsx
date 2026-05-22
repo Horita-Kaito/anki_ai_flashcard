@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import {
@@ -15,18 +15,8 @@ export function SystemSettingForm() {
 
   // null は「無制限 (空欄)」を表す。string で持って submit 時に parse する
   // (number 入力で null と 0 を厳密に区別したいため、生の文字列を一旦経由する)。
-  const [raw, setRaw] = useState<string>("");
-  const [touched, setTouched] = useState(false);
-
-  useEffect(() => {
-    if (setting && !touched) {
-      setRaw(
-        setting.monthly_token_limit === null
-          ? ""
-          : String(setting.monthly_token_limit),
-      );
-    }
-  }, [setting, touched]);
+  // ユーザーが触る前は data から派生表示し、触った後は override 値を使う。
+  const [rawOverride, setRawOverride] = useState<string | null>(null);
 
   if (isLoading || !setting) {
     return (
@@ -35,6 +25,13 @@ export function SystemSettingForm() {
       </p>
     );
   }
+
+  const initialRaw =
+    setting.monthly_token_limit === null
+      ? ""
+      : String(setting.monthly_token_limit);
+  const raw = rawOverride ?? initialRaw;
+  const setRaw = (v: string) => setRawOverride(v);
 
   const trimmed = raw.trim();
   let parsed: number | null = null;
@@ -97,10 +94,7 @@ export function SystemSettingForm() {
             inputMode="numeric"
             placeholder="例: 500000"
             value={raw}
-            onChange={(e) => {
-              setRaw(e.target.value);
-              setTouched(true);
-            }}
+            onChange={(e) => setRaw(e.target.value)}
             className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-invalid={!!parseError}
             aria-describedby={

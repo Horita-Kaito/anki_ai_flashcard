@@ -90,7 +90,7 @@ final class OpenAiProviderTest extends TestCase
         $provider->generate($this->makeRequest());
     }
 
-    public function test_jsonSchemaが指定されたらresponse_formatに渡される(): void
+    public function test_json_schemaが指定されたらresponse_formatに渡される(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([
@@ -119,7 +119,7 @@ final class OpenAiProviderTest extends TestCase
         });
     }
 
-    public function test_jsonSchemaがnullならjson_objectモードにフォールバック(): void
+    public function test_json_schemaがnullならjson_objectモードにフォールバック(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([

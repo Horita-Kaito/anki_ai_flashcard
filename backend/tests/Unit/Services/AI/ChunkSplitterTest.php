@@ -11,7 +11,7 @@ final class ChunkSplitterTest extends TestCase
 {
     public function test_短文メモは分割せず1チャンクで返す(): void
     {
-        $splitter = new ChunkSplitter();
+        $splitter = new ChunkSplitter;
         $body = '短いメモ。あまり情報量はない。';
 
         $chunks = $splitter->split($body);
@@ -22,7 +22,7 @@ final class ChunkSplitterTest extends TestCase
 
     public function test_空文字は空文字1件を返す(): void
     {
-        $splitter = new ChunkSplitter();
+        $splitter = new ChunkSplitter;
 
         $this->assertSame([''], $splitter->split(''));
         $this->assertSame([''], $splitter->split('   '));
@@ -31,7 +31,7 @@ final class ChunkSplitterTest extends TestCase
     public function test_skip閾値未満なら見出しがあっても分割しない(): void
     {
         // skipSplitThreshold=1500 のデフォルトなので、それ未満は分割対象外
-        $splitter = new ChunkSplitter();
+        $splitter = new ChunkSplitter;
         $body = "# 章1\n短い本文1\n\n# 章2\n短い本文2";
 
         $chunks = $splitter->split($body);
@@ -39,7 +39,7 @@ final class ChunkSplitterTest extends TestCase
         $this->assertCount(1, $chunks);
     }
 
-    public function test_長文メモはMarkdown見出しで分割される(): void
+    public function test_長文メモは_markdown見出しで分割される(): void
     {
         $splitter = new ChunkSplitter(
             minChunkSize: 50,
@@ -89,7 +89,7 @@ final class ChunkSplitterTest extends TestCase
         $this->assertStringStartsWith('段落B', $chunks[1]);
     }
 
-    public function test_minChunkSize未満のチャンクは次のチャンクと結合される(): void
+    public function test_min_chunk_size未満のチャンクは次のチャンクと結合される(): void
     {
         $splitter = new ChunkSplitter(
             minChunkSize: 200,
@@ -106,7 +106,7 @@ final class ChunkSplitterTest extends TestCase
         $this->assertStringContainsString('# 大', $chunks[0]);
     }
 
-    public function test_maxChunkSizeを超えるチャンクは文字数で強制カットされる(): void
+    public function test_max_chunk_sizeを超えるチャンクは文字数で強制カットされる(): void
     {
         $splitter = new ChunkSplitter(
             minChunkSize: 50,
@@ -177,7 +177,7 @@ final class ChunkSplitterTest extends TestCase
 
     public function test_長文ベタ書きメモも段落境界か文字数で分割される(): void
     {
-        $splitter = new ChunkSplitter();
+        $splitter = new ChunkSplitter;
         // 1500 字以上の長文ベタ書き (見出しも --- もなし)
         $body = str_repeat('これはサンプル文章です。', 200);
 

@@ -187,7 +187,7 @@ final class ChunkSplitter
 
         // 後方から優先度高い区切りを探す。半分未満まで戻ると小さすぎるので諦める。
         $minAcceptable = (int) ($maxLen * 0.5);
-        $separators = ["\n\n", "。\n", "。", '！', '？', "\n", '。', ' '];
+        $separators = ["\n\n", "。\n", '。', '！', '？', "\n", '。', ' '];
 
         foreach ($separators as $sep) {
             $pos = mb_strrpos($region, $sep);

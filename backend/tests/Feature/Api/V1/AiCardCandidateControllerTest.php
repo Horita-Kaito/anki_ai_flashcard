@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Contracts\Services\AI\AiProviderInterface;
+use App\Exceptions\Domain\AiGenerationFailedException;
 use App\Jobs\GenerateCardCandidatesJob;
 use App\Models\AiCardCandidate;
 use App\Models\AiGenerationLog;
 use App\Models\Deck;
 use App\Models\NoteSeed;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Services\AI\FakeAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -502,7 +504,7 @@ final class AiCardCandidateControllerTest extends TestCase
             return $callCount === 1
                 ? FakeAiProvider::make()
                 : FakeAiProvider::make(
-                    throwable: \App\Exceptions\Domain\AiGenerationFailedException::generic('simulated failure')
+                    throwable: AiGenerationFailedException::generic('simulated failure')
                 );
         });
 
@@ -526,7 +528,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
 
         $this->app->bind(AiProviderInterface::class, fn () => FakeAiProvider::make(
-            throwable: \App\Exceptions\Domain\AiGenerationFailedException::generic('always fails')
+            throwable: AiGenerationFailedException::generic('always fails')
         ));
 
         $this->actingAs($user)
@@ -540,7 +542,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame('failed', $parent->status);
     }
 
-    public function test_JSON_TRUNCATEDはリトライ対象外で1回で諦める(): void
+    public function test_jso_n_truncate_dはリトライ対象外で1回で諦める(): void
     {
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
@@ -551,7 +553,7 @@ final class AiCardCandidateControllerTest extends TestCase
             $callCount++;
 
             return FakeAiProvider::make(
-                throwable: \App\Exceptions\Domain\AiGenerationFailedException::jsonTruncated('cut at 16000 tokens')
+                throwable: AiGenerationFailedException::jsonTruncated('cut at 16000 tokens')
             );
         });
 
@@ -568,7 +570,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame(1, $callCount);
     }
 
-    public function test_RATE_LIMITEDはリトライされ最終的に成功する(): void
+    public function test_rat_e_limite_dはリトライされ最終的に成功する(): void
     {
         config()->set('ai.generation.max_retries', 2);
 
@@ -582,7 +584,7 @@ final class AiCardCandidateControllerTest extends TestCase
             // 最初の 1 回だけ rate limit、2 回目以降は成功
             return $callCount === 1
                 ? FakeAiProvider::make(
-                    throwable: \App\Exceptions\Domain\AiGenerationFailedException::rateLimit('openai')
+                    throwable: AiGenerationFailedException::rateLimit('openai')
                 )
                 : FakeAiProvider::make();
         });
@@ -599,7 +601,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame(2, $callCount);
     }
 
-    public function test_EMPTY_CANDIDATESはリトライされる(): void
+    public function test_empt_y_candidate_sはリトライされる(): void
     {
         config()->set('ai.generation.max_retries', 2);
 
@@ -655,8 +657,8 @@ final class AiCardCandidateControllerTest extends TestCase
 
     public function test_月次トークン上限に達していると429を返す(): void
     {
-        \App\Models\SystemSetting::query()->updateOrCreate(
-            ['id' => \App\Models\SystemSetting::SINGLETON_ID],
+        SystemSetting::query()->updateOrCreate(
+            ['id' => SystemSetting::SINGLETON_ID],
             ['monthly_token_limit' => 1000],
         );
 
@@ -684,8 +686,8 @@ final class AiCardCandidateControllerTest extends TestCase
     public function test_月次トークン上限が未設定なら無制限として扱う(): void
     {
         // SystemSetting.monthly_token_limit = null は無制限
-        \App\Models\SystemSetting::query()->updateOrCreate(
-            ['id' => \App\Models\SystemSetting::SINGLETON_ID],
+        SystemSetting::query()->updateOrCreate(
+            ['id' => SystemSetting::SINGLETON_ID],
             ['monthly_token_limit' => null],
         );
 
