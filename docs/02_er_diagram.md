@@ -158,7 +158,7 @@ erDiagram
         bigint default_domain_template_id FK
         varchar default_ai_provider
         varchar default_ai_model
-        int default_generation_count
+        decimal desired_retention
         timestamp created_at
         timestamp updated_at
     }
@@ -354,6 +354,6 @@ AI 候補生成時に `PromptBuilder` が `【分野ポリシー: <name>】\n<do
 | default_domain_template_id | BIGINT UNSIGNED | FK, NULLABLE | 既定テンプレート |
 | default_ai_provider | VARCHAR(50) | DEFAULT 'openai' | 既定AIプロバイダ |
 | default_ai_model | VARCHAR(100) | DEFAULT 'gpt-4o-mini' | 既定AIモデル |
-| default_generation_count | INT UNSIGNED | DEFAULT 3 | 既定生成候補数 |
+| desired_retention | DECIMAL(4,3) | DEFAULT 0.900 | FSRS 目標想起率 (0.7〜0.97) |
 | created_at | TIMESTAMP | | |
 | updated_at | TIMESTAMP | | |

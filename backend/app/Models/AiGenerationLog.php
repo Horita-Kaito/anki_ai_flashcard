@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AiGenerationLog extends Model
 {
@@ -16,6 +17,9 @@ class AiGenerationLog extends Model
     protected $fillable = [
         'user_id',
         'note_seed_id',
+        'parent_log_id',
+        'chunk_index',
+        'chunks_total',
         'provider',
         'model_name',
         'prompt_version',
@@ -35,6 +39,8 @@ class AiGenerationLog extends Model
 
     public const STATUS_SUCCESS = 'success';
 
+    public const STATUS_PARTIAL_SUCCESS = 'partial_success';
+
     public const STATUS_FAILED = 'failed';
 
     /**
@@ -50,8 +56,21 @@ class AiGenerationLog extends Model
         return in_array($this->status, self::inFlightStatuses(), true);
     }
 
+    public function isParent(): bool
+    {
+        return $this->parent_log_id === null && $this->chunks_total !== null;
+    }
+
+    public function isChild(): bool
+    {
+        return $this->parent_log_id !== null;
+    }
+
     /** @var array<string, string> */
     protected $casts = [
+        'parent_log_id' => 'integer',
+        'chunk_index' => 'integer',
+        'chunks_total' => 'integer',
         'input_tokens' => 'integer',
         'output_tokens' => 'integer',
         'cost_usd' => 'decimal:6',
@@ -69,5 +88,17 @@ class AiGenerationLog extends Model
     public function noteSeed(): BelongsTo
     {
         return $this->belongsTo(NoteSeed::class);
+    }
+
+    /** @return BelongsTo<self, self> */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_log_id');
+    }
+
+    /** @return HasMany<self> */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_log_id');
     }
 }

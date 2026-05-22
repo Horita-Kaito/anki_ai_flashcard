@@ -5,7 +5,6 @@ import { aiCardCandidateResponseSchema } from "@/entities/ai-candidate/schemas";
 import { parseApiListResponse } from "@/shared/api/parse-response";
 
 export interface GenerateOptions {
-  count?: number;
   domain_template_id?: number | null;
 }
 
@@ -14,11 +13,16 @@ export type GenerationStatusValue =
   | "queued"
   | "processing"
   | "success"
+  | "partial_success"
   | "failed";
 
 /**
  * 進行中・完了問わずジョブの状態を表す。
  * idle = まだ一度も生成依頼されていない (ログなし)
+ *
+ * 長文メモはサーバ側でチャンク分割され、各 chunk が独立した子ログとして処理される。
+ * フロントには親ログ (もしくは単一チャンク時はその log) のみが返り、
+ * chunks_total / chunks_completed / chunks_failed で進捗が分かる。
  */
 export interface GenerationStatus {
   id?: number;
@@ -30,6 +34,9 @@ export interface GenerationStatus {
   candidates_count?: number;
   duration_ms?: number;
   error_reason?: string | null;
+  chunks_total?: number | null;
+  chunks_completed?: number | null;
+  chunks_failed?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
 }

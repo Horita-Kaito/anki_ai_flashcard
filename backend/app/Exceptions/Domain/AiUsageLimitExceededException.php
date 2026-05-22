@@ -6,9 +6,9 @@ namespace App\Exceptions\Domain;
 
 final class AiUsageLimitExceededException extends DomainException
 {
-    public static function dailyLimit(int $limit): self
+    public static function monthlyTokenLimit(int $limitTokens, int $usedTokens): self
     {
-        return new self("Daily AI generation limit reached ({$limit})");
+        return new self("Monthly AI token limit reached (used={$usedTokens}, limit={$limitTokens})");
     }
 
     public function statusCode(): int
@@ -16,8 +16,13 @@ final class AiUsageLimitExceededException extends DomainException
         return 429;
     }
 
+    public function errorCode(): ?string
+    {
+        return 'MONTHLY_TOKEN_LIMIT_EXCEEDED';
+    }
+
     public function userMessage(): string
     {
-        return '本日の AI 生成上限に達しました。明日再度お試しください。';
+        return '今月の AI 利用上限に達しました。来月再度お試しください。';
     }
 }

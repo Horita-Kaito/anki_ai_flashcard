@@ -20,7 +20,6 @@ final class EloquentUserSettingRepository implements UserSettingRepositoryInterf
             'user_id' => $userId,
             'default_ai_provider' => config('ai.default_provider', 'openai'),
             'default_ai_model' => config('ai.default_model', 'gpt-4o-mini'),
-            'default_generation_count' => (int) config('ai.generation.default_candidate_count', 3),
         ]);
     }
 

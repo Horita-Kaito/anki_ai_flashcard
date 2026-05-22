@@ -158,8 +158,7 @@ Authorization: Bearer 1|abcdefg...
     "email": "test@example.com",
     "settings": {
       "default_ai_provider": "openai",
-      "default_ai_model": "gpt-4o-mini",
-      "default_generation_count": 3
+      "default_ai_model": "gpt-4o-mini"
     }
   }
 }
@@ -547,7 +546,6 @@ AI候補生成
 ```json
 {
   "domain_template_id": 1,
-  "count": 3,
   "preferred_card_types": ["basic_qa", "comparison"],
   "additional_instructions": null
 }
@@ -555,9 +553,13 @@ AI候補生成
 
 **Validation**:
 - domain_template_id: 任意(メモのテンプレートを優先、未設定時はこちらを使用)
-- count: 任意, 整数, 1-10, default 3
 - preferred_card_types: 任意, 配列
 - additional_instructions: 任意, 最大1000文字
+
+**生成枚数**:
+- 枚数の上限は設けない。AI はメモ内の独立した知識点を網羅的に分解する。
+- 短文メモ (〜500字) で 5〜10 枚、長文メモ (3000字以上) で 30〜60 枚程度を想定する。
+- 利用上限は `ai.limits.monthly_token_limit` の月次トークン量で制御する。
 
 **Response 201**:
 ```json
@@ -1000,7 +1002,6 @@ AI候補生成
   "default_domain_template_id": 1,
   "default_ai_provider": "openai",
   "default_ai_model": "gpt-4o-mini",
-  "default_generation_count": 3,
   "desired_retention": 0.9
 }
 ```
@@ -1010,4 +1011,6 @@ AI候補生成
   低いほど復習頻度が下がるが忘却率が上がる、高いほど確実だが復習量が増える。
   SM-2 カードには影響しない。
 
-**補足**: 旧 `daily_new_limit` / `daily_review_limit` は廃止。復習対象は due なカードを制限なく返す。
+**補足**:
+- 旧 `daily_new_limit` / `daily_review_limit` は廃止。復習対象は due なカードを制限なく返す。
+- 旧 `default_generation_count` は廃止。AI 候補生成はメモから網羅的に生成し、利用上限は月次トークン量で制御する (`config('ai.limits.monthly_token_limit')`)。

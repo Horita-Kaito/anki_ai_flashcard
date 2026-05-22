@@ -76,7 +76,7 @@ final class AiCardCandidateController extends Controller
      *
      * - 各メモごとに dispatchGeneration を呼ぶ (一部失敗しても全体は止めない)
      * - 既に進行中 (ALREADY_IN_FLIGHT) のメモは skipped に分類して継続
-     * - 日次上限に達した時点で残りを停止 (それまでの dispatch 結果は返す)
+     * - 月次トークン上限に達した時点で残りを停止 (それまでの dispatch 結果は返す)
      *
      * Response: 202 Accepted
      * {
@@ -94,7 +94,6 @@ final class AiCardCandidateController extends Controller
         $noteSeedIds = $validated['note_seed_ids'];
 
         $sharedOptions = [
-            'count' => $validated['count'] ?? null,
             'domain_template_id' => $validated['domain_template_id'] ?? null,
             'regenerate' => false,
             'additional' => false,

@@ -29,6 +29,12 @@ interface AiGenerationLogRepositoryInterface
     public function totalCostForUserInPeriod(int $userId, \DateTimeInterface $from, \DateTimeInterface $to): float;
 
     /**
+     * 指定期間のユーザーの累計トークン使用量 (input + output)。
+     * 月次の利用上限チェックに使用する。
+     */
+    public function sumTokensForUserInPeriod(int $userId, \DateTimeInterface $from, \DateTimeInterface $to): int;
+
+    /**
      * 指定メモに対して進行中 (queued/processing) のジョブを返す。
      */
     public function findInFlightForNote(int $userId, int $noteSeedId): ?AiGenerationLog;

@@ -178,7 +178,8 @@ SuperMemo 創設者 Piotr Woźniak の策問原則に従い、ユーザーの短
        - 全ての概念に冗長化を適用すると枚数が膨らむため、メモ内で中核となる概念 (最重要 1〜2 個) に限定する。
        - 副次的な概念は 1 角度 (定義→用語) のみで十分。
 
-   使いすぎ注意: 候補総数は {count} 件に収める。冗長化を優先した結果、メモ内の別の重要事実がカバーされなくなるなら、冗長化を減らすこと。
+   使いすぎ注意: メモの中核 1〜2 概念に限定する。副次的な概念にまで冗長化を適用するとカード総数が膨らみすぎる。
+   メモ内の別の重要事実がカバーされなくなるようなら、冗長化を減らすこと。
 
 【追加ルール】
 - メモに無い情報を過剰に補完しない (推測による作問禁止)。
@@ -228,18 +229,31 @@ PROMPT;
     }
 
     /**
-     * @param  array{count?: int, existing_questions?: array<int, string>, additional?: bool}  $options
+     * @param  array{existing_questions?: array<int, string>, additional?: bool, body_override?: string, chunk_index?: int, chunks_total?: int}  $options
      */
     public function userPrompt(NoteSeed $note, array $options = []): string
     {
-        $count = (int) ($options['count'] ?? 3);
         $existingQuestions = $options['existing_questions'] ?? [];
         $additional = (bool) ($options['additional'] ?? false);
+        $body = $options['body_override'] ?? $note->body;
+        $chunkIndex = $options['chunk_index'] ?? null;
+        $chunksTotal = $options['chunks_total'] ?? null;
 
-        $parts = [
-            '【メモ本文】',
-            $note->body,
-        ];
+        $isChunk = $chunkIndex !== null && $chunksTotal !== null && $chunksTotal > 1;
+
+        $parts = [];
+        if ($isChunk) {
+            $parts[] = sprintf(
+                '【メモ本文 (チャンク %d / %d)】',
+                $chunkIndex + 1,
+                $chunksTotal,
+            );
+            $parts[] = '※ このメモは長いため複数チャンクに分割されています。**このチャンクの範囲のみ**をカード化してください。他チャンクの内容を推測で補完しないこと。';
+            $parts[] = $body;
+        } else {
+            $parts[] = '【メモ本文】';
+            $parts[] = $body;
+        }
 
         if ($note->learning_goal) {
             $parts[] = "\n【学習目的】\n".$note->learning_goal;
@@ -259,7 +273,10 @@ PROMPT;
         }
 
         $parts[] = "\n【生成指示】";
-        $parts[] = "- 候補数: **最大 {$count} 件**。メモ内の独立した知識点の数に応じて過不足なく生成する。知識点が少なければ上限を下回ってよい。";
+        $parts[] = '- **メモ内の独立した知識点をすべてカード化する**。最小情報原則 (原則1) に従い、各知識点を細かく分解すること。枚数の上限は設けない。';
+        $parts[] = '- 見出し・箇条書き・段落で区切られたすべての塊について、定義 / 用語 / 具体例 / 比較 / 因果関係などの観点で漏れなくカードを生成する。';
+        $parts[] = '- 長文メモほどカード枚数は増える。短いメモでも 5〜10 枚、長文 (3000 字以上) なら 30〜60 枚に達することを想定する。';
+        $parts[] = '- ただし冗長性 (原則10) は中核 1〜2 概念に限定し、副次概念は 1 角度のみで十分。';
         if ($additional) {
             $parts[] = '- 追加生成モード: 既存候補と問い方・切り口が被らないように、異なる角度 (別の用語、反例、具体例、cloze 位置違い等) から生成すること。';
         }

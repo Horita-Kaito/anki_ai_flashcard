@@ -37,11 +37,11 @@ final class UserSettingControllerTest extends TestCase
         $this->actingAs($user)
             ->putJson('/api/v1/settings', [
                 'default_ai_provider' => 'anthropic',
-                'default_generation_count' => 5,
+                'default_ai_model' => 'claude-3-5-haiku-latest',
             ])
             ->assertOk()
             ->assertJsonPath('data.default_ai_provider', 'anthropic')
-            ->assertJsonPath('data.default_generation_count', 5);
+            ->assertJsonPath('data.default_ai_model', 'claude-3-5-haiku-latest');
     }
 
     public function test_無効な_a_iプロバイダで422(): void

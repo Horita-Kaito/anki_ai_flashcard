@@ -79,11 +79,9 @@ export function useBulkGenerateNoteSeeds() {
     mutationFn: (input: {
       noteSeedIds: number[];
       domain_template_id?: number | null;
-      count?: number;
     }) =>
       bulkGenerateCandidates(input.noteSeedIds, {
         domain_template_id: input.domain_template_id,
-        count: input.count,
       }),
     onSuccess: () => {
       // メモ一覧 (生成バッジ更新) と各メモの generation status を更新

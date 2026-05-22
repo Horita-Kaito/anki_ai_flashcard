@@ -32,7 +32,6 @@ final class UpdateUserSettingRequest extends FormRequest
                 Rule::in(['openai', 'anthropic', 'google']),
             ],
             'default_ai_model' => ['sometimes', 'string', 'max:100'],
-            'default_generation_count' => ['sometimes', 'integer', 'min:1', 'max:10'],
             // FSRS 目標想起率: 0.7〜0.97 の範囲 (低すぎると効率悪化、高すぎると復習過多)
             'desired_retention' => ['sometimes', 'numeric', 'min:0.7', 'max:0.97'],
         ];

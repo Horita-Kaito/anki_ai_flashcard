@@ -173,14 +173,38 @@ final class PromptBuilderTest extends TestCase
             'note_context' => '基本情報試験対策',
         ]);
 
-        $prompt = $this->builder->userPrompt($note, ['count' => 5]);
+        $prompt = $this->builder->userPrompt($note);
 
         $this->assertStringContainsString('TCPはコネクション指向のプロトコル', $prompt);
         $this->assertStringContainsString('ネットワーク基礎', $prompt);
         $this->assertStringContainsString('トランスポート層', $prompt);
         $this->assertStringContainsString('基本情報試験対策', $prompt);
-        $this->assertStringContainsString('最大 5 件', $prompt);
-        $this->assertStringContainsString('過不足なく', $prompt);
+        // 枚数上限を撤廃し「網羅的に分解」する指示に変更
+        $this->assertStringContainsString('独立した知識点をすべてカード化', $prompt);
+        $this->assertStringContainsString('枚数の上限は設けない', $prompt);
+    }
+
+    public function test_ユーザープロンプトに長文メモ想定の枚数目安が含まれる(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => 'メモ',
+        ]);
+
+        $prompt = $this->builder->userPrompt($note);
+
+        // 長文メモほどカード枚数が増える想定であることを AI に明示する
+        $this->assertStringContainsString('長文', $prompt);
+        $this->assertStringContainsString('30', $prompt);
+    }
+
+    public function test_システムプロンプトに未置換のcountプレースホルダが残っていない(): void
+    {
+        // v1.8 以前は systemPrompt 内に "{count}" がそのまま埋まっていた (バグ)。
+        // 該当プレースホルダが残っていないことを担保する。
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringNotContainsString('{count}', $prompt);
     }
 
     public function test_追加モードで既存質問が重複回避指示と共に渡される(): void
@@ -191,7 +215,6 @@ final class PromptBuilderTest extends TestCase
         ]);
 
         $prompt = $this->builder->userPrompt($note, [
-            'count' => 3,
             'additional' => true,
             'existing_questions' => [
                 'DI とは何か?',

@@ -29,7 +29,6 @@ final class BulkGenerateCandidatesRequest extends FormRequest
                 'integer',
                 Rule::exists('note_seeds', 'id')->where('user_id', $userId),
             ],
-            'count' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:10'],
             'domain_template_id' => [
                 'sometimes',
                 'nullable',

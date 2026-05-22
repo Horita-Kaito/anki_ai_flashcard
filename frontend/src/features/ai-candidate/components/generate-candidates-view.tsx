@@ -84,6 +84,15 @@ export function GenerateCandidatesView({
       toast.success(`AI が ${count} 件の候補を生成しました`);
       qc.invalidateQueries({ queryKey: aiCandidateKeys.forNote(noteSeedId) });
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+    } else if (wasInFlight && current === "partial_success") {
+      const count = generationStatus?.candidates_count ?? 0;
+      const failed = generationStatus?.chunks_failed ?? 0;
+      const total = generationStatus?.chunks_total ?? 0;
+      toast.warning(
+        `AI が ${count} 件の候補を生成しました (${failed}/${total} チャンクが失敗)`
+      );
+      qc.invalidateQueries({ queryKey: aiCandidateKeys.forNote(noteSeedId) });
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
     } else if (wasInFlight && current === "failed") {
       toast.error(toAsyncFailureMessage(generationStatus?.error_reason));
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
@@ -92,6 +101,8 @@ export function GenerateCandidatesView({
     generationStatus?.status,
     generationStatus?.candidates_count,
     generationStatus?.error_reason,
+    generationStatus?.chunks_failed,
+    generationStatus?.chunks_total,
     noteSeedId,
     qc,
   ]);

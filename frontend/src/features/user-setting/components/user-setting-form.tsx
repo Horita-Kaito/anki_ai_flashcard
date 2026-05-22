@@ -49,7 +49,7 @@ export function UserSettingForm() {
     reset,
     watch,
     setValue,
-    formState: { errors, isSubmitting, isDirty },
+    formState: { isSubmitting, isDirty },
   } = useForm<UpdateUserSettingInput>({
     resolver: zodResolver(updateUserSettingSchema),
     defaultValues: {},
@@ -63,7 +63,6 @@ export function UserSettingForm() {
         default_domain_template_id: setting.default_domain_template_id,
         default_ai_provider: setting.default_ai_provider,
         default_ai_model: setting.default_ai_model,
-        default_generation_count: setting.default_generation_count,
         desired_retention: setting.desired_retention,
       });
     }
@@ -159,24 +158,6 @@ export function UserSettingForm() {
           </select>
         </div>
 
-        <div className="space-y-1.5">
-          <label
-            htmlFor="default_generation_count"
-            className="text-sm font-medium"
-          >
-            既定の候補生成数 (1回の AI 生成で作るカード数)
-          </label>
-          <input
-            id="default_generation_count"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={10}
-            {...register("default_generation_count", { valueAsNumber: true })}
-            className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11"
-            aria-invalid={!!errors.default_generation_count}
-          />
-        </div>
       </section>
 
       <section className="space-y-4 border rounded-xl p-4 md:p-5">

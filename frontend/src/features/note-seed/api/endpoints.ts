@@ -86,7 +86,7 @@ export interface BulkGenerationResult {
  */
 export async function bulkGenerateCandidates(
   noteSeedIds: number[],
-  options: { domain_template_id?: number | null; count?: number } = {}
+  options: { domain_template_id?: number | null } = {}
 ): Promise<BulkGenerationResult> {
   await fetchCsrfCookie();
   const res = await apiClient.post<{ data: BulkGenerationResult }>(
@@ -96,7 +96,6 @@ export async function bulkGenerateCandidates(
       ...(options.domain_template_id !== undefined && options.domain_template_id !== null
         ? { domain_template_id: options.domain_template_id }
         : {}),
-      ...(options.count !== undefined ? { count: options.count } : {}),
     }
   );
   return res.data.data;

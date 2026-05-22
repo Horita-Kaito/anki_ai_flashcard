@@ -78,7 +78,6 @@ final class DevelopmentSeeder extends Seeder
             'default_domain_template_id' => null,
             'default_ai_provider' => 'openai',
             'default_ai_model' => 'gpt-4o-mini',
-            'default_generation_count' => 5,
         ]);
     }
 

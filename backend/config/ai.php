@@ -22,7 +22,7 @@ return [
     |--------------------------------------------------------------------------
     | プロンプト仕様を変更する度にバンプする。生成ログに記録される。
     */
-    'prompt_version' => env('AI_PROMPT_VERSION', 'v1.8'),
+    'prompt_version' => env('AI_PROMPT_VERSION', 'v1.9'),
 
     /*
     |--------------------------------------------------------------------------
@@ -53,11 +53,9 @@ return [
     |--------------------------------------------------------------------------
     */
     'generation' => [
-        'default_candidate_count' => (int) env('AI_DEFAULT_CANDIDATE_COUNT', 3),
-        'max_candidate_count' => (int) env('AI_MAX_CANDIDATE_COUNT', 10),
         'max_retries' => (int) env('AI_MAX_RETRIES', 2),
         'temperature' => (float) env('AI_TEMPERATURE', 0.6),
-        'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 4000),
+        'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 16000),
     ],
 
     /*
@@ -106,12 +104,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Usage Limits (per user, per day)
+    | Usage Limits (per user, per month)
     |--------------------------------------------------------------------------
     | 将来の収益化で plan 別に拡張。
+    | 月次の合計トークン使用量 (input + output) で制限する。
     | 0 以下は無制限扱い (現在はクローズド運用なので無制限がデフォルト)。
     */
     'limits' => [
-        'daily_generation_calls' => (int) env('AI_DAILY_GENERATION_LIMIT', 0),
+        'monthly_token_limit' => (int) env('AI_MONTHLY_TOKEN_LIMIT', 0),
     ],
 ];

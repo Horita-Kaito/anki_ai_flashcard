@@ -43,9 +43,7 @@ final class AiCardCandidateControllerTest extends TestCase
 
         // queue=sync の前提で同期実行される
         $response = $this->actingAs($user)
-            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates", [
-                'count' => 3,
-            ]);
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates");
 
         // 202 で queued log を返す
         $response->assertAccepted()
@@ -326,9 +324,7 @@ final class AiCardCandidateControllerTest extends TestCase
         ])->create();
 
         $this->actingAs($user)
-            ->postJson("/api/v1/note-seeds/{$note->id}/additional-candidates", [
-                'count' => 3,
-            ])
+            ->postJson("/api/v1/note-seeds/{$note->id}/additional-candidates")
             ->assertAccepted();
 
         // 元の 2件は pending のまま、新しい 3件も pending
@@ -425,6 +421,198 @@ final class AiCardCandidateControllerTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['note_seed_ids.1']);
+    }
+
+    public function test_長文メモはチャンクに分割され親ログと子ログが作られる(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        // 1500 字 (skipSplitThreshold) を超え、かつ 2 つ以上のチャンクに分かれるよう
+        // Markdown 見出しを 2 つ含む長文を作る
+        $body = "# 第1章\n".str_repeat('内容Aを記述します。', 100)
+            ."\n\n# 第2章\n".str_repeat('内容Bを記述します。', 100);
+        $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
+
+        $response = $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        // 親ログが返される
+        $response->assertJsonPath('data.note_seed_id', $note->id);
+        $parentLogId = $response->json('data.id');
+        $this->assertNotNull($parentLogId);
+
+        // 親ログには chunks_total が設定され、parent_log_id は null
+        $this->assertDatabaseHas('ai_generation_logs', [
+            'id' => $parentLogId,
+            'note_seed_id' => $note->id,
+            'parent_log_id' => null,
+        ]);
+
+        // 子ログが作られる (chunks_total と同数)
+        $children = AiGenerationLog::where('parent_log_id', $parentLogId)->get();
+        $this->assertGreaterThanOrEqual(2, $children->count());
+
+        // 各子は chunk_index と chunks_total を持つ
+        foreach ($children as $child) {
+            $this->assertNotNull($child->chunk_index);
+            $this->assertNotNull($child->chunks_total);
+        }
+
+        // 子の数だけ Job が dispatch される
+        Queue::assertPushed(GenerateCardCandidatesJob::class, $children->count());
+    }
+
+    public function test_長文メモのチャンク全てが成功すると親ログがsuccessになる(): void
+    {
+        $user = User::factory()->create();
+        $body = "# A\n".str_repeat('aaaaaaaaaaaaaaaaaaa', 100)
+            ."\n\n# B\n".str_repeat('bbbbbbbbbbbbbbbbbbb', 100);
+        $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
+
+        // queue=sync で全 chunk が同期実行される
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $parent = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($parent);
+        $this->assertSame('success', $parent->status);
+        // 親の candidates_count は全子の合計
+        $childrenTotal = (int) AiGenerationLog::where('parent_log_id', $parent->id)->sum('candidates_count');
+        $this->assertSame($childrenTotal, (int) $parent->candidates_count);
+        $this->assertGreaterThan(0, $parent->candidates_count);
+    }
+
+    public function test_一部のチャンクが失敗すると親ログがpartial_successになる(): void
+    {
+        $user = User::factory()->create();
+        $body = "# A\n".str_repeat('aaaaaaaaaaaaaaaaaaa', 100)
+            ."\n\n# B\n".str_repeat('bbbbbbbbbbbbbbbbbbb', 100);
+        $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
+
+        // chunk_index=0 では成功、chunk_index=1 以降では失敗する FakeAiProvider を仕込む
+        $callCount = 0;
+        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
+            $callCount++;
+
+            return $callCount === 1
+                ? FakeAiProvider::make()
+                : FakeAiProvider::make(
+                    throwable: \App\Exceptions\Domain\AiGenerationFailedException::generic('simulated failure')
+                );
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $parent = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($parent);
+        $this->assertSame('partial_success', $parent->status);
+        $this->assertStringContainsString('PARTIAL_SUCCESS', (string) $parent->error_reason);
+    }
+
+    public function test_全チャンクが失敗すると親ログがfailedになる(): void
+    {
+        $user = User::factory()->create();
+        $body = "# A\n".str_repeat('aaaaaaaaaaaaaaaaaaa', 100)
+            ."\n\n# B\n".str_repeat('bbbbbbbbbbbbbbbbbbb', 100);
+        $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
+
+        $this->app->bind(AiProviderInterface::class, fn () => FakeAiProvider::make(
+            throwable: \App\Exceptions\Domain\AiGenerationFailedException::generic('always fails')
+        ));
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $parent = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($parent);
+        $this->assertSame('failed', $parent->status);
+    }
+
+    public function test_チャンク分割が走るメモでも進行中ステータスは親ログを返す(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $body = "# A\n".str_repeat('aaaaaaaaaaaaaaaaaaa', 100)
+            ."\n\n# B\n".str_repeat('bbbbbbbbbbbbbbbbbbb', 100);
+        $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        // 進行中ステータス API は親ログのみを返す (子ログを隠す)
+        $response = $this->actingAs($user)
+            ->getJson("/api/v1/note-seeds/{$note->id}/generation-status")
+            ->assertOk();
+
+        $logId = $response->json('data.id');
+        $log = AiGenerationLog::find($logId);
+        $this->assertNotNull($log);
+        $this->assertNull($log->parent_log_id);
+        $this->assertNotNull($log->chunks_total);
+    }
+
+    public function test_月次トークン上限に達していると429を返す(): void
+    {
+        config()->set('ai.limits.monthly_token_limit', 1000);
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        // 当月の累計トークン使用量を上限超過状態にする
+        AiGenerationLog::create([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'provider' => 'fake',
+            'model_name' => 'gpt-4o-mini',
+            'prompt_version' => 'v1.9',
+            'status' => 'success',
+            'input_tokens' => 800,
+            'output_tokens' => 300,
+            'candidates_count' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertStatus(429);
+    }
+
+    public function test_月次トークン上限が0なら無制限として扱う(): void
+    {
+        config()->set('ai.limits.monthly_token_limit', 0);
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        // 大量のトークン使用ログがあっても弾かれない
+        AiGenerationLog::create([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'provider' => 'fake',
+            'model_name' => 'gpt-4o-mini',
+            'prompt_version' => 'v1.9',
+            'status' => 'success',
+            'input_tokens' => 1_000_000,
+            'output_tokens' => 1_000_000,
+            'candidates_count' => 0,
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
     }
 
     public function test_一括生成は10件超で422(): void

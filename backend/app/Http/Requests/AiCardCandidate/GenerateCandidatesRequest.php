@@ -18,7 +18,6 @@ final class GenerateCandidatesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'count' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:10'],
             'domain_template_id' => [
                 'sometimes',
                 'nullable',

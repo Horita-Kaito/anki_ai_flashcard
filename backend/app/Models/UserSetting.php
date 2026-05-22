@@ -15,13 +15,11 @@ class UserSetting extends Model
         'default_domain_template_id',
         'default_ai_provider',
         'default_ai_model',
-        'default_generation_count',
         'desired_retention',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
-        'default_generation_count' => 'integer',
         'default_domain_template_id' => 'integer',
         'desired_retention' => 'decimal:3',
     ];

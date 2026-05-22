@@ -67,8 +67,8 @@ final class AppServiceProvider extends ServiceProvider
 
         // AI 生成系: 60 req/hour/user (コスト爆発防止)。
         // 失敗レスポンス (4xx/5xx) はカウントしない: AI 呼び出しが失敗した時に
-        // ユーザーがすぐ再試行できないと体験を著しく損なうため。日次の累計コスト保護は
-        // CardGenerationService::assertDailyLimit (config('ai.limits.daily_generation_calls')) で行う。
+        // ユーザーがすぐ再試行できないと体験を著しく損なうため。月次の累計コスト保護は
+        // CardGenerationService::assertMonthlyTokenLimit (config('ai.limits.monthly_token_limit')) で行う。
         RateLimiter::for('ai-generation', fn (Request $request) => Limit::perHour(60)
             ->by($request->user()?->id ?: $request->ip())
             ->after(fn (Response $response) => $response->getStatusCode() < 400));
