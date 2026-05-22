@@ -178,8 +178,9 @@ final class ChunkSplitterTest extends TestCase
     public function test_長文ベタ書きメモも段落境界か文字数で分割される(): void
     {
         $splitter = new ChunkSplitter;
-        // 1500 字以上の長文ベタ書き (見出しも --- もなし)
-        $body = str_repeat('これはサンプル文章です。', 200);
+        // 「これはサンプル文章です。」は 12 文字。maxChunkSize=2500 を超えるよう 300 回繰り返して 3600 字に。
+        // 見出しも --- も空行 2 連続もないので、文字数フォールバックで分割される必要がある。
+        $body = str_repeat('これはサンプル文章です。', 300);
 
         $chunks = $splitter->split($body);
 

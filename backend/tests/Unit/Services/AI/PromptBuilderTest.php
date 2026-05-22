@@ -217,8 +217,8 @@ final class PromptBuilderTest extends TestCase
         $prompt = $this->builder->userPrompt($note);
 
         $this->assertStringContainsString('本文 800 字', $prompt);
-        // 800 字 → max=ceil(800/100)=8 枚を上限指示
-        $this->assertStringContainsString('8 枚を超えないこと', $prompt);
+        // 800 字 → max(10, ceil(800/100)) = max(10, 8) = 10 枚を上限指示
+        $this->assertStringContainsString('10 枚を超えないこと', $prompt);
     }
 
     public function test_単一チャンクモードでも上限は20枚で頭打ち(): void

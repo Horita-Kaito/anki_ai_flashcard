@@ -496,12 +496,15 @@ final class AiCardCandidateControllerTest extends TestCase
             ."\n\n# B\n".str_repeat('bbbbbbbbbbbbbbbbbbb', 100);
         $note = NoteSeed::factory()->for($user)->create(['body' => $body]);
 
-        // chunk_index=0 では成功、chunk_index=1 以降では失敗する FakeAiProvider を仕込む
+        // bind callback の呼ばれ方:
+        //   callCount=1: Controller で CardGenerationService が DI 解決される時 (dispatchGeneration 呼び出し時)
+        //   callCount=2: 子 Job (chunk_index=0) の handle() で Service が DI 解決 → 成功させる
+        //   callCount=3: 子 Job (chunk_index=1) の handle() で Service が DI 解決 → 失敗させる
         $callCount = 0;
         $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
             $callCount++;
 
-            return $callCount === 1
+            return $callCount <= 2
                 ? FakeAiProvider::make()
                 : FakeAiProvider::make(
                     throwable: AiGenerationFailedException::generic('simulated failure')
@@ -566,8 +569,11 @@ final class AiCardCandidateControllerTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('failed', $log->status);
-        // jsonTruncated は isRetryable=false なので 1 回だけ呼ばれる
-        $this->assertSame(1, $callCount);
+        // bind callback の呼ばれ方:
+        //   callCount=1: Controller で Service が DI 解決される時
+        //   callCount=2: 子 Job (単一 chunk) の handle() で Service が DI 解決 → 1 回 throw して終了
+        //                (jsonTruncated は isRetryable=false なのでサービス内でリトライしない)
+        $this->assertSame(2, $callCount);
     }
 
     public function test_rat_e_limite_dはリトライされ最終的に成功する(): void
