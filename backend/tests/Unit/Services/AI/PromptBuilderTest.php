@@ -179,23 +179,60 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('ネットワーク基礎', $prompt);
         $this->assertStringContainsString('トランスポート層', $prompt);
         $this->assertStringContainsString('基本情報試験対策', $prompt);
-        // 枚数上限を撤廃し「網羅的に分解」する指示に変更
+        // 独立した知識点を網羅的に分解する指示は残す
         $this->assertStringContainsString('独立した知識点をすべてカード化', $prompt);
-        $this->assertStringContainsString('枚数の上限は設けない', $prompt);
+        // 出力トークン切れ防止の指示が含まれる
+        $this->assertStringContainsString('explanation', $prompt);
     }
 
-    public function test_ユーザープロンプトに長文メモ想定の枚数目安が含まれる(): void
+    public function test_チャンクモードでは20枚を上限とする枚数目安が含まれる(): void
+    {
+        // 旧プロンプトは「長文 (3000字以上) なら 30〜60 枚」と書いており、
+        // chunk_text を渡したときに AI が過剰生成して JSON が途中で切れる事象が起きていた。
+        // chunk のときは 5〜15 枚を目安、20 枚上限と明示することで回帰を防ぐ。
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => '元のメモ全体',
+        ]);
+
+        $prompt = $this->builder->userPrompt($note, [
+            'body_override' => str_repeat('チャンク本文。', 200),
+            'chunk_index' => 0,
+            'chunks_total' => 3,
+        ]);
+
+        $this->assertStringContainsString('5〜15 枚', $prompt);
+        $this->assertStringContainsString('20 枚を超えないこと', $prompt);
+        // 旧プロンプトの「30〜60 枚」が残っていないことを担保
+        $this->assertStringNotContainsString('30〜60', $prompt);
+    }
+
+    public function test_単一チャンクモードでは本文長に応じた枚数目安が含まれる(): void
     {
         $note = new NoteSeed([
             'user_id' => 1,
-            'body' => 'メモ',
+            'body' => str_repeat('a', 800),
         ]);
 
         $prompt = $this->builder->userPrompt($note);
 
-        // 長文メモほどカード枚数が増える想定であることを AI に明示する
-        $this->assertStringContainsString('長文', $prompt);
-        $this->assertStringContainsString('30', $prompt);
+        $this->assertStringContainsString('本文 800 字', $prompt);
+        // 800 字 → max=ceil(800/100)=8 枚を上限指示
+        $this->assertStringContainsString('8 枚を超えないこと', $prompt);
+    }
+
+    public function test_単一チャンクモードでも上限は20枚で頭打ち(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            // 1500 字未満なら chunk 分割されないが、長文本文として渡された場合の上限を確認
+            'body' => str_repeat('a', 1400),
+        ]);
+
+        $prompt = $this->builder->userPrompt($note);
+
+        // ceil(1400/100)=14 → min(14, 20)=14
+        $this->assertStringContainsString('14 枚を超えないこと', $prompt);
     }
 
     public function test_システムプロンプトに未置換のcountプレースホルダが残っていない(): void
