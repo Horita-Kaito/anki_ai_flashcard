@@ -357,3 +357,15 @@ AI 候補生成時に `PromptBuilder` が `【分野ポリシー: <name>】\n<do
 | desired_retention | DECIMAL(4,3) | DEFAULT 0.900 | FSRS 目標想起率 (0.7〜0.97) |
 | created_at | TIMESTAMP | | |
 | updated_at | TIMESTAMP | | |
+
+### system_settings
+
+全ユーザー共通のシステム設定を保持するシングルトンテーブル。`id=1` の 1 行のみ運用する。
+管理画面 (`/admin/system-settings`) から `can:access-admin` 権限を持つユーザーのみ更新可能。
+
+| カラム | 型 | 制約 | 説明 |
+|--------|------|------|------|
+| id | BIGINT UNSIGNED | PK, シングルトン (常に 1) | |
+| monthly_token_limit | INT UNSIGNED | NULLABLE | 月次トークン上限 (input+output 合計)。NULL or 0 以下は無制限 |
+| created_at | TIMESTAMP | | |
+| updated_at | TIMESTAMP | | |

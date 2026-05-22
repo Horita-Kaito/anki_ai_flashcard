@@ -1,3 +1,4 @@
+import { adminSystemSettingHandlers } from "./handlers/admin-system-setting";
 import { aiCandidateHandlers } from "./handlers/ai-candidate";
 import { authHandlers } from "./handlers/auth";
 import { cardHandlers } from "./handlers/card";
@@ -22,4 +23,5 @@ export const handlers = [
   ...userSettingHandlers,
   ...aiCandidateHandlers,
   ...reviewHandlers,
+  ...adminSystemSettingHandlers,
 ];

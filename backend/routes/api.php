@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\SystemSettingController;
 use App\Http\Controllers\Api\V1\AiCardCandidateController;
 use App\Http\Controllers\Api\V1\CardController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -98,6 +99,9 @@ Route::prefix('v1')->group(function () {
         Route::middleware('can:access-admin')->prefix('admin')->group(function () {
             Route::post('users', [AdminUserController::class, 'store'])
                 ->middleware('throttle:10,60');
+
+            Route::get('system-settings', [SystemSettingController::class, 'show']);
+            Route::put('system-settings', [SystemSettingController::class, 'update']);
         });
     });
 });

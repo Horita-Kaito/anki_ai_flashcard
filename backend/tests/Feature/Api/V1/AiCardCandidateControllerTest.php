@@ -567,7 +567,10 @@ final class AiCardCandidateControllerTest extends TestCase
 
     public function test_月次トークン上限に達していると429を返す(): void
     {
-        config()->set('ai.limits.monthly_token_limit', 1000);
+        \App\Models\SystemSetting::query()->updateOrCreate(
+            ['id' => \App\Models\SystemSetting::SINGLETON_ID],
+            ['monthly_token_limit' => 1000],
+        );
 
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
@@ -590,9 +593,13 @@ final class AiCardCandidateControllerTest extends TestCase
             ->assertStatus(429);
     }
 
-    public function test_月次トークン上限が0なら無制限として扱う(): void
+    public function test_月次トークン上限が未設定なら無制限として扱う(): void
     {
-        config()->set('ai.limits.monthly_token_limit', 0);
+        // SystemSetting.monthly_token_limit = null は無制限
+        \App\Models\SystemSetting::query()->updateOrCreate(
+            ['id' => \App\Models\SystemSetting::SINGLETON_ID],
+            ['monthly_token_limit' => null],
+        );
 
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();

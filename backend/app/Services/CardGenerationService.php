@@ -8,6 +8,7 @@ use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
+use App\Contracts\Repositories\SystemSettingRepositoryInterface;
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Enums\CandidateStatus;
 use App\Exceptions\Domain\AiGenerationFailedException;
@@ -45,6 +46,7 @@ final class CardGenerationService
         private readonly AiGenerationLogRepositoryInterface $logRepository,
         private readonly DomainTemplateRepositoryInterface $templateRepository,
         private readonly DeckRepositoryInterface $deckRepository,
+        private readonly SystemSettingRepositoryInterface $systemSettingRepository,
         private readonly PromptBuilder $promptBuilder,
         private readonly CandidateParser $parser,
         private readonly ChunkSplitter $chunkSplitter,
@@ -422,8 +424,8 @@ final class CardGenerationService
 
     private function assertMonthlyTokenLimit(int $userId): void
     {
-        $limit = (int) config('ai.limits.monthly_token_limit', 0);
-        if ($limit <= 0) {
+        $limit = $this->systemSettingRepository->get()->effectiveMonthlyTokenLimit();
+        if ($limit === null) {
             return;
         }
         $used = $this->logRepository->sumTokensForUserInPeriod(

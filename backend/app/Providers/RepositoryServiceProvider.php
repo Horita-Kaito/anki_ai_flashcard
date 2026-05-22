@@ -12,6 +12,7 @@ use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
+use App\Contracts\Repositories\SystemSettingRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
@@ -25,6 +26,7 @@ use App\Repositories\EloquentCardScheduleRepository;
 use App\Repositories\EloquentDeckRepository;
 use App\Repositories\EloquentDomainTemplateRepository;
 use App\Repositories\EloquentNoteSeedRepository;
+use App\Repositories\EloquentSystemSettingRepository;
 use App\Repositories\EloquentTagRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
@@ -56,6 +58,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         CardRepositoryInterface::class => EloquentCardRepository::class,
         CardScheduleRepositoryInterface::class => EloquentCardScheduleRepository::class,
         UserSettingRepositoryInterface::class => EloquentUserSettingRepository::class,
+        SystemSettingRepositoryInterface::class => EloquentSystemSettingRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
         AiCardCandidateRepositoryInterface::class => EloquentAiCardCandidateRepository::class,
         AiGenerationLogRepositoryInterface::class => EloquentAiGenerationLogRepository::class,

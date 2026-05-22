@@ -559,7 +559,7 @@ AI候補生成
 **生成枚数**:
 - 枚数の上限は設けない。AI はメモ内の独立した知識点を網羅的に分解する。
 - 短文メモ (〜500字) で 5〜10 枚、長文メモ (3000字以上) で 30〜60 枚程度を想定する。
-- 利用上限は `ai.limits.monthly_token_limit` の月次トークン量で制御する。
+- 利用上限は `system_settings.monthly_token_limit` の月次トークン量で制御する (管理画面 `/admin/system-settings` で管理者が設定)。
 
 **Response 201**:
 ```json
@@ -1013,4 +1013,46 @@ AI候補生成
 
 **補足**:
 - 旧 `daily_new_limit` / `daily_review_limit` は廃止。復習対象は due なカードを制限なく返す。
-- 旧 `default_generation_count` は廃止。AI 候補生成はメモから網羅的に生成し、利用上限は月次トークン量で制御する (`config('ai.limits.monthly_token_limit')`)。
+- 旧 `default_generation_count` は廃止。AI 候補生成はメモから網羅的に生成し、利用上限は `system_settings.monthly_token_limit` (管理画面で管理者が設定) で制御する。
+
+---
+
+## 10. 管理者専用 API
+
+`can:access-admin` ゲート (`config('admin.emails')` に含まれる email のみ) を通過する必要がある。
+未認証は 401、認証済みでも管理者でなければ 403。
+
+### POST /api/admin/users
+管理者が新規ユーザーを発行する (パスワードはランダム生成され、レスポンスでのみ 1 度返る)。`throttle:10,60`。
+
+### GET /api/admin/system-settings
+全ユーザー共通のシステム設定を取得する。
+
+**Response 200**:
+```json
+{
+  "data": {
+    "monthly_token_limit": 500000,
+    "created_at": "...",
+    "updated_at": "..."
+  }
+}
+```
+
+- `monthly_token_limit`: 月次トークン上限 (input+output 合計)。`null` は無制限。
+
+### PUT /api/admin/system-settings
+システム設定を更新する。
+
+**Request Body**:
+```json
+{ "monthly_token_limit": 500000 }
+```
+
+または無制限に戻す場合:
+```json
+{ "monthly_token_limit": null }
+```
+
+**Validation**:
+- `monthly_token_limit`: `nullable | integer | min:1000 | max:1000000000`

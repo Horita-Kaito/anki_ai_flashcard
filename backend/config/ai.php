@@ -102,15 +102,4 @@ return [
         'fsrs_archive_interval_days' => (int) env('REVIEW_FSRS_ARCHIVE_INTERVAL_DAYS', 365),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Usage Limits (per user, per month)
-    |--------------------------------------------------------------------------
-    | 将来の収益化で plan 別に拡張。
-    | 月次の合計トークン使用量 (input + output) で制限する。
-    | 0 以下は無制限扱い (現在はクローズド運用なので無制限がデフォルト)。
-    */
-    'limits' => [
-        'monthly_token_limit' => (int) env('AI_MONTHLY_TOKEN_LIMIT', 0),
-    ],
 ];
