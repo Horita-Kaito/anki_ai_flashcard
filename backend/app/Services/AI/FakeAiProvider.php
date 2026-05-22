@@ -15,8 +15,14 @@ use App\Contracts\Services\AI\AiProviderInterface;
  */
 final class FakeAiProvider implements AiProviderInterface
 {
+    /** generate() が同一 instance に対して何回呼ばれたかを追跡する。 */
+    private int $callCount = 0;
+
     /**
      * @param  array<int, array<string, mixed>>|null  $candidates
+     * @param  int  $failFirstCalls  最初の N 回だけ throwable / forceRawContent によるフォールバック挙動を取り、
+     *                               それ以降は通常応答を返す (0 なら毎回フォールバック挙動)。
+     *                               リトライテストで「最初は失敗、リトライで成功」を表現するのに使う。
      */
     public function __construct(
         private readonly PricingCalculator $pricing,
@@ -25,6 +31,7 @@ final class FakeAiProvider implements AiProviderInterface
         private readonly int $outputTokens = 300,
         private readonly ?string $forceRawContent = null,
         private readonly ?\Throwable $throwable = null,
+        private readonly int $failFirstCalls = 0,
     ) {}
 
     /**
@@ -38,6 +45,7 @@ final class FakeAiProvider implements AiProviderInterface
         int $outputTokens = 300,
         ?string $forceRawContent = null,
         ?\Throwable $throwable = null,
+        int $failFirstCalls = 0,
     ): self {
         return new self(
             pricing: PricingCalculator::fromConfig(),
@@ -46,6 +54,7 @@ final class FakeAiProvider implements AiProviderInterface
             outputTokens: $outputTokens,
             forceRawContent: $forceRawContent,
             throwable: $throwable,
+            failFirstCalls: $failFirstCalls,
         );
     }
 
@@ -56,11 +65,20 @@ final class FakeAiProvider implements AiProviderInterface
 
     public function generate(AiGenerationRequest $request): AiGenerationResult
     {
-        if ($this->throwable !== null) {
+        $this->callCount++;
+
+        // failFirstCalls=0: 設定された throwable / forceRawContent を毎回適用 (旧来の挙動)
+        // failFirstCalls>0: 最初の N 回だけフォールバック挙動、N+1 回目以降は通常応答 (リトライテスト用)
+        $applyFallback = $this->failFirstCalls === 0
+            || $this->callCount <= $this->failFirstCalls;
+
+        if ($applyFallback && $this->throwable !== null) {
             throw $this->throwable;
         }
 
-        $raw = $this->forceRawContent ?? $this->buildDefaultJson();
+        $raw = $applyFallback && $this->forceRawContent !== null
+            ? $this->forceRawContent
+            : $this->buildDefaultJson();
         $inputRate = 0.15;
         $outputRate = 0.60;
         $cost = ($this->inputTokens * $inputRate / 1_000_000)

@@ -583,17 +583,12 @@ final class AiCardCandidateControllerTest extends TestCase
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
 
-        $callCount = 0;
-        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
-            $callCount++;
-
-            // 最初の 1 回だけ rate limit、2 回目以降は成功
-            return $callCount === 1
-                ? FakeAiProvider::make(
-                    throwable: AiGenerationFailedException::rateLimit('openai')
-                )
-                : FakeAiProvider::make();
-        });
+        // FakeAiProvider::failFirstCalls=1 → generate() の最初の 1 回だけ rateLimit を throw、
+        // 2 回目以降は通常応答。これで「リトライ発動 → 2 回目で成功」を検証できる。
+        $this->app->bind(AiProviderInterface::class, fn () => FakeAiProvider::make(
+            throwable: AiGenerationFailedException::rateLimit('openai'),
+            failFirstCalls: 1,
+        ));
 
         $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
@@ -604,7 +599,6 @@ final class AiCardCandidateControllerTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('success', $log->status);
-        $this->assertSame(2, $callCount);
     }
 
     public function test_empt_y_candidate_sはリトライされる(): void
@@ -614,15 +608,12 @@ final class AiCardCandidateControllerTest extends TestCase
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
 
-        $callCount = 0;
-        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
-            $callCount++;
-
-            // 最初は空配列、2 回目以降は通常応答
-            return $callCount === 1
-                ? FakeAiProvider::make(forceRawContent: json_encode(['candidates' => []]))
-                : FakeAiProvider::make();
-        });
+        // failFirstCalls=1 → 最初の 1 回だけ空 candidates を返し emptyCandidates 例外を誘発、
+        // 2 回目以降は通常応答。これで「リトライ発動 → 2 回目で成功」を検証できる。
+        $this->app->bind(AiProviderInterface::class, fn () => FakeAiProvider::make(
+            forceRawContent: json_encode(['candidates' => []]),
+            failFirstCalls: 1,
+        ));
 
         $this->actingAs($user)
             ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
@@ -633,7 +624,6 @@ final class AiCardCandidateControllerTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('success', $log->status);
-        $this->assertSame(2, $callCount);
     }
 
     public function test_チャンク分割が走るメモでも進行中ステータスは親ログを返す(): void
