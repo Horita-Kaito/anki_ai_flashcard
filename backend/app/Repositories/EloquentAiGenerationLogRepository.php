@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Models\AiGenerationLog;
+use Illuminate\Database\Eloquent\Collection;
 
 final class EloquentAiGenerationLogRepository implements AiGenerationLogRepositoryInterface
 {
@@ -50,8 +51,11 @@ final class EloquentAiGenerationLogRepository implements AiGenerationLogReposito
 
     public function findInFlightForNote(int $userId, int $noteSeedId): ?AiGenerationLog
     {
-        // 子 chunk ログは UI から隠す: parent_log_id IS NULL のもの (= 単発 or 親) のみ返す
+        // 子 chunk ログは UI から隠す: parent_log_id IS NULL のもの (= 単発 or 親) のみ返す。
+        // children は AiGenerationStatusResource で chunks_completed / chunks_failed を集計する
+        // 際に参照するため eager load しておく (3 秒間隔の polling で N+1 を避ける目的)。
         return AiGenerationLog::query()
+            ->with('children:id,parent_log_id,status,candidates_count')
             ->where('user_id', $userId)
             ->where('note_seed_id', $noteSeedId)
             ->whereNull('parent_log_id')
@@ -63,10 +67,27 @@ final class EloquentAiGenerationLogRepository implements AiGenerationLogReposito
     public function findLatestForNote(int $userId, int $noteSeedId): ?AiGenerationLog
     {
         return AiGenerationLog::query()
+            ->with('children:id,parent_log_id,status,candidates_count')
             ->where('user_id', $userId)
             ->where('note_seed_id', $noteSeedId)
             ->whereNull('parent_log_id')
             ->orderByDesc('id')
             ->first();
+    }
+
+    public function findForUpdate(int $id): ?AiGenerationLog
+    {
+        return AiGenerationLog::query()
+            ->whereKey($id)
+            ->lockForUpdate()
+            ->first();
+    }
+
+    public function listChildrenForParent(int $parentId): Collection
+    {
+        return AiGenerationLog::query()
+            ->where('parent_log_id', $parentId)
+            ->orderBy('id')
+            ->get();
     }
 }

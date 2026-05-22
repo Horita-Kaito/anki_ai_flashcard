@@ -25,7 +25,7 @@ use App\Services\AI\CandidateParser;
 use App\Services\AI\ChunkSplitter;
 use App\Services\AI\ParseResult;
 use App\Services\AI\PromptBuilder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -195,18 +195,17 @@ final class CardGenerationService
             $userPromptOptions['chunks_total'] = (int) $chunksTotal;
         }
 
-        $model = (string) config('ai.default_model', 'gpt-4o-mini');
-        $isOpenAi = str_starts_with($model, 'gpt-');
-
         $request = new AiGenerationRequest(
             systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, $userPromptOptions),
-            model: $model,
+            model: (string) config('ai.default_model', 'gpt-4o-mini'),
             temperature: (float) config('ai.generation.temperature', 0.6),
             maxOutputTokens: (int) config('ai.generation.max_output_tokens', 16000),
-            // OpenAI のみ json_schema (strict) で構造を強制し PARSE_ERROR を防ぐ。
-            // 他プロバイダ (Anthropic / Google) では従来通りプロンプト指示に依存する。
-            jsonSchema: $isOpenAi ? CandidateJsonSchema::forOpenAi() : null,
+            // 構造化出力を支えるプロバイダ (OpenAI strict json_schema 等) には schema を渡す。
+            // 非対応プロバイダはプロンプト指示のみに頼る。
+            jsonSchema: $this->aiProvider->supportsJsonSchema()
+                ? CandidateJsonSchema::forOpenAi()
+                : null,
         );
 
         try {
@@ -308,6 +307,12 @@ final class CardGenerationService
      *
      * 並列実行する子 Job が同時に親を書き換える race を避けるため、
      * 親行を行ロック (lockForUpdate) してから読み直して集約する。
+     *
+     * パフォーマンス特性:
+     *   各子 Job の完了時に親 SELECT + 全子 SELECT が走るので、
+     *   親集約コストは O(N)、N 個の子全体での総コストは O(N^2) になる。
+     *   現状の運用想定 (chunk_max ≒ 10) では問題ないが、将来 chunk 数を
+     *   大きく増やす場合は「最後に完了した子だけが親を更新する」最適化を検討する。
      */
     private function updateParentAggregateIfChild(AiGenerationLog $childLog): void
     {
@@ -317,43 +322,31 @@ final class CardGenerationService
         }
 
         DB::transaction(function () use ($parentId): void {
-            /** @var AiGenerationLog|null $parent */
-            $parent = AiGenerationLog::query()
-                ->whereKey($parentId)
-                ->lockForUpdate()
-                ->first();
+            // 並列実行する子 Job が同じ親を同時に書き換える race を行ロックで防ぐ
+            $parent = $this->logRepository->findForUpdate($parentId);
             if ($parent === null) {
                 return;
             }
 
-            /** @var EloquentCollection<int, AiGenerationLog> $children */
-            $children = AiGenerationLog::query()
-                ->where('parent_log_id', $parentId)
-                ->get();
+            $children = $this->logRepository->listChildrenForParent($parentId);
 
             $successCount = $children->where('status', AiGenerationLog::STATUS_SUCCESS)->count();
             $failedCount = $children->where('status', AiGenerationLog::STATUS_FAILED)->count();
             $totalChunks = (int) ($parent->chunks_total ?? $children->count());
             $completedCount = $successCount + $failedCount;
 
-            $totalCandidates = (int) $children->sum('candidates_count');
-            $totalInputTokens = (int) $children->sum('input_tokens');
-            $totalOutputTokens = (int) $children->sum('output_tokens');
-            $totalCost = (float) $children->sum(fn (AiGenerationLog $c) => (float) $c->cost_usd);
-            $maxDuration = (int) $children->max('duration_ms');
-
             $aggregate = [
-                'candidates_count' => $totalCandidates,
-                'input_tokens' => $totalInputTokens,
-                'output_tokens' => $totalOutputTokens,
-                'cost_usd' => $totalCost,
-                'duration_ms' => $maxDuration,
+                'candidates_count' => (int) $children->sum('candidates_count'),
+                'input_tokens' => (int) $children->sum('input_tokens'),
+                'output_tokens' => (int) $children->sum('output_tokens'),
+                'cost_usd' => (float) $children->sum(fn (AiGenerationLog $c) => (float) $c->cost_usd),
+                'duration_ms' => (int) $children->max('duration_ms'),
             ];
 
             if ($completedCount < $totalChunks) {
-                // まだ未完了の chunk がある → processing 中
+                // まだ未完了の chunk がある → processing 中として中間集約のみ更新
                 $aggregate['status'] = AiGenerationLog::STATUS_PROCESSING;
-                $parent->update($aggregate);
+                $this->logRepository->update($parent, $aggregate);
 
                 return;
             }
@@ -384,14 +377,14 @@ final class CardGenerationService
                 $aggregate['model_name'] = $firstCompleted->model_name;
             }
 
-            $parent->update($aggregate);
+            $this->logRepository->update($parent, $aggregate);
         });
     }
 
     /**
-     * @param  EloquentCollection<int, AiGenerationLog>  $children
+     * @param  Collection<int, AiGenerationLog>  $children
      */
-    private function summarizeChildErrors(EloquentCollection $children): string
+    private function summarizeChildErrors(Collection $children): string
     {
         $messages = $children
             ->where('status', AiGenerationLog::STATUS_FAILED)

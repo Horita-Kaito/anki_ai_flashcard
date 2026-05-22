@@ -176,6 +176,13 @@ final class ChunkSplitter
     /**
      * maxLen 以内で「自然な」切れ目を探す。
      * 句点・改行・空白を優先し、見つからなければ maxLen でハードカット。
+     *
+     * フォールバック挙動:
+     *   句点/改行が見つからないと minAcceptable (maxLen/2) を下回って諦め、maxLen でハードカット。
+     *   句読点がないベタ書きメモではこのパスに乗る。実運用で
+     *   ai_generation_logs.error_reason に [JSON_TRUNCATED] が頻発する場合、
+     *   minAcceptable の係数を 0.3 程度に下げて切断位置を緩めに探すか、
+     *   maxChunkSize 自体を下げる方向で調整する。
      */
     private function findCutPoint(string $s, int $maxLen): int
     {

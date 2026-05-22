@@ -39,6 +39,13 @@ final class OpenAiProvider implements AiProviderInterface
         return 'openai';
     }
 
+    public function supportsJsonSchema(): bool
+    {
+        // OpenAI Chat Completions の response_format=json_schema (strict) をサポート。
+        // 実際に使えるかはモデル次第 (gpt-4o-2024-08-06+, gpt-4o-mini-2024-07-18+ 以降)。
+        return true;
+    }
+
     public function generate(AiGenerationRequest $request): AiGenerationResult
     {
         if ($this->apiKey === '') {

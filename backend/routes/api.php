@@ -100,8 +100,10 @@ Route::prefix('v1')->group(function () {
             Route::post('users', [AdminUserController::class, 'store'])
                 ->middleware('throttle:10,60');
 
-            Route::get('system-settings', [SystemSettingController::class, 'show']);
-            Route::put('system-settings', [SystemSettingController::class, 'update']);
+            Route::get('system-settings', [SystemSettingController::class, 'show'])
+                ->middleware('throttle:30,1');
+            Route::put('system-settings', [SystemSettingController::class, 'update'])
+                ->middleware('throttle:10,1');
         });
     });
 });

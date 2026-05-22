@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Contracts\Repositories;
 
 use App\Models\AiGenerationLog;
+use Illuminate\Database\Eloquent\Collection;
 
 interface AiGenerationLogRepositoryInterface
 {
@@ -43,4 +44,17 @@ interface AiGenerationLogRepositoryInterface
      * 指定メモに対する最新ログ (進行中・完了問わず) を返す。
      */
     public function findLatestForNote(int $userId, int $noteSeedId): ?AiGenerationLog;
+
+    /**
+     * 行ロック付きで 1 件取得する。親ログの集約更新時に、並列の子 Job が同じ親を
+     * 同時に書き換える race を防ぐ目的でトランザクション内から呼ぶ。
+     */
+    public function findForUpdate(int $id): ?AiGenerationLog;
+
+    /**
+     * 親ログに属する子ログを全件返す。集約用の単純な順序を保つため id 昇順で返す。
+     *
+     * @return Collection<int, AiGenerationLog>
+     */
+    public function listChildrenForParent(int $parentId): Collection;
 }

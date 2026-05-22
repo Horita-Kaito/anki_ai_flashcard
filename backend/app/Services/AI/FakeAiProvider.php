@@ -63,6 +63,12 @@ final class FakeAiProvider implements AiProviderInterface
         return 'fake';
     }
 
+    public function supportsJsonSchema(): bool
+    {
+        // テスト用 Fake は何も検証しないので false (json_object 相当の挙動)。
+        return false;
+    }
+
     public function generate(AiGenerationRequest $request): AiGenerationResult
     {
         $this->callCount++;

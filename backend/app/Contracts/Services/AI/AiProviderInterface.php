@@ -22,4 +22,12 @@ interface AiProviderInterface
      * @throws AiGenerationFailedException
      */
     public function generate(AiGenerationRequest $request): AiGenerationResult;
+
+    /**
+     * このプロバイダが strict JSON Schema による構造化出力 (response_format=json_schema 相当) を
+     * サポートするか。true ならば呼び出し側は AiGenerationRequest::$jsonSchema を組み立てて渡せる。
+     *
+     * 現状は OpenAI (gpt-4o 系) のみ true、Anthropic / Google / Fake は false。
+     */
+    public function supportsJsonSchema(): bool;
 }

@@ -545,7 +545,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame('failed', $parent->status);
     }
 
-    public function test_jso_n_truncate_dはリトライ対象外で1回で諦める(): void
+    public function test_出力切れはリトライされず1回で諦める(): void
     {
         $user = User::factory()->create();
         $note = NoteSeed::factory()->for($user)->create();
@@ -576,7 +576,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame(2, $callCount);
     }
 
-    public function test_rat_e_limite_dはリトライされ最終的に成功する(): void
+    public function test_レート制限はリトライされ最終的に成功する(): void
     {
         config()->set('ai.generation.max_retries', 2);
 
@@ -601,7 +601,7 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame('success', $log->status);
     }
 
-    public function test_empt_y_candidate_sはリトライされる(): void
+    public function test_空候補はリトライされる(): void
     {
         config()->set('ai.generation.max_retries', 2);
 

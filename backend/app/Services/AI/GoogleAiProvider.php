@@ -36,6 +36,14 @@ final class GoogleAiProvider implements AiProviderInterface
         return 'google';
     }
 
+    public function supportsJsonSchema(): bool
+    {
+        // Gemini にも responseSchema があるが、本プロジェクトでは未実装のため false 固定。
+        // 必要になったら本メソッドを true に変えて generate() 側で
+        // generationConfig.responseSchema を組み立てる。
+        return false;
+    }
+
     private const FALLBACK_MODELS = [
         'gemini-2.5-flash-lite',
         'gemini-2.5-pro',
