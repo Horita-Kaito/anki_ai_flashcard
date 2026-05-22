@@ -130,4 +130,27 @@ final class AiGenerationFailedException extends DomainException
     {
         return $this->debugDetailText;
     }
+
+    /**
+     * 同じプロンプトで AI を再呼び出しすると改善する見込みがある失敗か判定する。
+     *
+     * リトライしても無駄なケース:
+     *   - JSON_TRUNCATED: 同じ枚数指示で再呼び出ししても同じく切れる
+     *   - MAX_TOKENS: 同上
+     *   - SAFETY_BLOCKED: 入力内容自体が問題なので何度呼んでも同じ
+     *
+     * リトライで救える可能性があるケース:
+     *   - TIMEOUT / RATE_LIMITED: ネットワーク・provider 一時障害
+     *   - INVALID_RESPONSE / EMPTY_CANDIDATES: temperature 起因の出力ブレで救える可能性
+     *   - GENERIC: 詳細不明なので一応リトライさせる
+     */
+    public function isRetryable(): bool
+    {
+        return match ($this->errorKind) {
+            self::CODE_JSON_TRUNCATED,
+            self::CODE_MAX_TOKENS,
+            self::CODE_SAFETY_BLOCKED => false,
+            default => true,
+        };
+    }
 }

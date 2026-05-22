@@ -49,6 +49,12 @@ final class OpenAiProvider implements AiProviderInterface
 
         $startMs = (int) (microtime(true) * 1000);
 
+        // json_schema (strict) を使うとフィールド欠落・enum 違反等の構造起因 PARSE_ERROR を構造的にゼロにできる。
+        // 指定がなければ従来通り json_object モード (構造保証なし) にフォールバックする。
+        $responseFormat = $request->jsonSchema !== null
+            ? ['type' => 'json_schema', 'json_schema' => $request->jsonSchema]
+            : ['type' => 'json_object'];
+
         try {
             $response = Http::withToken($this->apiKey)
                 ->timeout($this->timeout)
@@ -57,7 +63,7 @@ final class OpenAiProvider implements AiProviderInterface
                     'model' => $request->model,
                     'temperature' => $request->temperature,
                     'max_tokens' => $request->maxOutputTokens,
-                    'response_format' => ['type' => 'json_object'],
+                    'response_format' => $responseFormat,
                     'messages' => [
                         ['role' => 'system', 'content' => $request->systemPrompt],
                         ['role' => 'user', 'content' => $request->userPrompt],

@@ -540,6 +540,94 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertSame('failed', $parent->status);
     }
 
+    public function test_JSON_TRUNCATEDはリトライ対象外で1回で諦める(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $callCount = 0;
+        // truncated は何度呼んでも同じ結果になるはずなので、リトライせず即 failed
+        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
+            $callCount++;
+
+            return FakeAiProvider::make(
+                throwable: \App\Exceptions\Domain\AiGenerationFailedException::jsonTruncated('cut at 16000 tokens')
+            );
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $log = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertSame('failed', $log->status);
+        // jsonTruncated は isRetryable=false なので 1 回だけ呼ばれる
+        $this->assertSame(1, $callCount);
+    }
+
+    public function test_RATE_LIMITEDはリトライされ最終的に成功する(): void
+    {
+        config()->set('ai.generation.max_retries', 2);
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $callCount = 0;
+        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
+            $callCount++;
+
+            // 最初の 1 回だけ rate limit、2 回目以降は成功
+            return $callCount === 1
+                ? FakeAiProvider::make(
+                    throwable: \App\Exceptions\Domain\AiGenerationFailedException::rateLimit('openai')
+                )
+                : FakeAiProvider::make();
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $log = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertSame('success', $log->status);
+        $this->assertSame(2, $callCount);
+    }
+
+    public function test_EMPTY_CANDIDATESはリトライされる(): void
+    {
+        config()->set('ai.generation.max_retries', 2);
+
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $callCount = 0;
+        $this->app->bind(AiProviderInterface::class, function () use (&$callCount) {
+            $callCount++;
+
+            // 最初は空配列、2 回目以降は通常応答
+            return $callCount === 1
+                ? FakeAiProvider::make(forceRawContent: json_encode(['candidates' => []]))
+                : FakeAiProvider::make();
+        });
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $log = AiGenerationLog::whereNull('parent_log_id')
+            ->where('note_seed_id', $note->id)
+            ->first();
+        $this->assertNotNull($log);
+        $this->assertSame('success', $log->status);
+        $this->assertSame(2, $callCount);
+    }
+
     public function test_チャンク分割が走るメモでも進行中ステータスは親ログを返す(): void
     {
         Queue::fake();

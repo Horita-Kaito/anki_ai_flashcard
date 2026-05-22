@@ -20,8 +20,10 @@ use App\Models\AiGenerationLog;
 use App\Models\NoteSeed;
 use App\Services\AI\AiGenerationRequest;
 use App\Services\AI\AiGenerationResult;
+use App\Services\AI\CandidateJsonSchema;
 use App\Services\AI\CandidateParser;
 use App\Services\AI\ChunkSplitter;
+use App\Services\AI\ParseResult;
 use App\Services\AI\PromptBuilder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
@@ -193,49 +195,36 @@ final class CardGenerationService
             $userPromptOptions['chunks_total'] = (int) $chunksTotal;
         }
 
+        $model = (string) config('ai.default_model', 'gpt-4o-mini');
+        $isOpenAi = str_starts_with($model, 'gpt-');
+
         $request = new AiGenerationRequest(
             systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, $userPromptOptions),
-            model: (string) config('ai.default_model', 'gpt-4o-mini'),
+            model: $model,
             temperature: (float) config('ai.generation.temperature', 0.6),
             maxOutputTokens: (int) config('ai.generation.max_output_tokens', 16000),
+            // OpenAI のみ json_schema (strict) で構造を強制し PARSE_ERROR を防ぐ。
+            // 他プロバイダ (Anthropic / Google) では従来通りプロンプト指示に依存する。
+            jsonSchema: $isOpenAi ? CandidateJsonSchema::forOpenAi() : null,
         );
 
         try {
-            $result = $this->callWithRetry($request);
+            [$result, $parseResult] = $this->callAndParseWithRetry($request);
         } catch (AiGenerationFailedException $e) {
-            $this->markFailed($log, '['.($e->errorCode() ?? 'CALL_FAILED').']', $e->debugDetail() ?? $e->getMessage());
-            $this->updateParentAggregateIfChild($log);
+            // call と parse のどちらの失敗かを error_reason の prefix で識別できるよう、
+            // call 系 (TIMEOUT/RATE_LIMITED/SAFETY_BLOCKED/MAX_TOKENS/GENERIC) と
+            // parse 系 (INVALID_RESPONSE/EMPTY_CANDIDATES/JSON_TRUNCATED) を errorCode() に含める。
+            $code = $e->errorCode() ?? 'CALL_FAILED';
+            $detail = $e->debugDetail() ?? $e->getMessage();
 
-            throw $e;
-        }
-
-        // パース失敗時はトークン情報を保存した上で failed
-        try {
-            $parseResult = $this->parser->parse($result->rawContent);
-        } catch (AiGenerationFailedException $parseError) {
             $this->logRepository->update($log, [
-                'provider' => $result->provider,
-                'model_name' => $result->model,
-                'input_tokens' => $result->inputTokens,
-                'output_tokens' => $result->outputTokens,
-                'cost_usd' => $result->costUsd,
-                'duration_ms' => $result->durationMs,
                 'status' => AiGenerationLog::STATUS_FAILED,
-                'error_reason' => mb_substr(
-                    sprintf(
-                        '[%s] %s',
-                        $parseError->errorCode() ?? 'PARSE_ERROR',
-                        $parseError->debugDetail() ?? $parseError->getMessage(),
-                    ),
-                    0,
-                    2000,
-                ),
-                'candidates_count' => 0,
+                'error_reason' => mb_substr("[{$code}] {$detail}", 0, 2000),
             ]);
             $this->updateParentAggregateIfChild($log);
 
-            throw $parseError;
+            throw $e;
         }
 
         $parsed = $parseResult->items;
@@ -449,29 +438,50 @@ final class CardGenerationService
     }
 
     /**
-     * AI 呼び出しを max_retries 回までリトライする。
+     * AI 呼び出し + JSON パースを 1 セットとして、失敗種別に応じてリトライする。
+     *
+     * リトライ対象 (isRetryable=true):
+     *   - TIMEOUT / RATE_LIMITED: ネットワーク・provider 一時障害
+     *   - INVALID_RESPONSE / EMPTY_CANDIDATES: temperature 起因の出力ブレで救える可能性
+     *   - GENERIC: 詳細不明
+     *
+     * リトライ非対象 (isRetryable=false): 何度呼んでも同じ結果になるか、根本対処が必要なケース。
+     *   - JSON_TRUNCATED / MAX_TOKENS: 枚数指示やプロンプト圧縮等が必要
+     *   - SAFETY_BLOCKED: 入力内容自体が問題
+     *
+     * RATE_LIMITED の場合のみ短い backoff を入れて連続ヒットを回避する。
+     *
+     * @return array{0: AiGenerationResult, 1: ParseResult}
      */
-    private function callWithRetry(AiGenerationRequest $request): AiGenerationResult
+    private function callAndParseWithRetry(AiGenerationRequest $request): array
     {
         $maxRetries = (int) config('ai.generation.max_retries', 2);
         $attempt = 0;
+        /** @var AiGenerationFailedException|null $lastException */
         $lastException = null;
 
         while ($attempt <= $maxRetries) {
             try {
-                return $this->aiProvider->generate($request);
-            } catch (\Throwable $e) {
+                $result = $this->aiProvider->generate($request);
+                $parseResult = $this->parser->parse($result->rawContent);
+
+                return [$result, $parseResult];
+            } catch (AiGenerationFailedException $e) {
                 $lastException = $e;
+                if (! $e->isRetryable()) {
+                    throw $e;
+                }
+                $attempt++;
+                if ($attempt <= $maxRetries && $e->errorCode() === AiGenerationFailedException::CODE_RATE_LIMITED) {
+                    // rate limit のときだけ短い backoff (200ms, 400ms, ...) を入れる
+                    usleep(200_000 * $attempt);
+                }
+            } catch (\Throwable $e) {
+                $lastException = AiGenerationFailedException::generic($e->getMessage());
                 $attempt++;
             }
         }
 
-        if ($lastException instanceof AiGenerationFailedException) {
-            throw $lastException;
-        }
-
-        throw AiGenerationFailedException::generic(
-            $lastException?->getMessage() ?? 'unknown error'
-        );
+        throw $lastException ?? AiGenerationFailedException::generic('unknown error');
     }
 }

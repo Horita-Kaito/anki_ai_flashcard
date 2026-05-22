@@ -89,4 +89,49 @@ final class OpenAiProviderTest extends TestCase
         $this->expectException(AiGenerationFailedException::class);
         $provider->generate($this->makeRequest());
     }
+
+    public function test_jsonSchemaが指定されたらresponse_formatに渡される(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['content' => '{"candidates":[]}']]],
+                'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1],
+            ], 200),
+        ]);
+
+        $request = new AiGenerationRequest(
+            systemPrompt: 's',
+            userPrompt: 'u',
+            model: 'gpt-4o-mini',
+            temperature: 0.6,
+            maxOutputTokens: 2000,
+            jsonSchema: ['name' => 'card_candidates', 'strict' => true, 'schema' => ['type' => 'object']],
+        );
+
+        $this->makeProvider()->generate($request);
+
+        Http::assertSent(function ($req) {
+            $body = $req->data();
+
+            return $body['response_format']['type'] === 'json_schema'
+                && $body['response_format']['json_schema']['name'] === 'card_candidates'
+                && $body['response_format']['json_schema']['strict'] === true;
+        });
+    }
+
+    public function test_jsonSchemaがnullならjson_objectモードにフォールバック(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['content' => '{"candidates":[]}']]],
+                'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1],
+            ], 200),
+        ]);
+
+        $this->makeProvider()->generate($this->makeRequest());
+
+        Http::assertSent(function ($req) {
+            return $req->data()['response_format']['type'] === 'json_object';
+        });
+    }
 }

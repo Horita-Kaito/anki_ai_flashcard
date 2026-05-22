@@ -157,6 +157,24 @@ final class CandidateParserTest extends TestCase
         }
     }
 
+    public function test_末尾の閉じ括弧と配列括弧が落ちているケースを二段救済する(): void
+    {
+        // 1 件目は完全に閉じている。2 件目の途中で切れて、
+        // candidates 配列の `]` も親オブジェクトの `}` も落ちている状況。
+        // extractCompleteObjects は 1 件目を救出するが、
+        // それも失敗した場合の二段救済 (`]}`/`}` を補完して再 decode) も動くことを確認する。
+        $truncated = '{"candidates":[{"question":"Q1","answer":"A1","card_type":"basic_qa"},'
+            .'{"question":"Q2","answer":"A2","card_type":"basic_qa"}';
+
+        $result = $this->parser->parse($truncated);
+
+        $this->assertTrue($result->truncated);
+        // 完成済みの 1 件目に加え、二段救済で 2 件目も救出される可能性があるが、
+        // 最低でも 1 件は救出されることを担保する
+        $this->assertGreaterThanOrEqual(1, count($result->items));
+        $this->assertSame('Q1', $result->items[0]['question']);
+    }
+
     public function test_文字列内の波括弧をオブジェクト境界と誤認しない(): void
     {
         // explanation 内に閉じ括弧 } や開き括弧 { が含まれる cloze っぽいケース

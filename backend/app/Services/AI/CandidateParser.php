@@ -126,6 +126,9 @@ final class CandidateParser
      * `"candidates"` キー直後の `[` を起点に、ネスト深さを追って完全に閉じた
      * オブジェクトのみ json_decode する。文字列内の `{` や `}`、エスケープも考慮する。
      *
+     * さらに、要素単位で完成していなくても、各要素の中身を
+     * 「最後の有効な閉じ括弧」までに切り詰めて再パースを試みる二段救済を行う。
+     *
      * @return array<int, array<string, mixed>>
      */
     private function recoverPartialCandidates(string $trimmed): array
@@ -143,7 +146,40 @@ final class CandidateParser
             $body = substr($trimmed, $bodyStart);
         }
 
-        return $this->extractCompleteObjects($body);
+        $items = $this->extractCompleteObjects($body);
+        if ($items !== []) {
+            return $items;
+        }
+
+        // 二段救済: 全体を最後の `}` までで切ってから decode 試行 (末尾カンマや不完全な文字列を除去)
+        $lastClose = strrpos($trimmed, '}');
+        if ($lastClose !== false) {
+            // candidates 配列の閉じが落ちている可能性があるので、`]` も補完して試す
+            $candidates = [
+                substr($trimmed, 0, $lastClose + 1).']}',
+                substr($trimmed, 0, $lastClose + 1).'}',
+                substr($trimmed, 0, $lastClose + 1),
+            ];
+            foreach ($candidates as $candidate) {
+                $decoded = json_decode($candidate, true);
+                if (is_array($decoded)) {
+                    $list = $decoded['candidates'] ?? $decoded;
+                    if (is_array($list) && $list !== []) {
+                        $result = [];
+                        foreach ($list as $item) {
+                            if (is_array($item)) {
+                                $result[] = $item;
+                            }
+                        }
+                        if ($result !== []) {
+                            return $result;
+                        }
+                    }
+                }
+            }
+        }
+
+        return [];
     }
 
     /**
