@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // PWA (next-pwa / workbox) が public/ 配下に生成する minified Service Worker。
+    // 我々のコードではないので lint 対象外にする。
+    "public/sw.js",
+    "public/workbox-*.js",
+    "public/swe-worker-*.js",
   ]),
 ]);
 

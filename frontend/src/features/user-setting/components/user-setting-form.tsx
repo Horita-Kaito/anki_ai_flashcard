@@ -55,6 +55,10 @@ export function UserSettingForm() {
     defaultValues: {},
   });
 
+  // react-hook-form の watch() は React Compiler の memoize 対象外 (incompatible-library)
+  // だが、ここでは provider 切替時にモデル選択肢を動的に変えるため必要。Compiler に
+  // 監視対象外であることを認めさせる。
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedProvider = watch("default_ai_provider");
 
   useEffect(() => {

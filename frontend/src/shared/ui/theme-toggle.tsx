@@ -1,13 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/shared/hooks/use-theme";
 import { cn } from "@/shared/lib/utils";
 
+// SSR では false、CSR の hydration 後に true を返すフラグ。
+// useEffect で setState する旧パターンは react-hooks/set-state-in-effect で
+// 警告されるため、useSyncExternalStore の serverSnapshot 引数を使って
+// hydration-safe に「mount したか」を表現する。
+const emptySubscribe = () => () => {};
+const useMounted = () =>
+  useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false,
+  );
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(() => typeof window !== "undefined");
+  const mounted = useMounted();
 
   const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
   const label =
