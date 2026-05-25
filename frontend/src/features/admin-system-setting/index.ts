@@ -7,5 +7,6 @@ export {
 } from "./api/system-setting-queries";
 export type {
   SystemSettingResponse,
-  UpdateSystemSettingInput,
+  UpdateSystemSettingApiInput,
+  UpdateSystemSettingFormInput,
 } from "./schemas/system-setting-schemas";

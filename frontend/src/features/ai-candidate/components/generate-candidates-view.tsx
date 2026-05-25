@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  AlertTriangle,
   ChevronDown,
   Loader2,
   Plus,
@@ -210,6 +211,33 @@ export function GenerateCandidatesView({
             </span>
           </div>
         )}
+
+        {/* partial_success バナー: 長文メモのチャンク分割で一部失敗した場合、
+            toast は一瞬で消えてしまうため、候補一覧の冒頭に常時バナーを出して
+            「再生成」へ自然に誘導する。 */}
+        {!isInFlight &&
+          generationStatus?.status === "partial_success" &&
+          (generationStatus?.chunks_failed ?? 0) > 0 && (
+            <div
+              role="status"
+              className="flex items-start gap-2 text-sm bg-amber-500/15 text-amber-800 dark:text-amber-300 rounded-md px-3 py-2"
+            >
+              <AlertTriangle
+                className="size-4 shrink-0 mt-0.5"
+                aria-hidden
+              />
+              <div className="space-y-1 leading-snug">
+                <p>
+                  メモが長いため複数の塊に分けて生成し、
+                  {generationStatus.chunks_failed} / {generationStatus.chunks_total}
+                  {" "}個の塊で失敗しました。
+                </p>
+                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
+                  「再生成」で失敗した範囲も含めて再試行できます。
+                </p>
+              </div>
+            </div>
+          )}
 
         {/* メイン CTA: 大きく、肩書きが揺れない (新規生成 / 追加生成 を 1 つのボタンにまとめる) */}
         <div className="flex flex-col sm:flex-row gap-2">

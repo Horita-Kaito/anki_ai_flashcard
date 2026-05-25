@@ -3,7 +3,7 @@ import { parseApiDataResponse } from "@/shared/api/parse-response";
 import {
   systemSettingResponseSchema,
   type SystemSettingResponse,
-  type UpdateSystemSettingInput,
+  type UpdateSystemSettingApiInput,
 } from "../schemas/system-setting-schemas";
 
 export async function fetchSystemSetting(): Promise<SystemSettingResponse> {
@@ -12,7 +12,7 @@ export async function fetchSystemSetting(): Promise<SystemSettingResponse> {
 }
 
 export async function updateSystemSetting(
-  input: UpdateSystemSettingInput
+  input: UpdateSystemSettingApiInput
 ): Promise<SystemSettingResponse> {
   await fetchCsrfCookie();
   const res = await apiClient.put("/admin/system-settings", input);

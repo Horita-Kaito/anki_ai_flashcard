@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchSystemSetting, updateSystemSetting } from "./endpoints";
-import type { UpdateSystemSettingInput } from "../schemas/system-setting-schemas";
+import type { UpdateSystemSettingApiInput } from "../schemas/system-setting-schemas";
 
 export const systemSettingKeys = {
   all: ["admin", "system-settings"] as const,
@@ -16,7 +16,8 @@ export function useSystemSetting() {
 export function useUpdateSystemSetting() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateSystemSettingInput) => updateSystemSetting(input),
+    mutationFn: (input: UpdateSystemSettingApiInput) =>
+      updateSystemSetting(input),
     onSuccess: (data) => {
       qc.setQueryData(systemSettingKeys.all, data);
     },

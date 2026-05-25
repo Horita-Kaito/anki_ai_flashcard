@@ -1,76 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import {
   useSystemSetting,
   useUpdateSystemSetting,
 } from "../api/system-setting-queries";
+import {
+  formInputToApiInput,
+  updateSystemSettingFormSchema,
+  type UpdateSystemSettingFormInput,
+} from "../schemas/system-setting-schemas";
 import { Button } from "@/shared/ui/button";
 
 export function SystemSettingForm() {
-  const { data: setting, isLoading } = useSystemSetting();
+  const { data: setting, isLoading, isError, refetch } = useSystemSetting();
   const updateMutation = useUpdateSystemSetting();
 
-  // null は「無制限 (空欄)」を表す。string で持って submit 時に parse する
-  // (number 入力で null と 0 を厳密に区別したいため、生の文字列を一旦経由する)。
-  // ユーザーが触る前は data から派生表示し、触った後は override 値を使う。
-  const [rawOverride, setRawOverride] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isDirty, isSubmitting },
+  } = useForm<UpdateSystemSettingFormInput>({
+    resolver: zodResolver(updateSystemSettingFormSchema),
+    defaultValues: { monthly_token_limit: "" },
+  });
+
+  // 初回データ取得時にフォームの初期値をセットする (rhf 標準パターン)
+  useEffect(() => {
+    if (setting) {
+      reset({
+        monthly_token_limit:
+          setting.monthly_token_limit === null
+            ? ""
+            : String(setting.monthly_token_limit),
+      });
+    }
+  }, [setting, reset]);
+
+  if (isError) {
+    return (
+      <div
+        role="alert"
+        className="space-y-3 border border-red-300 bg-red-50 dark:bg-red-950/30 rounded-xl p-4"
+      >
+        <p className="text-sm text-red-700 dark:text-red-300">
+          設定の読み込みに失敗しました。
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-11"
+          onClick={() => refetch()}
+        >
+          再試行
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading || !setting) {
     return (
-      <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+      <p
+        className="text-sm text-muted-foreground"
+        role="status"
+        aria-live="polite"
+      >
         読み込み中...
       </p>
     );
   }
 
-  const initialRaw =
-    setting.monthly_token_limit === null
-      ? ""
-      : String(setting.monthly_token_limit);
-  const raw = rawOverride ?? initialRaw;
-  const setRaw = (v: string) => setRawOverride(v);
-
-  const trimmed = raw.trim();
-  let parsed: number | null = null;
-  let parseError: string | null = null;
-  if (trimmed === "") {
-    parsed = null;
-  } else if (!/^\d+$/.test(trimmed)) {
-    parseError = "整数で入力してください";
-  } else {
-    const n = Number(trimmed);
-    if (n < 1000) {
-      parseError = "1000 以上を指定してください (無制限にするには空欄)";
-    } else if (n > 1_000_000_000) {
-      parseError = "値が大きすぎます (10 億以下)";
-    } else {
-      parsed = n;
-    }
-  }
-
-  const currentValue = setting.monthly_token_limit;
-  const isDirty = parsed !== currentValue;
-  const canSubmit = !parseError && isDirty && !updateMutation.isPending;
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
+  const onSubmit = handleSubmit(async (values) => {
     try {
-      await updateMutation.mutateAsync({ monthly_token_limit: parsed });
+      await updateMutation.mutateAsync(formInputToApiInput(values));
       toast.success("システム設定を保存しました");
     } catch (err: unknown) {
       toast.error(resolveErrorMessage(err));
     }
-  }
+  });
+
+  const currentValue = setting.monthly_token_limit;
+  const errorMessage = errors.monthly_token_limit?.message;
 
   return (
     <form
       onSubmit={onSubmit}
       className="space-y-6"
       aria-label="システム設定フォーム"
+      noValidate
     >
       <section className="space-y-4 border rounded-xl p-4 md:p-5">
         <header className="space-y-1">
@@ -93,24 +116,30 @@ export function SystemSettingForm() {
             type="text"
             inputMode="numeric"
             placeholder="例: 500000"
-            value={raw}
-            onChange={(e) => setRaw(e.target.value)}
+            {...register("monthly_token_limit")}
             className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            aria-invalid={!!parseError}
+            aria-invalid={!!errorMessage}
             aria-describedby={
-              parseError ? "monthly_token_limit-error" : "monthly_token_limit-help"
+              errorMessage
+                ? "monthly_token_limit-error"
+                : "monthly_token_limit-help"
             }
           />
-          {parseError ? (
-            <p id="monthly_token_limit-error" className="text-xs text-red-600">
-              {parseError}
+          {errorMessage ? (
+            <p
+              id="monthly_token_limit-error"
+              role="alert"
+              className="text-xs text-red-600"
+            >
+              {errorMessage}
             </p>
           ) : (
             <p
               id="monthly_token_limit-help"
               className="text-xs text-muted-foreground"
             >
-              現在: {currentValue === null
+              現在:{" "}
+              {currentValue === null
                 ? "無制限"
                 : `${currentValue.toLocaleString()} tokens / 月`}
             </p>
@@ -123,9 +152,9 @@ export function SystemSettingForm() {
           type="submit"
           size="lg"
           className="min-h-11"
-          disabled={!canSubmit}
+          disabled={!isDirty || isSubmitting || updateMutation.isPending}
         >
-          {updateMutation.isPending ? "保存中..." : "保存"}
+          {isSubmitting || updateMutation.isPending ? "保存中..." : "保存"}
         </Button>
       </div>
     </form>
@@ -145,5 +174,6 @@ function resolveErrorMessage(error: unknown): string {
       : undefined;
     return firstError ?? data?.message ?? "入力内容を確認してください";
   }
+  if (status === 429) return "短時間に保存しすぎです。少し待ってから再度試してください";
   return "保存に失敗しました";
 }
