@@ -23,9 +23,9 @@ import { useCurrentUser } from "@/features/auth/api/auth-queries";
 
 const tabs = [
   { href: "/dashboard", label: "ホーム", icon: LayoutDashboard },
-  { href: "/decks", label: "デッキ", icon: Layers },
   { href: "/notes", label: "メモ", icon: NotebookPen },
   { href: "/review", label: "復習", icon: GraduationCap },
+  { href: "/decks", label: "デッキ", icon: Layers },
 ] as const;
 
 const moreItems = [

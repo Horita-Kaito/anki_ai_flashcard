@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DomainTemplateForm } from "@/features/domain-template";
+import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
   title: "テンプレート作成 | Anki AI Flashcard",
@@ -7,18 +8,12 @@ export const metadata: Metadata = {
 
 export default function NewTemplatePage() {
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">
-            テンプレートを作成
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            分野ごとの策問ポリシーを定義すると、AI 生成の品質が安定します
-          </p>
-        </header>
-        <DomainTemplateForm />
-      </div>
-    </main>
+    <PageShell
+      title="テンプレートを作成"
+      description="分野ごとの出題形式・難易度・採点観点を先に決めます。"
+      maxWidth="2xl"
+    >
+      <DomainTemplateForm />
+    </PageShell>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NewNotePageClient } from "./new-note-page-client";
+import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
   title: "メモを書く | Anki AI Flashcard",
@@ -7,16 +8,12 @@ export const metadata: Metadata = {
 
 export default function NewNotePage() {
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">メモを書く</h1>
-          <p className="text-sm text-muted-foreground">
-            短い断片でOK。AI がカード候補に変換します。
-          </p>
-        </header>
-        <NewNotePageClient />
-      </div>
-    </main>
+    <PageShell
+      title="メモを書く"
+      description="授業・読書・調査中の断片を残し、そのままカード候補に変換します。"
+      maxWidth="2xl"
+    >
+      <NewNotePageClient />
+    </PageShell>
   );
 }

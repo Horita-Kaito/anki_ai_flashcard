@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Plus } from "lucide-react";
 import { DomainTemplateList } from "@/features/domain-template";
 import { buttonVariants } from "@/shared/ui/button";
+import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
   title: "分野テンプレート | Anki AI Flashcard",
@@ -9,24 +11,20 @@ export const metadata: Metadata = {
 
 export default function TemplatesPage() {
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">分野テンプレート</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              AI の策問ポリシーを分野ごとに定義します
-            </p>
-          </div>
-          <Link
-            href="/templates/new"
-            className={`${buttonVariants({ size: "sm" })} min-h-11 shrink-0`}
-          >
-            新規作成
-          </Link>
-        </div>
-        <DomainTemplateList />
-      </div>
-    </main>
+    <PageShell
+      title="分野テンプレート"
+      description="分野ごとの出題方針を決めて、AI 候補の粒度と品質を安定させます。"
+      action={
+        <Link
+          href="/templates/new"
+          className={`${buttonVariants({ size: "lg" })} min-h-11`}
+        >
+          <Plus className="size-4" aria-hidden />
+          テンプレート作成
+        </Link>
+      }
+    >
+      <DomainTemplateList />
+    </PageShell>
   );
 }

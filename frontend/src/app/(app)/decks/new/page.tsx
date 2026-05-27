@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DeckForm } from "@/features/deck";
+import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
   title: "デッキ作成 | Anki AI Flashcard",
@@ -7,16 +8,12 @@ export const metadata: Metadata = {
 
 export default function NewDeckPage() {
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">デッキを作成</h1>
-          <p className="text-sm text-muted-foreground">
-            学習する分野ごとにデッキを分けて管理できます
-          </p>
-        </header>
-        <DeckForm />
-      </div>
-    </main>
+    <PageShell
+      title="デッキを作成"
+      description="学習分野や試験範囲ごとに、カードの受け皿を作ります。"
+      maxWidth="2xl"
+    >
+      <DeckForm />
+    </PageShell>
   );
 }

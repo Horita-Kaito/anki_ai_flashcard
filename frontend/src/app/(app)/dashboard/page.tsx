@@ -4,6 +4,7 @@ import { useCurrentUser, useLogout } from "@/features/auth";
 import { useOnboardingStatus } from "@/features/onboarding";
 import { DashboardOverview } from "@/features/dashboard";
 import { Button } from "@/shared/ui/button";
+import { PageShell } from "@/shared/ui/page-shell";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
@@ -63,28 +64,22 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">ダッシュボード</h1>
-            <p className="text-sm text-muted-foreground">
-              {user.name} さん、おかえりなさい
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleLogout}
-            disabled={logout.isPending}
-            className="min-h-11"
-          >
-            ログアウト
-          </Button>
-        </div>
-
-        <DashboardOverview />
-      </div>
-    </main>
+    <PageShell
+      title="ダッシュボード"
+      description={`${user.name} さん、おかえりなさい。今日の作成・復習・整理をここから始めます。`}
+      action={
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={handleLogout}
+          disabled={logout.isPending}
+          className="min-h-11"
+        >
+          ログアウト
+        </Button>
+      }
+    >
+      <DashboardOverview />
+    </PageShell>
   );
 }

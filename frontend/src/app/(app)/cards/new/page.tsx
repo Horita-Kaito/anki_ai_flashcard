@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CardForm } from "@/features/card";
+import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
   title: "カード作成 | Anki AI Flashcard",
@@ -7,16 +8,12 @@ export const metadata: Metadata = {
 
 export default function NewCardPage() {
   return (
-    <main className="flex-1 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold">カードを作成</h1>
-          <p className="text-sm text-muted-foreground">
-            手動でカードを作成します。AI 生成のカードはメモから作れます。
-          </p>
-        </header>
-        <CardForm />
-      </div>
-    </main>
+    <PageShell
+      title="カードを作成"
+      description="AI を使わずに、すぐ復習へ回したいカードを手動で作ります。"
+      maxWidth="2xl"
+    >
+      <CardForm />
+    </PageShell>
   );
 }
