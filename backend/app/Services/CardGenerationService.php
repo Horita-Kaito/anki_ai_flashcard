@@ -8,6 +8,7 @@ use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
+use App\Contracts\Repositories\NoteSeedRepositoryInterface;
 use App\Contracts\Repositories\SystemSettingRepositoryInterface;
 use App\Contracts\Services\AI\AiProviderInterface;
 use App\Enums\CandidateStatus;
@@ -47,6 +48,7 @@ final class CardGenerationService
         private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly AiGenerationLogRepositoryInterface $logRepository,
         private readonly DomainTemplateRepositoryInterface $templateRepository,
+        private readonly NoteSeedRepositoryInterface $noteSeedRepository,
         private readonly DeckRepositoryInterface $deckRepository,
         private readonly SystemSettingRepositoryInterface $systemSettingRepository,
         private readonly PromptBuilder $promptBuilder,
@@ -160,7 +162,7 @@ final class CardGenerationService
         $log = $this->logRepository->update($log, ['status' => AiGenerationLog::STATUS_PROCESSING]);
 
         /** @var NoteSeed|null $note */
-        $note = NoteSeed::query()->find($log->note_seed_id);
+        $note = $this->noteSeedRepository->find($log->note_seed_id);
         if ($note === null || $note->user_id !== $log->user_id) {
             $this->markFailed($log, '[NOTE_NOT_FOUND]', 'note_seed_id='.$log->note_seed_id);
             $this->updateParentAggregateIfChild($log);

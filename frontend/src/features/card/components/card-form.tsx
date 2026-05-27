@@ -14,8 +14,8 @@ import {
   createCardSchema,
   type CreateCardInput,
 } from "../schemas/card-schemas";
-import { TagPicker } from "@/shared/ui/tag-picker";
-import { useCreateTag } from "@/entities/tag/api/tag-queries";
+import { TagPicker } from "@/entities/tag/ui/tag-picker";
+import { useCreateTag, useTagList } from "@/entities/tag/api/tag-queries";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import {
@@ -43,6 +43,7 @@ export function CardForm({
   const createMutation = useCreateCard();
   const updateMutation = useUpdateCard(card?.id ?? 0);
   const createTag = useCreateTag();
+  const { data: tags = [] } = useTagList();
   const { data: decks } = useDeckList();
   const deckOptions = buildHierarchicalOptions(decks ?? []);
   const isEdit = !!card;
@@ -210,6 +211,7 @@ export function CardForm({
         control={control}
         render={({ field }) => (
           <TagPicker
+            tags={tags}
             value={field.value ?? []}
             onChange={field.onChange}
             onCreateTag={(name) => createTag.mutateAsync(name)}

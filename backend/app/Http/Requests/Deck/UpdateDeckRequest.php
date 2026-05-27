@@ -28,7 +28,12 @@ final class UpdateDeckRequest extends FormRequest
                 'integer',
                 Rule::exists('decks', 'id')->where('user_id', $userId),
             ],
-            'default_domain_template_id' => ['sometimes', 'nullable', 'integer'],
+            'default_domain_template_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('domain_templates', 'id')->where('user_id', $userId),
+            ],
         ];
     }
 

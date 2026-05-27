@@ -15,6 +15,12 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
         return NoteSeed::class;
     }
 
+    public function find(int $noteSeedId): ?NoteSeed
+    {
+        /** @var NoteSeed|null */
+        return $this->baseQuery()->where('id', $noteSeedId)->first();
+    }
+
     public function findForUser(int $userId, int $noteSeedId): ?NoteSeed
     {
         /** @var NoteSeed|null */

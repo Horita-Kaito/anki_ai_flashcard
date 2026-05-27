@@ -28,7 +28,11 @@ final class StoreDeckRequest extends FormRequest
                 // 同一ユーザー所有のデッキに限定
                 Rule::exists('decks', 'id')->where('user_id', $userId),
             ],
-            'default_domain_template_id' => ['nullable', 'integer'],
+            'default_domain_template_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('domain_templates', 'id')->where('user_id', $userId),
+            ],
         ];
     }
 

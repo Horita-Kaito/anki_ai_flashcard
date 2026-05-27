@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Models\Deck;
+use App\Models\DomainTemplate;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -76,6 +77,21 @@ final class DeckControllerTest extends TestCase
             ->assertJsonValidationErrors(['name']);
     }
 
+    public function test_他ユーザーのテンプレートをデフォルトに指定して作成できない(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $template = DomainTemplate::factory()->for($other)->create();
+
+        $this->actingAs($me)
+            ->postJson('/api/v1/decks', [
+                'name' => 'Web開発',
+                'default_domain_template_id' => $template->id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['default_domain_template_id']);
+    }
+
     public function test_他ユーザーのデッキ詳細は404を返す(): void
     {
         $me = User::factory()->create();
@@ -98,6 +114,21 @@ final class DeckControllerTest extends TestCase
 
         $response->assertOk()->assertJsonPath('data.name', 'after');
         $this->assertDatabaseHas('decks', ['id' => $deck->id, 'name' => 'after']);
+    }
+
+    public function test_他ユーザーのテンプレートをデフォルトに指定して更新できない(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $deck = Deck::factory()->for($me)->create();
+        $template = DomainTemplate::factory()->for($other)->create();
+
+        $this->actingAs($me)
+            ->putJson("/api/v1/decks/{$deck->id}", [
+                'default_domain_template_id' => $template->id,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['default_domain_template_id']);
     }
 
     public function test_他ユーザーのデッキは更新できない(): void

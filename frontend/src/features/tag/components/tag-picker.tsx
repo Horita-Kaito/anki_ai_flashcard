@@ -1,7 +1,7 @@
 "use client";
 
-import { useCreateTag } from "@/entities/tag/api/tag-queries";
-import { TagPicker as BaseTagPicker } from "@/shared/ui/tag-picker";
+import { useCreateTag, useTagList } from "@/entities/tag/api/tag-queries";
+import { TagPicker as EntityTagPicker } from "@/entities/tag/ui/tag-picker";
 
 interface TagPickerProps {
   value: number[];
@@ -14,9 +14,12 @@ interface TagPickerProps {
  * 親に mutation を意識させない。
  */
 export function TagPicker({ value, onChange, label }: TagPickerProps) {
+  const { data: tags = [] } = useTagList();
   const createTag = useCreateTag();
+
   return (
-    <BaseTagPicker
+    <EntityTagPicker
+      tags={tags}
       value={value}
       onChange={onChange}
       label={label}

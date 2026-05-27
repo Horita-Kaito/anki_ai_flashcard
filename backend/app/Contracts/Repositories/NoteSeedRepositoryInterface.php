@@ -9,6 +9,8 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface NoteSeedRepositoryInterface
 {
+    public function find(int $noteSeedId): ?NoteSeed;
+
     public function findForUser(int $userId, int $noteSeedId): ?NoteSeed;
 
     /**

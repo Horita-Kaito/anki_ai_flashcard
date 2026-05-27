@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { useTagList } from "@/entities/tag/api/tag-queries";
 import { Button } from "@/shared/ui/button";
 
+export interface TagPickerOption {
+  id: number;
+  name: string;
+}
+
 interface TagPickerProps {
+  tags: TagPickerOption[];
   value: number[];
   onChange: (ids: number[]) => void;
   /** 新規タグ作成を許可する場合のコールバック (なければ作成 UI を非表示) */
@@ -18,13 +23,13 @@ interface TagPickerProps {
  * タグ選択 UI。features 側からは callback 経由で mutation を渡す。
  */
 export function TagPicker({
+  tags,
   value,
   onChange,
   onCreateTag,
   isCreating = false,
   label = "タグ",
 }: TagPickerProps) {
-  const { data: tags = [] } = useTagList();
   const [newTagName, setNewTagName] = useState("");
 
   function toggle(id: number) {

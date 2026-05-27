@@ -17,7 +17,6 @@ use App\Http\Requests\AiCardCandidate\UpdateCandidateRequest;
 use App\Http\Resources\AiCardCandidateResource;
 use App\Http\Resources\AiGenerationStatusResource;
 use App\Http\Resources\CardResource;
-use App\Models\NoteSeed;
 use App\Services\AiCardCandidateService;
 use App\Services\CardGenerationService;
 use App\Services\NoteSeedService;
@@ -30,6 +29,8 @@ final class AiCardCandidateController extends Controller
         private readonly CardGenerationService $generationService,
         private readonly AiCardCandidateService $candidateService,
         private readonly NoteSeedService $noteSeedService,
+        private readonly AiGenerationLogRepositoryInterface $generationLogRepository,
+        private readonly AiCardCandidateRepositoryInterface $candidateRepository,
     ) {}
 
     /**
@@ -160,11 +161,8 @@ final class AiCardCandidateController extends Controller
             noteSeedId: $noteSeedId,
         );
 
-        /** @var AiGenerationLogRepositoryInterface $repo */
-        $repo = app(AiGenerationLogRepositoryInterface::class);
-
-        $log = $repo->findInFlightForNote($note->user_id, $note->id)
-            ?? $repo->findLatestForNote($note->user_id, $note->id);
+        $log = $this->generationLogRepository->findInFlightForNote($note->user_id, $note->id)
+            ?? $this->generationLogRepository->findLatestForNote($note->user_id, $note->id);
 
         if ($log === null) {
             return response()->json([
@@ -180,7 +178,6 @@ final class AiCardCandidateController extends Controller
 
     public function indexForNoteSeed(Request $request, int $noteSeedId): JsonResponse
     {
-        /** @var NoteSeed $note */
         $note = $this->noteSeedService->getForUser(
             userId: $request->user()->id,
             noteSeedId: $noteSeedId,
@@ -189,9 +186,7 @@ final class AiCardCandidateController extends Controller
         $status = $request->query('status');
         $statusStr = is_string($status) && $status !== '' ? $status : null;
 
-        /** @var AiCardCandidateRepositoryInterface $repo */
-        $repo = app(AiCardCandidateRepositoryInterface::class);
-        $candidates = $repo->listForNoteSeed($note->user_id, $note->id, $statusStr);
+        $candidates = $this->candidateRepository->listForNoteSeed($note->user_id, $note->id, $statusStr);
 
         return AiCardCandidateResource::collection($candidates)->response();
     }
