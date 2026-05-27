@@ -5,12 +5,16 @@
 .env.staging
 .env.prod
 .env.production
+CLAUDE.local.md
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+
+# Dependencies
+node_modules/
 
 # OS
 .DS_Store

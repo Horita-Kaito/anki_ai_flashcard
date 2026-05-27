@@ -117,9 +117,11 @@ $this->app->bind(
 $this->app->bind(AiProviderInterface::class, function ($app) {
     $provider = config('ai.default_provider');
     return match ($provider) {
+        'fake' => $app->make(FakeAiProvider::class),
         'openai' => $app->make(OpenAiProvider::class),
-        'anthropic' => $app->make(AnthropicProvider::class),
         'google' => $app->make(GoogleAiProvider::class),
+        // Anthropic は config 予約済み。実プロバイダ追加時に具象を差し替える。
+        'anthropic' => $app->make(FakeAiProvider::class),
         default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
     };
 });

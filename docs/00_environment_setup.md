@@ -42,6 +42,7 @@
 anki_ai_flashcard/
 ├── docker-compose.yml
 ├── .env.example
+├── AGENTS.md
 ├── CLAUDE.md
 ├── docs/
 │   ├── requirements.md
@@ -105,7 +106,8 @@ anki_ai_flashcard/
 │   │   │   ├── AI/
 │   │   │   │   ├── AiProviderInterface.php
 │   │   │   │   ├── OpenAiProvider.php
-│   │   │   │   ├── AnthropicProvider.php
+│   │   │   │   ├── GoogleAiProvider.php
+│   │   │   │   ├── FakeAiProvider.php
 │   │   │   │   └── CardGenerationService.php
 │   │   │   └── Review/
 │   │   │       ├── SchedulerInterface.php

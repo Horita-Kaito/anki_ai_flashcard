@@ -20,7 +20,7 @@ description: |
 ## レビュー観点
 
 ### 1. レイヤー依存
-- [ ] Controller → Service Interface → Repository Interface の依存方向を守っている
+- [ ] Controller → Service/domain Service → Repository Interface の依存方向を守っている
 - [ ] Controller に Eloquent クエリがない
 - [ ] Service に Eloquent クエリがない (Repository 経由で呼ぶ)
 - [ ] Service が具象クラスを `new` していない (DI で受け取る)
@@ -69,7 +69,7 @@ description: |
 ### 8. セキュリティ
 - [ ] Rate Limiting (`throttle:`) が設定されている
   - 認証系: `throttle:5,1`
-  - AI 生成系: `throttle:10,60`
+  - AI 生成系: `throttle:ai-generation`
   - 一般: デフォルト (`throttleApi()`)
 - [ ] Model に `$fillable` が定義されている (Mass Assignment 対策)
 - [ ] パスワードは `Hash::make()` or `bcrypt()`

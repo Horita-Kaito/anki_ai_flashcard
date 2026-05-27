@@ -523,7 +523,7 @@ toast.error("保存に失敗しました");
 
 ---
 
-## 15. ワークフロー (Claude Code Skills)
+## 15. ワークフロー (Agent Skills)
 
 本プロジェクトでは以下の skill で UI 作成を標準化する:
 
@@ -534,7 +534,7 @@ toast.error("保存に失敗しました");
 | `ui-new-page` | `app/` 配下に新規ルートを追加 | `/ui-new-page <path>` |
 | `ui-review` | 作ったUIをルールに照らしてセルフレビュー | `/ui-review <path>` |
 
-詳細は `.claude/skills/*/SKILL.md` を参照。
+詳細は `.agents/skills/*/SKILL.md` を参照。
 
 ---
 

@@ -49,7 +49,8 @@ backend/app/
 │   ├── CardService.php
 │   ├── AI/                          # AI プロバイダ具象
 │   │   ├── OpenAiProvider.php
-│   │   ├── AnthropicProvider.php
+│   │   ├── GoogleAiProvider.php
+│   │   ├── FakeAiProvider.php
 │   │   └── CardGenerationService.php
 │   └── Review/                      # スケジューラ具象
 │       └── Sm2Scheduler.php
@@ -325,10 +326,13 @@ AI/Scheduler のような **切替可能な依存** は設定駆動:
 ```php
 // AI プロバイダをユーザー設定 or env で切替
 $this->app->bind(AiProviderInterface::class, function ($app) {
-    $provider = config('ai.default_provider'); // openai | anthropic | google
+    $provider = config('ai.default_provider'); // fake | openai | google | anthropic
     return match ($provider) {
+        'fake' => $app->make(FakeAiProvider::class),
         'openai' => $app->make(OpenAiProvider::class),
-        'anthropic' => $app->make(AnthropicProvider::class),
+        'google' => $app->make(GoogleAiProvider::class),
+        // Anthropic は config 予約済み。実プロバイダ追加時に具象を差し替える。
+        'anthropic' => $app->make(FakeAiProvider::class),
         default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
     };
 });
@@ -642,7 +646,7 @@ docker compose exec backend php artisan test --coverage
 ### 11-1. 必ず実装
 - 認証系エンドポイントに `throttle:5,1` (ブルートフォース)
 - 一般 API に `throttle:60,1` (Sanctum SPA ミドルウェア込み)
-- AI 生成系に `throttle:10,60` (コスト爆発防止)
+- AI 生成系に `throttle:ai-generation` (コスト爆発防止)
 - 全リソースアクセスに user_id スコープ or Policy
 - CSRF Cookie 必須 (Sanctum SPA)
 - 本番 `APP_DEBUG=false`
@@ -712,7 +716,7 @@ Sanctum を採用し、用途で2系統を使い分ける。`auth:sanctum` ミ�
 
 ---
 
-## 15. ワークフロー (Claude Code Skills)
+## 15. ワークフロー (Agent Skills)
 
 | skill | 用途 | 起動 |
 |-------|------|------|

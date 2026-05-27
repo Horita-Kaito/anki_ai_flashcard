@@ -1,18 +1,10 @@
----
-name: architecture-reviewer
-description: |
-  プロジェクト全体のアーキテクチャ適合性を検証するエージェント。
-  Backend の Repository+Service+Interface 依存方向、Frontend の Feature-Sliced レイヤー規約、
-  DB スキーマ設計、API RESTful 準拠、Docker/Infra 構成を横断的にチェックする。
-  「アーキテクチャレビュー」「設計チェック」「構造確認」等のリクエストで起動する。
-model: sonnet
-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
----
-
+name = "architecture-reviewer"
+description = """
+プロジェクト全体のアーキテクチャ適合性を検証するエージェント。
+Backend の Repository+Service+Interface 依存方向、Frontend の Feature-Sliced レイヤー規約、
+DB スキーマ設計、API RESTful 準拠、Docker/Infra 構成を横断的にチェックする。
+「アーキテクチャレビュー」「設計チェック」「構造確認」等のリクエストで起動する。"""
+developer_instructions = """
 # Architecture Reviewer
 
 プロジェクト全体のアーキテクチャ適合性を検証する。
@@ -75,4 +67,4 @@ tools:
 1. ...
 ```
 
-findings は severity (Critical/Warning/Info) 付きで、ファイルパスと行番号を含めること。
+findings は severity (Critical/Warning/Info) 付きで、ファイルパスと行番号を含めること。"""
