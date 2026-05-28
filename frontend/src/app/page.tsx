@@ -11,7 +11,7 @@ import { buttonVariants } from "@/shared/ui/button";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Anki AI Flashcard",
+  name: "まなメモAI",
   description:
     "AI がメモからフラッシュカード候補を生成し、科学的な間隔反復で記憶に定着させる学習支援アプリ。",
   applicationCategory: "EducationalApplication",
@@ -128,7 +128,7 @@ export default function HomePage() {
 
       {/* フッター */}
       <footer className="mx-auto max-w-5xl px-4 md:px-8 py-8 md:py-12 text-xs text-muted-foreground text-center border-t">
-        <p>© {new Date().getFullYear()} Anki AI Flashcard · 個人学習支援ツール</p>
+        <p>© {new Date().getFullYear()} まなメモAI · 個人学習支援ツール</p>
       </footer>
     </main>
   );

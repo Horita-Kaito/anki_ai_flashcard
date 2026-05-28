@@ -1,4 +1,4 @@
-# Anki AI Flashcard Agent Guide
+# まなメモAI Agent Guide
 
 This file is the canonical project guide for coding agents. Keep it short, durable, and linked to the source documents instead of duplicating every rule.
 
@@ -17,6 +17,8 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 ## Source Of Truth
 
 - Requirements and phase plan: `docs/requirements.md`, `docs/01_mvp_phases.md`
+- Personas and use cases: `docs/10_personas_use_cases.md`
+- Redesign brief: `docs/11_design_redesign_brief.md`
 - API contract: `docs/03_api_specification.md`
 - Frontend architecture: `docs/05_frontend_design.md`
 - Backend architecture: `docs/06_backend_design.md`
