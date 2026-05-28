@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 const mockUser = {
   id: 1,

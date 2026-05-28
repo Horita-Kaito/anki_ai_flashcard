@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { SystemSettingResponse } from "@/features/admin-system-setting";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockSetting: SystemSettingResponse = {
   monthly_token_limit: null,

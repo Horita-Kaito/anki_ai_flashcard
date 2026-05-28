@@ -2,7 +2,7 @@ import { http, HttpResponse } from "msw";
 import type { Card } from "@/entities/card/types";
 import type { Tag } from "@/entities/tag/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockCards: Card[] = [];
 let mockTags: Tag[] = [];

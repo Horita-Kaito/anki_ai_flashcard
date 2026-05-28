@@ -5,7 +5,7 @@ import { server } from "@/test/msw/server";
 import { DeckList } from "./deck-list";
 import { renderWithProviders } from "@/test/render";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 describe("DeckList", () => {
   it("MSW のデフォルトデータが表示される", async () => {

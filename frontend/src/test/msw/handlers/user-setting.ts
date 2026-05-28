@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { UserSetting } from "@/entities/user-setting/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockSetting: UserSetting = {
   default_domain_template_id: null,

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { Deck } from "@/entities/deck/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 const initialDecks = (): Deck[] => [
   {

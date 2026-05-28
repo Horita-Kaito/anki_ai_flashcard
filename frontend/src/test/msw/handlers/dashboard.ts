@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 export const dashboardHandlers = [
   http.get(`${API}/api/v1/dashboard/summary`, () =>

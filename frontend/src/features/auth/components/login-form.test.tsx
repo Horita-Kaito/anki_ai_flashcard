@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-const API = "http://localhost:8000";
+const API = "*";
 
 describe("LoginForm", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { DomainTemplate } from "@/entities/domain-template/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockTemplates: DomainTemplate[] = [
   {

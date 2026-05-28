@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { NoteSeed } from "@/entities/note-seed/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockNotes: NoteSeed[] = [];
 

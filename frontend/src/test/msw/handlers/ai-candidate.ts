@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 
-const API = "http://localhost:8000";
+const API = "*";
 
 let mockCandidates: AiCardCandidate[] = [];
 

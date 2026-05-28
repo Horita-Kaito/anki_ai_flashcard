@@ -21,7 +21,7 @@ vi.mock("sonner", () => ({
   toast: { success: toastSuccess, error: toastError },
 }));
 
-const API = "http://localhost:8000";
+const API = "*";
 
 describe("NewNotePageClient", () => {
   beforeEach(() => {
@@ -50,7 +50,7 @@ describe("NewNotePageClient", () => {
     renderWithProviders(<NewNotePageClient />);
 
     // 連続モード toggle を ON
-    await user.click(screen.getByRole("checkbox", { name: /続けて作成モード/ }));
+    await user.click(screen.getByRole("checkbox", { name: /続けてメモを書く/ }));
 
     // 「保存」単独ボタンが消えていること
     expect(
