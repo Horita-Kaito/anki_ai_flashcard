@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";
 import { cn } from "@/shared/lib/utils";
-import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import { useCurrentUser } from "@/features/auth/api/auth-queries";
 
 const tabs = [
@@ -127,9 +126,6 @@ export function BottomTabBar() {
                       );
                     })}
                   </ul>
-                  <div className="border-t mt-1 pt-1 px-1">
-                    <ThemeToggle className="w-full justify-start min-h-11 px-2" />
-                  </div>
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>

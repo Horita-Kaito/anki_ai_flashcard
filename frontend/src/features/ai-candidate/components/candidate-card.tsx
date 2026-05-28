@@ -19,9 +19,16 @@ import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 interface CandidateCardProps {
   candidate: AiCardCandidate;
   defaultDeckId?: number;
+  ordinal?: number;
+  total?: number;
 }
 
-export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) {
+export function CandidateCard({
+  candidate,
+  defaultDeckId,
+  ordinal,
+  total,
+}: CandidateCardProps) {
   const [editing, setEditing] = useState(false);
   const [question, setQuestion] = useState(candidate.question);
   const [answer, setAnswer] = useState(candidate.answer);
@@ -55,7 +62,10 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
           explanation: explanation.trim() === "" ? null : explanation,
         },
       });
-      toast.success("カードとして採用しました");
+      toast.success("カードとして採用しました", {
+        duration: 5000,
+        description: "採用先デッキへ追加しました。",
+      });
     } catch {
       toast.error("採用に失敗しました");
     }
@@ -103,9 +113,9 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
 
   return (
     <article
-      className={`border rounded-xl p-4 md:p-5 space-y-3 ${
+      className={`border rounded-lg p-4 md:p-5 space-y-4 ${
         candidate.status === "adopted"
-          ? "bg-primary/5 border-primary/30"
+          ? "bg-[var(--forest-faint)] border-primary/30"
           : candidate.status === "rejected"
             ? "bg-muted/30 opacity-60"
             : "bg-card"
@@ -125,6 +135,11 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
           {candidate.confidence !== null && (
             <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
               信頼度 {(candidate.confidence * 100).toFixed(0)}%
+            </span>
+          )}
+          {typeof ordinal === "number" && typeof total === "number" && (
+            <span className="px-2 py-0.5 rounded-full bg-[var(--bronze-faint)] text-muted-foreground">
+              {ordinal} / {total}
             </span>
           )}
           {candidate.status !== "pending" && (
@@ -204,36 +219,41 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {candidate.card_type === "cloze_like" ? (
-            <p className="font-medium">
+            <p className="knowledge-text text-lg font-medium leading-relaxed">
               <ClozeText text={question} mode="front" />
             </p>
           ) : (
-            <p className="font-medium">{question}</p>
+            <p className="knowledge-text text-lg font-medium leading-relaxed">{question}</p>
           )}
-          <p className="text-sm text-muted-foreground">{answer}</p>
+          <p className="knowledge-text text-sm text-muted-foreground">{answer}</p>
           {explanation && (
-            <p className="text-sm text-muted-foreground border-l-2 border-muted-foreground/30 pl-2 whitespace-pre-wrap">
+            <p className="knowledge-text text-sm text-muted-foreground border-l-2 border-[var(--bronze)]/35 pl-3 whitespace-pre-wrap">
               {explanation}
             </p>
           )}
           {candidate.rationale && (
-            <p className="text-xs text-muted-foreground italic">
-              AIの判断: {candidate.rationale}
-            </p>
+            <details className="rounded-md bg-[var(--bronze-faint)] px-3 py-2">
+              <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+                AI の判断理由
+              </summary>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {candidate.rationale}
+              </p>
+            </details>
           )}
         </div>
       )}
 
       {!isFinal && !editing && (
-        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+        <div className="space-y-2 pt-1">
           <select
             value={deckId}
             onChange={(e) =>
               setDeckId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background sm:flex-1 max-w-full"
+            className="w-full border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background max-w-full"
             aria-label="採用先のデッキ"
           >
             <option value="">採用先のデッキを選択</option>
@@ -244,40 +264,40 @@ export function CandidateCard({ candidate, defaultDeckId }: CandidateCardProps) 
               </option>
             ))}
           </select>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="lg"
-              className="min-h-11 flex-1 sm:flex-none"
-              onClick={handleAdopt}
-              disabled={!canAdopt || adoptMutation.isPending}
-              aria-keyshortcuts="a"
-            >
-              <Check className="size-4" aria-hidden />
-              採用
-            </Button>
+          <Button
+            type="button"
+            size="lg"
+            className="min-h-14 w-full rounded-md text-base"
+            onClick={handleAdopt}
+            disabled={!canAdopt || adoptMutation.isPending}
+            aria-keyshortcuts="a"
+          >
+            <Check className="size-4" aria-hidden />
+            採用して復習に回す
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="min-h-11 min-w-11"
+              className="min-h-11"
               onClick={() => setEditing(true)}
               aria-keyshortcuts="e"
-              aria-label="編集"
             >
               <Pencil className="size-4" aria-hidden />
+              編集
             </Button>
             <Button
               type="button"
               size="lg"
               variant="outline"
-              className="min-h-11 min-w-11 text-destructive"
+              className="min-h-11 text-destructive"
               onClick={handleReject}
               disabled={rejectMutation.isPending}
               aria-keyshortcuts="r"
-              aria-label="却下"
             >
               <X className="size-4" aria-hidden />
+              却下
             </Button>
           </div>
         </div>

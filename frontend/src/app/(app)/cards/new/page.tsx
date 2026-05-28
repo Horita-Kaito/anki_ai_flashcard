@@ -3,7 +3,7 @@ import { CardForm } from "@/features/card";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "カード作成 | Anki AI Flashcard",
+  title: "カード作成 | まとメモAI",
 };
 
 export default function NewCardPage() {

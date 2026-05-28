@@ -3,7 +3,7 @@ import { TagManager } from "@/features/tag";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "タグ管理 | Anki AI Flashcard",
+  title: "タグ管理 | まとメモAI",
 };
 
 export default function TagsPage() {

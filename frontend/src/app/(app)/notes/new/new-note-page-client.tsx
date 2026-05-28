@@ -73,8 +73,8 @@ export function NewNotePageClient() {
     <div className="space-y-5">
       <label
         className="
-          flex items-start gap-3 p-3 border rounded-md cursor-pointer
-          bg-muted/30 hover:bg-muted/50 transition-colors
+          flex items-start gap-3 p-3 border rounded-lg cursor-pointer
+          bg-[var(--bronze-faint)] hover:bg-[var(--bronze-soft)]/40 transition-colors
           min-h-11
           has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2
         "
@@ -87,13 +87,12 @@ export function NewNotePageClient() {
           aria-describedby="continue-mode-desc"
         />
         <span className="text-sm">
-          <span className="font-medium">続けて作成モード</span>
+          <span className="font-medium">続けてメモを書く</span>
           <span
             id="continue-mode-desc"
             className="block text-xs text-muted-foreground mt-0.5"
           >
-            保存後にフォームを空にして連続でメモを書けます。詳細設定 (テンプレート等)
-            は引き継がれます。このモードでは「保存して候補生成」だけが有効です。
+            本文だけを空にします。設定は引き継ぎ、保存したメモは候補生成へ回します。
           </span>
         </span>
       </label>

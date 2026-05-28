@@ -11,9 +11,9 @@ import { buttonVariants } from "@/shared/ui/button";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "まなメモAI",
+  name: "まとメモAI",
   description:
-    "AI がメモからフラッシュカード候補を生成し、科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+    "学習メモを、今日覚えるべき問いに変える作業台。",
   applicationCategory: "EducationalApplication",
   operatingSystem: "Web",
   offers: {
@@ -32,33 +32,21 @@ export default function HomePage() {
       />
       {/* ヒーロー */}
       <section className="relative overflow-hidden">
-        {/* 背景: 微細なグラデーション */}
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10"
-          style={{
-            background:
-              "radial-gradient(60% 80% at 50% 0%, color-mix(in oklch, var(--primary), transparent 92%), transparent 70%)",
-          }}
-        />
-
         <div className="mx-auto max-w-5xl px-4 md:px-8 pt-16 md:pt-28 pb-12 md:pb-20">
           <div className="flex flex-col items-center text-center space-y-6 md:space-y-8">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-card/70 backdrop-blur text-xs text-muted-foreground">
+            <span className="bookplate-mark inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs">
               <Sparkles className="size-3 text-primary" aria-hidden />
-              AI × 間隔反復で「問いを作る面倒」をゼロに
+              まとメモAI
             </span>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
-              メモを、
-              <br className="sm:hidden" />
-              <span className="text-gradient-primary">記憶に残る問い</span>
-              へ。
+              学習メモを、
+              <br />
+              今日覚えるべき問いへ。
             </h1>
 
             <p className="text-base md:text-lg text-muted-foreground max-w-xl">
-              学習中の気づきを短いメモで残すだけ。AI が効果的なフラッシュカード候補に変換し、
-              科学的な間隔反復であなたの記憶に定着させます。
+              AI が候補を出し、人がレビューして採用します。読んだだけで終わらせず、明日の復習に残します。
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm sm:w-auto sm:max-w-none pt-2">
@@ -66,7 +54,7 @@ export default function HomePage() {
                 href="/login"
                 className={`${buttonVariants({ size: "lg" })} min-h-12 px-6 justify-center text-base shadow-sm`}
               >
-                ログイン
+                作業台を開く
               </Link>
             </div>
           </div>
@@ -78,18 +66,18 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           <Feature
             icon={<Sparkles className="size-5" aria-hidden />}
-            title="AI が候補を生成"
-            description="メモを書くだけ。OpenAI / Anthropic 等の LLM が分野テンプレートに沿って複数のカード候補を提案します。採用・編集・却下はあなたが判断。"
+            title="メモを問いに変える"
+            description="AI は候補を出すだけです。採用・編集・却下は人が判断し、復習対象を整えます。"
           />
           <Feature
             icon={<GraduationCap className="size-5" aria-hidden />}
-            title="SM-2 間隔反復"
-            description="Again / Hard / Good / Easy の自己評価で次回出題日を自動調整。無駄な復習を減らし、忘れる直前のタイミングで想起します。"
+            title="今日の復習に戻す"
+            description="Again / Hard / Good / Easy の評価で、次に出会う日を決めます。"
           />
           <Feature
             icon={<LineChart className="size-5" aria-hidden />}
-            title="学習を可視化"
-            description="ストリーク、Again 率、デッキ別パフォーマンス。データを味方に、継続のモチベーションを保ちます。"
+            title="整理を主役にしない"
+            description="検索と期日を中心に、今やるカードへすぐ戻れるようにします。"
           />
         </div>
       </section>
@@ -97,17 +85,16 @@ export default function HomePage() {
       {/* モバイル/PC 両対応 */}
       <section className="mx-auto max-w-5xl px-4 md:px-8 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <div className="rounded-2xl border bg-card p-6 md:p-8 space-y-3">
+          <div className="rounded-lg border bg-card p-6 md:p-8 space-y-3">
             <span className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <Smartphone className="size-5" aria-hidden />
             </span>
             <h3 className="text-lg font-semibold">モバイルに最適化</h3>
             <p className="text-sm text-muted-foreground">
-              ボトムタブ + FAB で片手操作。復習カードは左右スワイプで評価。
-              ハプティクスと 3D フリップでネイティブアプリ級の操作感。
+              メモ入力中も保存導線を下部に固定します。復習では余計な導線を消し、評価だけを残します。
             </p>
           </div>
-          <div className="rounded-2xl border bg-card p-6 md:p-8 space-y-3">
+          <div className="rounded-lg border bg-card p-6 md:p-8 space-y-3">
             <span className="inline-flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <KeyboardIcon className="size-5" aria-hidden />
             </span>
@@ -128,7 +115,7 @@ export default function HomePage() {
 
       {/* フッター */}
       <footer className="mx-auto max-w-5xl px-4 md:px-8 py-8 md:py-12 text-xs text-muted-foreground text-center border-t">
-        <p>© {new Date().getFullYear()} まなメモAI · 個人学習支援ツール</p>
+        <p>© {new Date().getFullYear()} まとメモAI · 個人学習支援ツール</p>
       </footer>
     </main>
   );

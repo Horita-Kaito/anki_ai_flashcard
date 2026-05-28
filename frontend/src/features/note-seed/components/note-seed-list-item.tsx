@@ -35,7 +35,7 @@ export function NoteSeedListItem({
   const preview = stripMarkdown(note.body);
 
   // 一括選択モードでは Link ではなく button として動作させ、誤遷移を防ぐ
-  const wrapperClass = `group flex items-start gap-3 border rounded-xl p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
+  const wrapperClass = `group flex items-start gap-3 border rounded-lg p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
     selectable && selected
       ? "border-primary ring-2 ring-primary/30 bg-primary/5"
       : ""
@@ -63,7 +63,7 @@ export function NoteSeedListItem({
         </span>
       )}
       <span className="flex-1 min-w-0 space-y-2">
-        <span className="block text-sm line-clamp-2 break-words">{preview}</span>
+        <span className="knowledge-text block text-sm line-clamp-2 break-words">{preview}</span>
         <NoteSeedStatusBadges
           pending={pending}
           adopted={adopted}
@@ -130,13 +130,13 @@ function NoteSeedStatusBadges({
   return (
     <span className="flex flex-wrap gap-1.5">
       {pending > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--persimmon-faint)] text-foreground px-2 py-0.5 text-xs font-medium">
           <Sparkles className="size-3" aria-hidden />
           レビュー待ち {pending}
         </span>
       ) : null}
       {adopted > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 text-xs font-medium">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--forest-faint)] text-primary px-2 py-0.5 text-xs font-medium">
           <CheckCircle2 className="size-3" aria-hidden />
           採用 {adopted}
         </span>

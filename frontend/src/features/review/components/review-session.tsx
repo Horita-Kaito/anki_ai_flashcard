@@ -21,24 +21,18 @@ import type { ExtraCard } from "@/entities/review/types";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { haptic } from "@/shared/lib/haptics";
 
-// メイン (hard / good) は大きく強調。サブ (again / easy) は控えめ。
-// アルゴリズムを知らないユーザーが基本の 2 択をすぐ見つけられるようにする。
-const RATING_CLASSES_PRIMARY: Record<"hard" | "good", string> = {
-  hard: "bg-amber-500 text-white hover:bg-amber-600 shadow-sm",
-  good: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm",
-};
-
-const RATING_CLASSES_SECONDARY: Record<"again" | "easy", string> = {
-  again:
-    "bg-background border border-destructive/40 text-destructive hover:bg-destructive/10",
-  easy: "bg-background border border-sky-500/40 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10",
+const RATING_CLASSES: Record<ReviewRating, string> = {
+  again: "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/15",
+  hard: "border-[color-mix(in_oklch,var(--persimmon),transparent_45%)] bg-[var(--persimmon-faint)] text-foreground hover:bg-[var(--persimmon-soft)]/60",
+  good: "border-primary/35 bg-[var(--forest-faint)] text-primary hover:bg-[var(--forest-soft)]/60",
+  easy: "border-[color-mix(in_oklch,var(--bronze),transparent_35%)] bg-[var(--bronze-faint)] text-foreground hover:bg-[var(--bronze-soft)]/70",
 };
 
 const RATING_HINTS: Record<ReviewRating, string> = {
-  again: "思い出せなかった",
-  hard: "時間がかかった",
-  good: "スムーズに思い出せた",
-  easy: "余裕だった",
+  again: "<1分",
+  hard: "10分",
+  good: "4日",
+  easy: "12日",
 };
 
 export function ReviewSession() {
@@ -303,15 +297,15 @@ export function ReviewSession() {
   if (!current) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {extraMode && (
-        <div className="flex items-center justify-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+        <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
           <CalendarClock className="size-4" aria-hidden />
           閲覧モード — スケジュールには影響しません
         </div>
       )}
 
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
           {activeCompleted} / {activeCards.length} 完了
         </span>
@@ -340,7 +334,6 @@ export function ReviewSession() {
         </div>
       )}
 
-      {/* アーカイブボタン */}
       <div className="flex justify-end">
         <Button
           variant="ghost"
@@ -382,7 +375,7 @@ export function ReviewSession() {
       />
 
       {!showAnswer ? (
-        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -395,7 +388,7 @@ export function ReviewSession() {
           </Button>
         </div>
       ) : extraMode ? (
-        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -408,51 +401,28 @@ export function ReviewSession() {
           </Button>
         </div>
       ) : (
-        <div className="fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
-          <div className="space-y-2">
-            {/* 基本の 2 択: 「難しい」と「普通」を大きく */}
-            <div className="grid grid-cols-2 gap-2">
-              {(["hard", "good"] as const).map((rating) => (
-                <button
-                  key={rating}
-                  type="button"
-                  onClick={() => handleRate(rating)}
-                  disabled={answerMutation.isPending}
-                  className={`${RATING_CLASSES_PRIMARY[rating]} min-h-16 rounded-md font-semibold text-base md:text-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 px-3`}
-                  aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
-                >
-                  <span className="block leading-tight">
-                    {REVIEW_RATING_LABELS[rating]}
-                  </span>
-                  <span className="block text-[11px] md:text-xs font-normal opacity-90 leading-tight mt-0.5">
-                    {RATING_HINTS[rating]}
-                  </span>
-                  <span className="block text-[10px] md:text-xs opacity-70 leading-tight mt-0.5">
-                    ({REVIEW_RATING_SHORTCUTS[rating]})
-                  </span>
-                </button>
-              ))}
-            </div>
-            {/* 補助の 2 択: 「もう一度」と「簡単」は控えめに */}
-            <div className="grid grid-cols-2 gap-2">
-              {(["again", "easy"] as const).map((rating) => (
-                <button
-                  key={rating}
-                  type="button"
-                  onClick={() => handleRate(rating)}
-                  disabled={answerMutation.isPending}
-                  className={`${RATING_CLASSES_SECONDARY[rating]} min-h-11 rounded-md text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 px-3`}
-                  aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
-                >
-                  <span className="font-medium">
-                    {REVIEW_RATING_LABELS[rating]}
-                  </span>
-                  <span className="text-xs opacity-70 ml-1.5">
-                    ({REVIEW_RATING_SHORTCUTS[rating]})
-                  </span>
-                </button>
-              ))}
-            </div>
+        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+          <div className="grid grid-cols-4 gap-2">
+            {REVIEW_RATINGS.map((rating) => (
+              <button
+                key={rating}
+                type="button"
+                onClick={() => handleRate(rating)}
+                disabled={answerMutation.isPending}
+                className={`${RATING_CLASSES[rating]} min-h-16 rounded-md border px-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50`}
+                aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
+              >
+                <span className="block text-sm font-semibold leading-tight md:text-base">
+                  {REVIEW_RATING_LABELS[rating]}
+                </span>
+                <span className="block text-[11px] leading-tight opacity-80">
+                  {RATING_HINTS[rating]}
+                </span>
+                <kbd className="mt-1 inline-flex rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75">
+                  {REVIEW_RATING_SHORTCUTS[rating]}
+                </kbd>
+              </button>
+            ))}
           </div>
         </div>
       )}

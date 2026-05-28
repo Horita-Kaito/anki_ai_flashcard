@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 import { useCardInfiniteList } from "../api/card-queries";
 import { CardListItem } from "./card-list-item";
 import { CardListEmpty } from "./card-list-empty";
@@ -25,6 +25,7 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
   const [deckId, setDeckId] = useState<number | "">(lockedDeckId ?? "");
   const [tagId, setTagId] = useState<number | "">("");
   const [archiveFilter, setArchiveFilter] = useState<ArchiveFilter>("active");
+  const [showFilters, setShowFilters] = useState(false);
   const debouncedKeyword = useDebouncedValue(keyword, 300);
 
   const effectiveDeckId = lockedDeckId ?? (deckId === "" ? undefined : Number(deckId));
@@ -79,35 +80,6 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        <div className="flex gap-1 rounded-lg bg-muted p-1" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={archiveFilter === "active"}
-            onClick={() => setArchiveFilter("active")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
-              archiveFilter === "active"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            学習中
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={archiveFilter === "archived"}
-            onClick={() => setArchiveFilter("archived")}
-            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
-              archiveFilter === "archived"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            アーカイブ済み
-          </button>
-        </div>
-
         <div className="relative">
           <Search
             aria-hidden
@@ -117,47 +89,94 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
             type="search"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="キーワードで検索 (問題/回答/補足)"
+            placeholder="カードを検索 (⌘K は準備中)"
             className="w-full border rounded-md pl-10 pr-3 py-2.5 text-base md:text-sm min-h-11"
             aria-label="キーワード検索"
           />
         </div>
 
-        <div
-          className={`grid gap-2 ${
-            lockedDeckId === undefined ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
-          }`}
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-[var(--bronze-faint)] px-3 text-sm text-muted-foreground hover:text-foreground"
+          aria-expanded={showFilters}
+          aria-controls="card-filters"
         >
-          {lockedDeckId === undefined && (
-            <select
-              value={deckId}
-              onChange={(e) => setDeckId(e.target.value === "" ? "" : Number(e.target.value))}
-              className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
-              aria-label="デッキで絞り込み"
+          <ChevronDown
+            className={`size-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+          絞り込み
+        </button>
+
+        {showFilters && (
+          <div id="card-filters" className="space-y-2 rounded-lg border bg-card p-3">
+            <div className="flex gap-1 rounded-lg bg-muted p-1" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={archiveFilter === "active"}
+                onClick={() => setArchiveFilter("active")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
+                  archiveFilter === "active"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                学習中
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={archiveFilter === "archived"}
+                onClick={() => setArchiveFilter("archived")}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors min-h-11 ${
+                  archiveFilter === "archived"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                アーカイブ済み
+              </button>
+            </div>
+
+            <div
+              className={`grid gap-2 ${
+                lockedDeckId === undefined ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+              }`}
             >
-              <option value="">すべてのデッキ</option>
-              {deckOptions.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {"— ".repeat(opt.depth)}
-                  {opt.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <select
-            value={tagId}
-            onChange={(e) => setTagId(e.target.value === "" ? "" : Number(e.target.value))}
-            className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
-            aria-label="タグで絞り込み"
-          >
-            <option value="">すべてのタグ</option>
-            {tags?.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-        </div>
+              {lockedDeckId === undefined && (
+                <select
+                  value={deckId}
+                  onChange={(e) => setDeckId(e.target.value === "" ? "" : Number(e.target.value))}
+                  className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+                  aria-label="デッキで絞り込み"
+                >
+                  <option value="">すべてのデッキ</option>
+                  {deckOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {"— ".repeat(opt.depth)}
+                      {opt.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <select
+                value={tagId}
+                onChange={(e) => setTagId(e.target.value === "" ? "" : Number(e.target.value))}
+                className="border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
+                aria-label="タグで絞り込み"
+              >
+                <option value="">すべてのタグ</option>
+                {tags?.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
 
         {hasActiveFilter && (
           <Button

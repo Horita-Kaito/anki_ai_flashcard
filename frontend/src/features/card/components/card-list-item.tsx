@@ -26,6 +26,8 @@ export function CardListItem({ card }: CardListItemProps) {
     isCloze && clozeAnswers.length > 0
       ? clozeAnswers.join("、")
       : card.answer;
+  const dueAt = card.schedule?.due_at ? new Date(card.schedule.due_at) : null;
+  const dueTone = dueAt ? resolveDueTone(dueAt) : null;
 
   function handleToggleArchive(e: React.MouseEvent) {
     e.preventDefault();
@@ -49,10 +51,10 @@ export function CardListItem({ card }: CardListItemProps) {
     <li>
       <Link
         href={`/cards/${card.id}`}
-        className="group flex flex-col gap-2 border rounded-xl p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+        className="group flex flex-col gap-2 border rounded-lg p-4 min-h-16 bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
       >
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm line-clamp-2 flex-1">{questionPreview}</p>
+          <p className="knowledge-text text-sm line-clamp-2 flex-1">{questionPreview}</p>
           <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
@@ -77,6 +79,11 @@ export function CardListItem({ card }: CardListItemProps) {
         <p className="text-xs text-muted-foreground line-clamp-1">
           {answerPreview}
         </p>
+        {dueTone && (
+          <p className={`text-xs ${dueTone.className}`}>
+            次回: {dueTone.label}
+          </p>
+        )}
         {card.tags && card.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {card.tags.map((t) => (
@@ -92,4 +99,23 @@ export function CardListItem({ card }: CardListItemProps) {
       </Link>
     </li>
   );
+}
+
+function resolveDueTone(dueAt: Date): { label: string; className: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueAt);
+  due.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((due.getTime() - today.getTime()) / 86_400_000);
+
+  if (diffDays <= 0) {
+    return { label: "今日", className: "text-destructive font-medium" };
+  }
+  if (diffDays === 1) {
+    return { label: "明日", className: "text-[var(--persimmon)] font-medium" };
+  }
+  return {
+    label: `${diffDays}日後`,
+    className: "text-muted-foreground",
+  };
 }

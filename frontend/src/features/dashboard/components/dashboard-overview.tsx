@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  CheckCircle2,
   GraduationCap,
   Layers,
   NotebookPen,
@@ -25,16 +26,18 @@ function EntryCta({
   label: string;
   sublabel?: string;
   icon: React.ReactNode;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "review";
 }) {
   const base =
-    "group flex flex-col items-start gap-2 rounded-xl p-5 md:p-6 min-h-28 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "group flex flex-col items-start gap-2 rounded-lg p-5 md:p-6 min-h-28 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   const tone =
-    variant === "primary"
+    variant === "review"
       ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-      : "bg-card border hover:bg-muted/50";
+      : variant === "primary"
+        ? "bg-[var(--persimmon-faint)] text-foreground border border-[color-mix(in_oklch,var(--persimmon),transparent_55%)] hover:bg-[var(--persimmon-soft)]/60"
+        : "bg-card border hover:bg-muted/50";
   const iconTone =
-    variant === "primary"
+    variant === "primary" || variant === "review"
       ? "bg-primary-foreground/15 text-primary-foreground"
       : "bg-primary/10 text-primary";
 
@@ -46,7 +49,7 @@ function EntryCta({
       >
         {icon}
       </span>
-      <span className="text-base font-semibold leading-tight">{label}</span>
+      <span className={variant === "review" ? "font-serif text-2xl font-semibold leading-tight md:text-3xl" : "text-base font-semibold leading-tight"}>{label}</span>
       {sublabel && (
         <span
           className={`text-xs leading-tight ${
@@ -90,49 +93,76 @@ export function DashboardOverview() {
   }
 
   const dueToday = data.due_count_today;
+  const pendingReview =
+    data.recent_notes.reduce(
+      (sum, note) =>
+        sum +
+        ((note as { candidates_pending_count?: number }).candidates_pending_count ??
+          0),
+      0
+    ) ?? 0;
   const monthCostJpyApprox = Math.round(data.ai_usage.month_cost_usd * 150);
 
   return (
     <div className="space-y-6 md:space-y-8">
-      {/* 主要 CTA: 一気に作る・復習する・デッキを開く */}
       <section aria-labelledby="primary-actions" className="space-y-3">
         <h2 id="primary-actions" className="sr-only">
           主要なアクション
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-          <EntryCta
-            href="/notes/new"
-            label="メモを書く"
-            sublabel="思いついた知識を AI でカード化"
-            icon={<Plus className="size-5" />}
-            variant="primary"
-          />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.4fr_1fr] md:gap-4">
           <EntryCta
             href="/review"
-            label={dueToday > 0 ? `今日の復習 ${dueToday} 枚` : "今日の復習"}
+            label={`${dueToday} 枚`}
             sublabel={
-              dueToday > 0 ? "間隔反復で記憶を定着" : "今日の予定はありません"
+              dueToday > 0 ? "今日の復習を始めます" : "今日の予定はありません"
             }
             icon={<GraduationCap className="size-5" />}
-            variant={dueToday > 0 ? "primary" : "secondary"}
+            variant="review"
           />
-          <EntryCta
-            href="/decks"
-            label="デッキを見る"
-            sublabel="カードを分野ごとに整理"
-            icon={<Layers className="size-5" />}
-            variant="secondary"
-          />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
+            <EntryCta
+              href="/notes/new"
+              label="メモを書く"
+              sublabel="保存して AI 候補へ進めます"
+              icon={<Plus className="size-5" />}
+              variant="primary"
+            />
+            <EntryCta
+              href="/cards"
+              label="カードを探す"
+              sublabel="期日と履歴から確認します"
+              icon={<Layers className="size-5" />}
+              variant="secondary"
+            />
+          </div>
         </div>
       </section>
 
-      {/* ストリーク (継続性の可視化、軽め) */}
-      <StreakRing streak={data.streak} />
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_0.8fr]">
+        <Link
+          href="/notes"
+          className="rounded-lg border bg-card p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">未レビュー候補</p>
+              <p className="font-serif text-2xl font-semibold">{pendingReview} 件</p>
+              <p className="text-sm text-muted-foreground">
+                AI が出した候補は、採用するまで復習に入りません。
+              </p>
+            </div>
+            <CheckCircle2 className="size-5 text-primary" aria-hidden />
+          </div>
+        </Link>
+        <div className="rounded-lg border bg-card p-4">
+          <StreakRing streak={data.streak} />
+        </div>
+      </section>
 
       {/* 補助統計 (一段下げ、border 控えめ、冗長な数字は削減) */}
       <section
         aria-labelledby="secondary-stats"
-        className="rounded-xl bg-muted/30 p-4 md:p-5"
+        className="rounded-lg bg-[var(--bronze-faint)] p-4 md:p-5"
       >
         <h2
           id="secondary-stats"

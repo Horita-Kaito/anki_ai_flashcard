@@ -3,7 +3,7 @@ import { StatsOverview } from "@/features/review";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "学習統計 | Anki AI Flashcard",
+  title: "学習統計 | まとメモAI",
 };
 
 export default function StatsPage() {

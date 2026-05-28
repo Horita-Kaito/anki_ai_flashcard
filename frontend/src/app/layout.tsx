@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Noto_Sans_JP } from "next/font/google";
-import Script from "next/script";
+import {
+  Inter,
+  JetBrains_Mono,
+  Noto_Sans_JP,
+  Noto_Serif_JP,
+  Source_Serif_4,
+} from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -19,6 +24,19 @@ const notoJp = Noto_Sans_JP({
   display: "swap",
 });
 
+const sourceSerif = Source_Serif_4({
+  variable: "--font-serif-latin",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const notoSerifJp = Noto_Serif_JP({
+  variable: "--font-serif-jp",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
 // Mono: JetBrains Mono (kbd 表記・コード表示)
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -30,11 +48,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anki-ai-flashcard.
 
 export const metadata: Metadata = {
   title: {
-    default: "Anki AI Flashcard",
-    template: "%s | Anki AI Flashcard",
+    default: "まとメモAI",
+    template: "%s | まとメモAI",
   },
   description:
-    "AI策問補助付きフラッシュカードアプリ。メモから AI がカード候補を生成し、間隔反復で記憶定着を支援します。",
+    "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
   keywords: [
     "フラッシュカード",
     "AI",
@@ -47,26 +65,26 @@ export const metadata: Metadata = {
     "flashcard",
     "spaced repetition",
   ],
-  applicationName: "Anki AI Flashcard",
+  applicationName: "まとメモAI",
   manifest: "/manifest.json",
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Anki AI Flashcard",
+    title: "まとメモAI",
     description:
-      "メモを書くだけで AI がフラッシュカード候補を生成。科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+      "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
     url: SITE_URL,
-    siteName: "Anki AI Flashcard",
+    siteName: "まとメモAI",
     locale: "ja_JP",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anki AI Flashcard",
+    title: "まとメモAI",
     description:
-      "メモを書くだけで AI がフラッシュカード候補を生成。科学的な間隔反復で記憶に定着させる学習支援アプリ。",
+      "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
   },
   robots: {
     index: true,
@@ -82,7 +100,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "AnkiAI",
+    title: "まとメモAI",
   },
   formatDetection: {
     telephone: false,
@@ -97,7 +115,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#f7f0e4",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -113,17 +131,8 @@ export default function RootLayout({
     <html
       lang="ja"
       suppressHydrationWarning
-      className={`${inter.variable} ${notoJp.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${notoJp.variable} ${sourceSerif.variable} ${notoSerifJp.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <head>
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`,
-          }}
-        />
-      </head>
       <body className="min-h-dvh flex flex-col font-sans" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>

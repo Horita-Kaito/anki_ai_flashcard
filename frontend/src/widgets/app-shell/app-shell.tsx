@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { BottomTabBar } from "./bottom-tab-bar";
 import { DesktopSidebar } from "./desktop-sidebar";
 import { Fab } from "./fab";
@@ -9,12 +12,17 @@ import { Fab } from "./fab";
  * - PC: 左サイドバー
  */
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const focusMode = pathname === "/review";
+
   return (
     <div className="flex-1 flex flex-col md:flex-row min-h-dvh">
-      <DesktopSidebar />
-      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0">{children}</div>
-      <Fab />
-      <BottomTabBar />
+      {!focusMode && <DesktopSidebar />}
+      <div className={`flex-1 flex flex-col min-w-0 ${focusMode ? "pb-0" : "pb-16 md:pb-0"}`}>
+        {children}
+      </div>
+      {!focusMode && <Fab />}
+      {!focusMode && <BottomTabBar />}
     </div>
   );
 }

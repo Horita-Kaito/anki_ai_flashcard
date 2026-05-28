@@ -15,6 +15,21 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  allowedDevOrigins: ["127.0.0.1"],
+  async rewrites() {
+    const apiBase = process.env.INTERNAL_API_URL ?? "http://backend:8000";
+
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiBase}/api/:path*`,
+      },
+      {
+        source: "/sanctum/csrf-cookie",
+        destination: `${apiBase}/sanctum/csrf-cookie`,
+      },
+    ];
+  },
   turbopack: {},
   experimental: {
     viewTransition: true,

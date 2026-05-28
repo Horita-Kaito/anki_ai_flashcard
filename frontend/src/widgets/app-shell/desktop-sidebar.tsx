@@ -16,7 +16,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
-import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import { useCurrentUser } from "@/features/auth/api/auth-queries";
 
 const learningItems = [
@@ -60,17 +59,20 @@ export function DesktopSidebar() {
                  md:sticky md:top-0 md:self-start md:h-dvh md:overflow-y-auto"
     >
       <div className="px-3 py-4">
-        <p className="text-sm font-semibold tracking-tight">Anki AI</p>
-        <p className="text-xs text-muted-foreground">Flashcard Studio</p>
+        <div className="bookplate-mark inline-flex size-9 items-center justify-center rounded-sm font-serif text-lg font-semibold">
+          ま
+        </div>
+        <p className="mt-2 text-sm font-semibold">まとメモAI</p>
+        <p className="text-xs text-muted-foreground">学習メモを問いに変える作業台</p>
       </div>
       <nav className="space-y-5">
         <NavGroup label="学習" items={learningItems} pathname={pathname} />
         <NavGroup label="整理" items={libraryItems} pathname={pathname} />
         <NavGroup label="運用" items={preferenceNavItems} pathname={pathname} />
       </nav>
-      <div className="mt-auto px-3 pb-2">
-        <ThemeToggle />
-      </div>
+      <p className="mt-auto px-3 pb-2 text-[11px] leading-relaxed text-muted-foreground">
+        書き、候補を見て、採用したものだけを復習に回します。
+      </p>
     </aside>
   );
 }

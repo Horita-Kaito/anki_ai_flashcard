@@ -17,7 +17,7 @@ export function SchedulerBadge({
   const label = scheduler === "fsrs" ? "FSRS" : "SM-2";
   const tone =
     scheduler === "fsrs"
-      ? "bg-sky-500/10 text-sky-700 dark:text-sky-300"
+      ? "bg-[var(--forest-faint)] text-primary"
       : "bg-muted text-muted-foreground";
   const sizing =
     size === "xs"

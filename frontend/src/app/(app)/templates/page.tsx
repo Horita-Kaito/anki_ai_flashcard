@@ -6,7 +6,7 @@ import { buttonVariants } from "@/shared/ui/button";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "分野テンプレート | Anki AI Flashcard",
+  title: "分野テンプレート | まとメモAI",
 };
 
 export default function TemplatesPage() {

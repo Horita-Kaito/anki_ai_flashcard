@@ -45,7 +45,7 @@ export function ReviewCardFlip({
       tabIndex={0}
       aria-label={showAnswer ? "答え表示中" : "タップして答えを表示"}
       className={`
-        border rounded-xl p-6 md:p-8 bg-card
+        border rounded-lg p-6 md:p-8 bg-card paper-rule
         cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
         focus-visible:ring-ring
         ${!showAnswer ? "min-h-[50vh] md:min-h-[40vh] flex flex-col" : ""}
@@ -76,14 +76,14 @@ export function ReviewCardFlip({
             問題
           </p>
           {card.card_type === "cloze_like" ? (
-            <p className="text-lg md:text-xl">
+            <p className="knowledge-text text-xl md:text-2xl">
               <ClozeText
                 text={card.question}
                 mode={showAnswer ? "back" : "front"}
               />
             </p>
           ) : (
-            <p className="text-lg md:text-xl whitespace-pre-wrap break-words">
+            <p className="knowledge-text text-xl md:text-2xl whitespace-pre-wrap break-words">
               {card.question}
             </p>
           )}
@@ -104,20 +104,20 @@ export function ReviewCardFlip({
               );
               if (answers.length > 0) {
                 return (
-                  <p className="text-base md:text-lg font-medium break-words">
+                  <p className="knowledge-text text-lg md:text-xl font-medium break-words">
                     正解: {answers.join("、")}
                   </p>
                 );
               }
             }
             return (
-              <p className="text-base md:text-lg whitespace-pre-wrap break-words">
+              <p className="knowledge-text text-lg md:text-xl whitespace-pre-wrap break-words">
                 {card.answer}
               </p>
             );
           })()}
           {card.explanation && (
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap border-t pt-3">
+            <p className="knowledge-text text-sm text-muted-foreground whitespace-pre-wrap border-t pt-3">
               {card.explanation}
             </p>
           )}

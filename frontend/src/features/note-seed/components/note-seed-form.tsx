@@ -167,7 +167,7 @@ export function NoteSeedForm({
     <form
       onSubmit={onSubmit}
       onKeyDown={handleKeyDown}
-      className="space-y-5 pb-36 md:pb-0"
+      className="space-y-5 pb-40 md:pb-0"
       noValidate
       aria-label={isEdit ? "メモ編集フォーム" : "メモ作成フォーム"}
     >
@@ -179,7 +179,7 @@ export function NoteSeedForm({
           <div
             role="tablist"
             aria-label="本文の表示モード切替"
-            className="flex border rounded-md p-0.5 bg-muted/50 text-xs"
+            className="flex border rounded-md p-0.5 bg-[var(--bronze-faint)] text-xs"
           >
             <button
               type="button"
@@ -191,7 +191,7 @@ export function NoteSeedForm({
               onClick={() => switchBodyTab("edit")}
               className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 bodyTab === "edit"
-                  ? "bg-background shadow-sm font-medium"
+                  ? "bg-card shadow-sm font-medium"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -207,7 +207,7 @@ export function NoteSeedForm({
               onClick={() => switchBodyTab("preview")}
               className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 bodyTab === "preview"
-                  ? "bg-background shadow-sm font-medium"
+                  ? "bg-card shadow-sm font-medium"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -226,8 +226,8 @@ export function NoteSeedForm({
             rows={8}
             {...bodyRegister}
             ref={setBodyTextareaRef}
-            className="w-full border rounded-md px-3 py-3 text-base md:text-sm min-h-40 resize-y leading-relaxed"
-            placeholder="学習中に気になった知識の断片を書き留めてください..."
+            className="knowledge-text w-full border rounded-lg bg-card px-4 py-4 text-lg md:text-base min-h-[60vh] resize-y leading-relaxed shadow-sm"
+            placeholder="読んだこと、聞いたこと、自分の言葉で残しておきたいことを書きます。"
             aria-invalid={!!errors.body}
             autoFocus
           />
@@ -237,7 +237,7 @@ export function NoteSeedForm({
           role="tabpanel"
           aria-labelledby="body-tab-preview"
           hidden={bodyTab !== "preview"}
-          className="border rounded-md px-3 py-3 min-h-40 bg-muted/20"
+          className="knowledge-text border rounded-lg px-4 py-4 min-h-[60vh] bg-card paper-rule"
         >
           {bodyValue ? (
             <MarkdownText text={bodyValue} />
@@ -257,7 +257,7 @@ export function NoteSeedForm({
         </p>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 rounded-lg border bg-card p-3">
         <label htmlFor="domain_template_id" className="text-sm font-medium">
           分野テンプレート
         </label>
@@ -280,7 +280,7 @@ export function NoteSeedForm({
       <button
         type="button"
         onClick={() => setShowAdvanced((v) => !v)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground min-h-11"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border bg-[var(--bronze-faint)] px-3 text-sm text-muted-foreground hover:text-foreground"
         aria-expanded={showAdvanced}
         aria-controls="advanced-fields"
       >
@@ -292,7 +292,7 @@ export function NoteSeedForm({
       </button>
 
       {showAdvanced && (
-        <div id="advanced-fields" className="space-y-4 pl-6 border-l">
+        <div id="advanced-fields" className="grid gap-3 rounded-lg border bg-card p-3 md:grid-cols-3">
           <div className="space-y-1.5">
             <label htmlFor="subdomain" className="text-sm font-medium">
               サブ分野
@@ -336,16 +336,16 @@ export function NoteSeedForm({
       <div
         className="
           fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] border-t bg-background/95 backdrop-blur z-30
-          p-3 flex gap-2
+          p-3 grid grid-cols-[1.6fr_1fr_auto] gap-2
           md:static md:border-0 md:bg-transparent md:backdrop-blur-0
-          md:p-0 md:pb-0 md:justify-end md:flex-row-reverse
+          md:p-0 md:pb-0 md:flex md:justify-end md:flex-row-reverse
         "
       >
         {showSaveAndGenerate && (
           <Button
             type="submit"
             size="lg"
-            className="flex-1 md:flex-none min-h-11"
+            className="min-h-12 md:min-w-56"
             disabled={isSubmitting}
             onClick={() => {
               submitActionRef.current = "save-and-generate";
@@ -359,7 +359,7 @@ export function NoteSeedForm({
             type="submit"
             size="lg"
             variant={showSaveAndGenerate ? "outline" : "default"}
-            className="flex-1 md:flex-none min-h-11"
+            className="min-h-12 md:min-w-36"
             disabled={isSubmitting}
             onClick={() => {
               submitActionRef.current = "save";

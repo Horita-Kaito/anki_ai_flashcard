@@ -114,6 +114,9 @@ export function GenerateCandidatesView({
     candidates?.filter((c) => c.status !== "pending") ?? [];
   const hasPending = pendingCandidates.length > 0;
   const hasAnyCandidates = (candidates?.length ?? 0) > 0;
+  const progressSteps = ["構造化", "方針読込", "生成", "判定"] as const;
+  const activeStepIndex = generationStatus?.status === "queued" ? 1 : 2;
+  const previewQuestions = pendingCandidates.slice(0, 3).map((c) => c.question);
 
   async function handleGenerate() {
     try {
@@ -169,9 +172,9 @@ export function GenerateCandidatesView({
       <section
         aria-labelledby="ai-action"
         className="
-          relative overflow-hidden rounded-xl
-          bg-gradient-to-br from-primary/10 via-primary/5 to-transparent
-          border-l-4 border-primary
+          relative overflow-hidden rounded-lg
+          bg-[var(--forest-faint)]
+          border border-[color-mix(in_oklch,var(--forest),transparent_70%)]
           p-4 md:p-5 space-y-3
         "
       >
@@ -181,7 +184,7 @@ export function GenerateCandidatesView({
             className="text-sm font-semibold flex items-center gap-2 text-primary"
           >
             <Sparkles className="size-4" aria-hidden />
-            AI でカード化
+            AI で候補を作る
           </h2>
           <button
             type="button"
@@ -200,15 +203,37 @@ export function GenerateCandidatesView({
 
         {/* 進行中インジケータ (常に最も目立つ位置に) */}
         {isInFlight && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="flex items-center gap-2 text-sm bg-amber-500/15 text-amber-700 dark:text-amber-300 rounded-md px-3 py-2"
-          >
-            <Loader2 className="size-4 animate-spin shrink-0" aria-hidden />
-            <span className="leading-snug">
-              AI が候補を生成中。画面を離れても続行されます。
-            </span>
+          <div role="status" aria-live="polite" className="space-y-3 rounded-md bg-card/75 px-3 py-3">
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <Loader2 className="size-4 animate-spin shrink-0" aria-hidden />
+              <span className="leading-snug">
+                候補を生成しています。およそ 20-40 秒で反映されます。
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-3/4 rounded-full bg-primary transition-all" />
+            </div>
+            <ol className="grid grid-cols-4 gap-1 text-[11px] text-muted-foreground">
+              {progressSteps.map((step, i) => (
+                <li
+                  key={step}
+                  className={i <= activeStepIndex ? "font-medium text-primary" : ""}
+                >
+                  {i < activeStepIndex ? "✓ " : i === activeStepIndex ? "• " : ""}
+                  {step}
+                </li>
+              ))}
+            </ol>
+            {previewQuestions.length > 0 && (
+              <div className="space-y-1 border-t pt-2">
+                <p className="text-[11px] font-medium text-muted-foreground">先行プレビュー</p>
+                {previewQuestions.map((q, i) => (
+                  <p key={`${q}-${i}`} className="knowledge-text line-clamp-1 text-sm">
+                    {q}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -220,7 +245,7 @@ export function GenerateCandidatesView({
           (generationStatus?.chunks_failed ?? 0) > 0 && (
             <div
               role="status"
-              className="flex items-start gap-2 text-sm bg-amber-500/15 text-amber-800 dark:text-amber-300 rounded-md px-3 py-2"
+            className="flex items-start gap-2 text-sm bg-[var(--persimmon-faint)] text-foreground rounded-md px-3 py-2"
             >
               <AlertTriangle
                 className="size-4 shrink-0 mt-0.5"
@@ -232,8 +257,8 @@ export function GenerateCandidatesView({
                   {generationStatus.chunks_failed} / {generationStatus.chunks_total}
                   {" "}個の塊で失敗しました。
                 </p>
-                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">
-                  「再生成」で失敗した範囲も含めて再試行できます。
+                <p className="text-xs text-muted-foreground">
+                  生成できた候補はそのままレビューできます。空いた分は再生成できます。
                 </p>
               </div>
             </div>
@@ -297,6 +322,14 @@ export function GenerateCandidatesView({
           )}
         </div>
 
+        <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+          <span className="rounded-full bg-card px-2 py-1">モデル: 既定設定</span>
+          <span className="rounded-full bg-card px-2 py-1">
+            テンプレート: {templates?.find((t) => t.id === templateId)?.name ?? "指定なし"}
+          </span>
+          <span className="rounded-full bg-card px-2 py-1">件数: メモ量から自動</span>
+        </div>
+
         {/* オプション (折りたたみ): 分野テンプレート選択 */}
         {showOptions && (
           <div id="ai-options" className="space-y-1.5 pt-1">
@@ -358,6 +391,8 @@ export function GenerateCandidatesView({
                     key={c.id}
                     candidate={c}
                     defaultDeckId={undefined}
+                    ordinal={pendingCandidates.indexOf(c) + 1}
+                    total={pendingCandidates.length}
                   />
                 ))}
               </div>

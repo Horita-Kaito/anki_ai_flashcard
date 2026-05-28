@@ -3,7 +3,7 @@ import { DomainTemplateForm } from "@/features/domain-template";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "テンプレート作成 | Anki AI Flashcard",
+  title: "テンプレート作成 | まとメモAI",
 };
 
 export default function NewTemplatePage() {
