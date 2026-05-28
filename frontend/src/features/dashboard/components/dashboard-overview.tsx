@@ -37,9 +37,13 @@ function EntryCta({
         ? "bg-[var(--persimmon-faint)] text-foreground border border-[color-mix(in_oklch,var(--persimmon),transparent_55%)] hover:bg-[var(--persimmon-soft)]/60"
         : "bg-card border hover:bg-muted/50";
   const iconTone =
-    variant === "primary" || variant === "review"
+    variant === "review"
       ? "bg-primary-foreground/15 text-primary-foreground"
+      : variant === "primary"
+        ? "bg-[var(--persimmon-soft)]/55 text-foreground"
       : "bg-primary/10 text-primary";
+  const sublabelTone =
+    variant === "review" ? "text-primary-foreground/90" : "text-muted-foreground";
 
   return (
     <Link href={href} className={`${base} ${tone}`}>
@@ -51,13 +55,7 @@ function EntryCta({
       </span>
       <span className={variant === "review" ? "font-serif text-2xl font-semibold leading-tight md:text-3xl" : "text-base font-semibold leading-tight"}>{label}</span>
       {sublabel && (
-        <span
-          className={`text-xs leading-tight ${
-            variant === "primary"
-              ? "text-primary-foreground/85"
-              : "text-muted-foreground"
-          }`}
-        >
+        <span className={`text-xs leading-tight ${sublabelTone}`}>
           {sublabel}
         </span>
       )}

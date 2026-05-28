@@ -71,13 +71,21 @@ final class OnboardingService
             $uniqueTagNames = array_unique($tagNames);
             $tagCount = 0;
             foreach ($uniqueTagNames as $tagName) {
-                $this->tagRepository->create($user->id, ['name' => $tagName]);
+                $this->tagRepository->findByNameForUser($user->id, $tagName)
+                    ?? $this->tagRepository->create($user->id, ['name' => $tagName]);
                 $tagCount++;
             }
 
-            $this->userSettingRepository->create($user->id, [
-                'default_domain_template_id' => $firstTemplateId,
-            ]);
+            $existingSetting = $this->userSettingRepository->findForUser($user->id);
+            if ($existingSetting !== null) {
+                $this->userSettingRepository->update($existingSetting, [
+                    'default_domain_template_id' => $firstTemplateId,
+                ]);
+            } else {
+                $this->userSettingRepository->create($user->id, [
+                    'default_domain_template_id' => $firstTemplateId,
+                ]);
+            }
 
             $this->userRepository->markOnboarded($user);
 

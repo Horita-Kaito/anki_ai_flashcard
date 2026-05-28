@@ -119,7 +119,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center p-4 md:p-8">
+    <main className="flex-1 flex items-center justify-center bg-background p-4 md:p-8 text-foreground">
       <div className="w-full max-w-lg space-y-8">
         <header className="space-y-2 text-center">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
@@ -140,10 +140,10 @@ export default function OnboardingPage() {
                 key={goal.id}
                 type="button"
                 onClick={() => toggleGoal(goal.id)}
-                className={`relative flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all min-h-[44px] ${
+                className={`relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left text-foreground transition-all min-h-[44px] ${
                   isSelected
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-card hover:border-primary/40"
+                    ? "border-primary bg-[var(--forest-faint)]"
+                    : "border-border bg-card hover:border-primary/40 hover:bg-[var(--bronze-faint)]"
                 }`}
               >
                 {isSelected && (
@@ -151,7 +151,7 @@ export default function OnboardingPage() {
                     <Check className="size-3" />
                   </div>
                 )}
-                <Icon className="size-6 text-foreground/70" />
+                <Icon className="size-6 text-muted-foreground" />
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium leading-tight">
                     {goal.label}

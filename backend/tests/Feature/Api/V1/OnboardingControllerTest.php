@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Models\DomainTemplate;
+use App\Models\Tag;
 use App\Models\User;
+use App\Models\UserSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -171,5 +173,40 @@ final class OnboardingControllerTest extends TestCase
             'user_id' => $user->id,
             'default_domain_template_id' => $examTemplate->id,
         ]);
+    }
+
+    public function test_既存タグとユーザー設定があってもオンボーディングを完了できる(): void
+    {
+        $user = User::factory()->create();
+        Tag::factory()->create(['user_id' => $user->id, 'name' => '重要']);
+        Tag::factory()->create(['user_id' => $user->id, 'name' => '復習必須']);
+        UserSetting::create([
+            'user_id' => $user->id,
+            'default_domain_template_id' => null,
+            'default_ai_provider' => 'openai',
+            'default_ai_model' => 'gpt-4o-mini',
+        ]);
+
+        $response = $this->actingAs($user)->postJson('/api/v1/onboarding', [
+            'goals' => ['exam'],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('data.tags', 5);
+
+        $this->assertSame(1, Tag::where('user_id', $user->id)->where('name', '重要')->count());
+        $this->assertSame(1, Tag::where('user_id', $user->id)->where('name', '復習必須')->count());
+
+        $examTemplate = DomainTemplate::where('user_id', $user->id)
+            ->where('name', '資格試験')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('user_settings', [
+            'user_id' => $user->id,
+            'default_domain_template_id' => $examTemplate->id,
+        ]);
+
+        $user->refresh();
+        $this->assertNotNull($user->onboarding_completed_at);
     }
 }

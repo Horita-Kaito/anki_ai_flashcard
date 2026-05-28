@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { Archive, CalendarClock, Check, RotateCcw, Sparkles } from "lucide-react";
+import {
+  Archive,
+  CalendarClock,
+  Check,
+  Home,
+  Layers,
+  NotebookPen,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   useAnswerReview,
@@ -34,6 +43,42 @@ const RATING_HINTS: Record<ReviewRating, string> = {
   good: "4日",
   easy: "12日",
 };
+
+function ReviewExitBar() {
+  return (
+    <nav
+      aria-label="復習を中断して移動"
+      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-sm"
+    >
+      <span className="text-xs font-medium text-muted-foreground">
+        復習を中断
+      </span>
+      <div className="flex items-center gap-1">
+        <Link
+          href="/dashboard"
+          className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Home className="size-4" aria-hidden />
+          <span>ホーム</span>
+        </Link>
+        <Link
+          href="/notes"
+          className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <NotebookPen className="size-4" aria-hidden />
+          <span>メモ</span>
+        </Link>
+        <Link
+          href="/cards"
+          className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Layers className="size-4" aria-hidden />
+          <span>カード</span>
+        </Link>
+      </div>
+    </nav>
+  );
+}
 
 export function ReviewSession() {
   const todaySession = useTodaySession();
@@ -298,6 +343,8 @@ export function ReviewSession() {
 
   return (
     <div className="space-y-5">
+      <ReviewExitBar />
+
       {extraMode && (
         <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
           <CalendarClock className="size-4" aria-hidden />
