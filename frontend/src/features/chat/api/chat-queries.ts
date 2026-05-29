@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ChatSession } from "@/entities/chat/types";
 import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
+import type { PaginatedResponse } from "@/shared/types/pagination";
 import {
   createChatSession,
+  deleteChatSession,
   fetchChatSession,
   fetchChatSessions,
   materializeChatNotes,
@@ -41,6 +44,28 @@ export function useCreateChatSession() {
     onSuccess: (session) => {
       qc.invalidateQueries({ queryKey: chatKeys.list() });
       qc.setQueryData(chatKeys.detail(session.id), session);
+    },
+  });
+}
+
+export function useDeleteChatSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteChatSession(id),
+    onSuccess: (_data, id) => {
+      qc.removeQueries({ queryKey: chatKeys.detail(id) });
+      qc.setQueryData<PaginatedResponse<ChatSession>>(chatKeys.list(), (current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          data: current.data.filter((session) => session.id !== id),
+          meta: {
+            ...current.meta,
+            total: Math.max(current.meta.total - 1, 0),
+          },
+        };
+      });
+      qc.invalidateQueries({ queryKey: chatKeys.list() });
     },
   });
 }

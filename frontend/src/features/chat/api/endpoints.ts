@@ -40,6 +40,11 @@ export async function fetchChatSession(id: number): Promise<ChatSession> {
   return parseApiDataResponse(chatSessionSchema, res);
 }
 
+export async function deleteChatSession(id: number): Promise<void> {
+  await fetchCsrfCookie();
+  await apiClient.delete(`/chats/${id}`);
+}
+
 export async function sendChatMessage(
   chatSessionId: number,
   input: SendChatMessageInput

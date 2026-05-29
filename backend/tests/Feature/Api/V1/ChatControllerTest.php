@@ -63,6 +63,33 @@ final class ChatControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_メモ化しないチャットを削除できる(): void
+    {
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+        ChatMessage::factory()->for($user)->for($session)->create();
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/chats/{$session->id}")
+            ->assertNoContent();
+
+        $this->assertDatabaseMissing('chat_sessions', ['id' => $session->id]);
+        $this->assertDatabaseMissing('chat_messages', ['chat_session_id' => $session->id]);
+    }
+
+    public function test_他ユーザーのチャットは削除できない(): void
+    {
+        $me = User::factory()->create();
+        $other = User::factory()->create();
+        $session = ChatSession::factory()->for($other)->create();
+
+        $this->actingAs($me)
+            ->deleteJson("/api/v1/chats/{$session->id}")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('chat_sessions', ['id' => $session->id]);
+    }
+
     public function test_メッセージ送信でユーザー発言とai応答を保存する(): void
     {
         config(['ai.default_provider' => 'fake']);

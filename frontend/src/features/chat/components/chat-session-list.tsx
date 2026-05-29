@@ -1,7 +1,9 @@
 "use client";
 
-import { MessageSquarePlus } from "lucide-react";
+import { useState } from "react";
+import { MessageSquarePlus, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { cn } from "@/shared/lib/utils";
 import type { ChatSession } from "@/entities/chat/types";
 
@@ -10,8 +12,10 @@ interface ChatSessionListProps {
   activeId: number | null;
   isLoading: boolean;
   isCreating: boolean;
+  deletingId?: number | null;
   onCreate: () => void;
   onSelect: (id: number) => void;
+  onDelete: (id: number) => Promise<void>;
 }
 
 export function ChatSessionList({
@@ -19,13 +23,32 @@ export function ChatSessionList({
   activeId,
   isLoading,
   isCreating,
+  deletingId = null,
   onCreate,
   onSelect,
+  onDelete,
 }: ChatSessionListProps) {
+  const [deleteTarget, setDeleteTarget] = useState<ChatSession | null>(null);
   const selectedId = activeId ?? sessions[0]?.id ?? null;
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    await onDelete(deleteTarget.id);
+    setDeleteTarget(null);
+  }
 
   return (
     <aside className="space-y-3 md:sticky md:top-4 md:self-start">
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title="チャットを削除"
+        description="このチャットはメモ化せずに削除されます。削除後は元に戻せません。"
+        confirmLabel="削除する"
+        variant="destructive"
+        loading={deletingId === deleteTarget?.id}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
       <Button
         type="button"
         size="lg"
@@ -45,18 +68,34 @@ export function ChatSessionList({
           <ul className="space-y-1">
             {sessions.map((session) => (
               <li key={session.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(session.id)}
+                <div
                   className={cn(
-                    "min-h-11 w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
+                    "group flex min-h-11 items-stretch rounded-md transition-colors",
                     selectedId === session.id
-                      ? "bg-primary/10 font-medium text-primary"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   )}
                 >
-                  <span className="line-clamp-2">{session.title ?? "学習チャット"}</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(session.id)}
+                    className={cn(
+                      "min-w-0 flex-1 rounded-l-md px-3 py-2 text-left text-sm focus-visible:ring-2 focus-visible:ring-ring",
+                      selectedId === session.id && "font-medium"
+                    )}
+                  >
+                    <span className="line-clamp-2">{session.title ?? "学習チャット"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(session)}
+                    disabled={deletingId === session.id}
+                    className="flex min-h-11 min-w-11 items-center justify-center rounded-r-md text-muted-foreground opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+                    aria-label={`${session.title ?? "学習チャット"}を削除`}
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

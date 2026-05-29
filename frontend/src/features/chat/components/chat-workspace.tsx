@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
 import { Loader2, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
@@ -8,6 +8,7 @@ import {
   useChatSession,
   useChatSessions,
   useCreateChatSession,
+  useDeleteChatSession,
   useMaterializeChatNotes,
   useSendChatMessage,
 } from "../api/chat-queries";
@@ -28,6 +29,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
   const selectedId = activeId ?? sessions[0]?.id ?? null;
   const { data: activeSession, isLoading: sessionLoading } = useChatSession(selectedId);
   const sendMessage = useSendChatMessage(activeId);
+  const deleteSession = useDeleteChatSession();
   const materialize = useMaterializeChatNotes(selectedId);
   const [content, setContent] = useState("");
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
@@ -44,8 +46,13 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    await submitMessage();
+  }
+
+  async function submitMessage() {
     const trimmed = content.trim();
     if (!trimmed) return;
+    if (sendMessage.isPending || createSession.isPending) return;
 
     let sessionId = selectedId;
     setPendingPrompt(trimmed);
@@ -70,6 +77,12 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
     }
   }
 
+  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    void submitMessage();
+  }
+
   async function handleMaterialize() {
     try {
       const result = await materialize.mutateAsync();
@@ -84,6 +97,19 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
     }
   }
 
+  async function handleDeleteChat(id: number) {
+    try {
+      await deleteSession.mutateAsync(id);
+      if (id === selectedId) {
+        setActiveId(null);
+        setContent("");
+      }
+      toast.success("チャットを削除しました");
+    } catch {
+      toast.error("チャットの削除に失敗しました");
+    }
+  }
+
   const messages = activeSession?.messages ?? [];
   const canMaterialize = messages.some((message) => message.role === "assistant");
 
@@ -94,8 +120,10 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
         activeId={activeId}
         isLoading={sessionsLoading}
         isCreating={createSession.isPending}
+        deletingId={deleteSession.isPending ? (deleteSession.variables ?? null) : null}
         onCreate={handleNewChat}
         onSelect={setActiveId}
+        onDelete={handleDeleteChat}
       />
 
       <section className="min-h-[70dvh] rounded-lg border bg-background">
@@ -141,6 +169,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
                 aria-label="質問"
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
+                onKeyDown={handleComposerKeyDown}
                 placeholder="質問を入力"
                 rows={2}
                 className="min-h-16 flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
