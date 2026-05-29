@@ -9,6 +9,7 @@ use App\Models\CardSchedule;
 use App\Models\Deck;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 final class ReviewSessionControllerTest extends TestCase
@@ -53,6 +54,35 @@ final class ReviewSessionControllerTest extends TestCase
             ->assertJsonPath('data.total_due', 2)
             ->assertJsonPath('data.new_count', 2)
             ->assertJsonCount(2, 'data.cards');
+    }
+
+    public function test_今日の復習対象カードは作成順のまま返さない(): void
+    {
+        Carbon::setTestNow('2026-05-29 09:00:00');
+
+        try {
+            $user = User::factory()->create();
+            $deck = Deck::factory()->for($user)->create();
+            $createdCardIds = [];
+            for ($i = 0; $i < 8; $i++) {
+                $createdCardIds[] = $this->makeCardWithSchedule($user, $deck)->id;
+            }
+
+            $first = $this->actingAs($user)
+                ->getJson('/api/v1/review-sessions/today')
+                ->assertOk()
+                ->json('data.cards.*.id');
+
+            $second = $this->actingAs($user)
+                ->getJson('/api/v1/review-sessions/today')
+                ->assertOk()
+                ->json('data.cards.*.id');
+
+            $this->assertNotSame($createdCardIds, $first);
+            $this->assertSame($first, $second);
+        } finally {
+            Carbon::setTestNow();
+        }
     }
 
     public function test_他ユーザーのカードは含まれない(): void

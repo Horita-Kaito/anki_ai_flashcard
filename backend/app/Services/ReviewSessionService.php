@@ -49,12 +49,43 @@ final class ReviewSessionService
             ];
         }
 
-        return $this->scheduleRepository->dueCardsForUser(
+        $now = now();
+
+        $schedules = $this->scheduleRepository->dueCardsForUser(
             $userId,
-            now(),
+            $now,
             $deckIds,
             $limit,
         );
+
+        return $this->stableShuffleDueSchedules($schedules, $userId, $now);
+    }
+
+    /**
+     * 作成日時や due_at が近いカードの連続出題を避ける。
+     * 同じユーザー・同じ日では順序を固定し、再読み込みで復習順が揺れないようにする。
+     *
+     * @param  array<int, CardSchedule>  $schedules
+     * @return array<int, CardSchedule>
+     */
+    private function stableShuffleDueSchedules(array $schedules, int $userId, Carbon $date): array
+    {
+        usort($schedules, function (CardSchedule $a, CardSchedule $b) use ($userId, $date): int {
+            $aCardId = $a->card_id;
+            $bCardId = $b->card_id;
+            $seed = $date->toDateString();
+
+            $aKey = crc32("{$userId}:{$seed}:{$aCardId}");
+            $bKey = crc32("{$userId}:{$seed}:{$bCardId}");
+
+            if ($aKey === $bKey) {
+                return $aCardId <=> $bCardId;
+            }
+
+            return $aKey <=> $bKey;
+        });
+
+        return array_values($schedules);
     }
 
     /**
