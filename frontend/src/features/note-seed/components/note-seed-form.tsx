@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Mic, MicOff } from "lucide-react";
 import {
   useCreateNoteSeed,
   useUpdateNoteSeed,
@@ -22,6 +22,50 @@ import type { NoteSeed } from "@/entities/note-seed/types";
 type BodyTab = "edit" | "preview";
 
 type SubmitAction = "save" | "save-and-generate";
+
+interface BrowserSpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface BrowserSpeechRecognitionResult {
+  readonly isFinal: boolean;
+  readonly 0: BrowserSpeechRecognitionAlternative;
+}
+
+interface BrowserSpeechRecognitionResultList {
+  readonly length: number;
+  readonly [index: number]: BrowserSpeechRecognitionResult;
+}
+
+interface BrowserSpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: BrowserSpeechRecognitionResultList;
+}
+
+interface BrowserSpeechRecognitionErrorEvent extends Event {
+  readonly error: string;
+}
+
+interface BrowserSpeechRecognition extends EventTarget {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onresult: ((event: BrowserSpeechRecognitionEvent) => void) | null;
+  onerror: ((event: BrowserSpeechRecognitionErrorEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
+
+type WindowWithSpeechRecognition = Window &
+  typeof globalThis & {
+    SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+    webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+  };
 
 interface NoteSeedFormProps {
   note?: NoteSeed;
@@ -73,7 +117,10 @@ export function NoteSeedForm({
     !!(note?.subdomain || note?.learning_goal || note?.note_context)
   );
   const [bodyTab, setBodyTab] = useState<BodyTab>("edit");
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   // どのボタンで submit したかを onSubmit 側で判別するためのフラグ。
   // ref を使うのは render を引き起こさず、かつ submit イベントと同期させたいため。
   const submitActionRef = useRef<SubmitAction>("save");
@@ -85,7 +132,9 @@ export function NoteSeedForm({
     register,
     handleSubmit,
     control,
+    getValues,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateNoteSeedInput>({
     resolver: zodResolver(createNoteSeedSchema),
@@ -97,6 +146,18 @@ export function NoteSeedForm({
       note_context: note?.note_context ?? "",
     },
   });
+
+  useEffect(() => {
+    const speechWindow = window as WindowWithSpeechRecognition;
+    setIsSpeechSupported(
+      !!(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition)
+    );
+
+    return () => {
+      recognitionRef.current?.abort();
+      recognitionRef.current = null;
+    };
+  }, []);
 
   const onSubmit = handleSubmit(async (values) => {
     const payload = {
@@ -161,6 +222,69 @@ export function NoteSeedForm({
       requestAnimationFrame(() => textareaRef.current?.focus());
     }
   }
+
+  function appendRecognizedText(text: string) {
+    const transcript = text.trim();
+    if (!transcript) return;
+
+    const current = getValues("body") ?? "";
+    const separator =
+      current.trim().length === 0 || current.endsWith("\n") ? "" : "\n";
+
+    setValue("body", `${current}${separator}${transcript}`, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setBodyTab("edit");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
+
+  function toggleSpeechInput() {
+    if (!isSpeechSupported) {
+      toast.error("このブラウザは音声入力に対応していません");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const speechWindow = window as WindowWithSpeechRecognition;
+    const Recognition =
+      speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!Recognition) return;
+
+    const recognition = new Recognition();
+    recognition.lang = "ja-JP";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => {
+      setIsListening(false);
+      toast.error("音声入力を開始できませんでした");
+    };
+    recognition.onresult = (event) => {
+      let finalTranscript = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        }
+      }
+      appendRecognizedText(finalTranscript);
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      setIsListening(false);
+      toast.error("音声入力を開始できませんでした");
+    }
+  }
   const bodyValue = useWatch({ control, name: "body" });
 
   return (
@@ -176,43 +300,69 @@ export function NoteSeedForm({
           <label htmlFor="body" className="text-sm font-medium">
             メモ本文 <span className="text-destructive">*</span>
           </label>
-          <div
-            role="tablist"
-            aria-label="本文の表示モード切替"
-            className="flex border rounded-md p-0.5 bg-[var(--bronze-faint)] text-xs"
-          >
-            <button
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button
               type="button"
-              role="tab"
-              id="body-tab-edit"
-              aria-selected={bodyTab === "edit"}
-              aria-controls="body-panel-edit"
-              tabIndex={bodyTab === "edit" ? 0 : -1}
-              onClick={() => switchBodyTab("edit")}
-              className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                bodyTab === "edit"
-                  ? "bg-card shadow-sm font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              variant={isListening ? "destructive" : "outline"}
+              size="sm"
+              onClick={toggleSpeechInput}
+              disabled={!isSpeechSupported}
+              aria-pressed={isListening}
+              aria-label={isListening ? "音声入力を停止" : "音声入力を開始"}
+              title={
+                isSpeechSupported
+                  ? isListening
+                    ? "音声入力を停止"
+                    : "音声入力を開始"
+                  : "このブラウザは音声入力に対応していません"
+              }
+              className="min-h-9"
             >
-              編集
-            </button>
-            <button
-              type="button"
-              role="tab"
-              id="body-tab-preview"
-              aria-selected={bodyTab === "preview"}
-              aria-controls="body-panel-preview"
-              tabIndex={bodyTab === "preview" ? 0 : -1}
-              onClick={() => switchBodyTab("preview")}
-              className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                bodyTab === "preview"
-                  ? "bg-card shadow-sm font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+              {isListening ? (
+                <MicOff className="size-4" aria-hidden />
+              ) : (
+                <Mic className="size-4" aria-hidden />
+              )}
+              <span>{isListening ? "録音中" : "音声入力"}</span>
+            </Button>
+            <div
+              role="tablist"
+              aria-label="本文の表示モード切替"
+              className="flex border rounded-md p-0.5 bg-[var(--bronze-faint)] text-xs"
             >
-              プレビュー
-            </button>
+              <button
+                type="button"
+                role="tab"
+                id="body-tab-edit"
+                aria-selected={bodyTab === "edit"}
+                aria-controls="body-panel-edit"
+                tabIndex={bodyTab === "edit" ? 0 : -1}
+                onClick={() => switchBodyTab("edit")}
+                className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  bodyTab === "edit"
+                    ? "bg-card shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                編集
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="body-tab-preview"
+                aria-selected={bodyTab === "preview"}
+                aria-controls="body-panel-preview"
+                tabIndex={bodyTab === "preview" ? 0 : -1}
+                onClick={() => switchBodyTab("preview")}
+                className={`px-3 min-h-8 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  bodyTab === "preview"
+                    ? "bg-card shadow-sm font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                プレビュー
+              </button>
+            </div>
           </div>
         </div>
         <div
@@ -253,7 +403,7 @@ export function NoteSeedForm({
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          Markdown 記法対応 / PC: Cmd/Ctrl + Enter で保存
+          Markdown 記法対応 / 音声入力は対応ブラウザのみ / PC: Cmd/Ctrl + Enter で保存
         </p>
       </div>
 

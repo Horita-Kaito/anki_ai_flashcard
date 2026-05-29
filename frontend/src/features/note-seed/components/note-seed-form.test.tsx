@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/render";
 import { NoteSeedForm } from "./note-seed-form";
@@ -14,10 +14,51 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+class MockSpeechRecognition extends EventTarget {
+  static latest: MockSpeechRecognition | null = null;
+
+  lang = "";
+  continuous = false;
+  interimResults = false;
+  onstart: (() => void) | null = null;
+  onend: (() => void) | null = null;
+  onresult: ((event: Event) => void) | null = null;
+  onerror: ((event: Event) => void) | null = null;
+
+  constructor() {
+    super();
+    MockSpeechRecognition.latest = this;
+  }
+
+  start() {
+    this.onstart?.();
+  }
+
+  stop() {
+    this.onend?.();
+  }
+
+  abort() {
+    this.onend?.();
+  }
+
+  emitTranscript(transcript: string) {
+    this.onresult?.({
+      resultIndex: 0,
+      results: [{ isFinal: true, 0: { transcript } }],
+    } as unknown as Event);
+  }
+}
+
 describe("NoteSeedForm", () => {
   beforeEach(() => {
     pushMock.mockClear();
     backMock.mockClear();
+    MockSpeechRecognition.latest = null;
+  });
+
+  afterEach(() => {
+    Reflect.deleteProperty(window, "webkitSpeechRecognition");
   });
 
   it("必須フィールドが表示される", () => {
@@ -104,6 +145,26 @@ describe("NoteSeedForm", () => {
     expect(
       screen.getByText("プレビューするメモがありません")
     ).toBeInTheDocument();
+  });
+
+  it("音声入力に対応している場合、認識した文章をメモ本文へ追記する", async () => {
+    Object.defineProperty(window, "webkitSpeechRecognition", {
+      configurable: true,
+      value: MockSpeechRecognition,
+    });
+    const user = userEvent.setup();
+    renderWithProviders(<NoteSeedForm />);
+
+    const body = screen.getByLabelText(/メモ本文/) as HTMLTextAreaElement;
+    await user.type(body, "既存メモ");
+    await user.click(screen.getByRole("button", { name: "音声入力を開始" }));
+
+    await act(async () => {
+      MockSpeechRecognition.latest?.emitTranscript("音声で追加した内容");
+    });
+
+    expect(body.value).toBe("既存メモ\n音声で追加した内容");
+    expect(screen.getByRole("button", { name: "音声入力を停止" })).toBeInTheDocument();
   });
 
   it("onSaveAndGenerate が渡されると「保存して候補生成」ボタンが追加表示される", () => {
