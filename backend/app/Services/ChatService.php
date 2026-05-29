@@ -237,7 +237,11 @@ PROMPT;
     private function normalizeChatReplyContent(string $rawContent): string
     {
         $content = trim($rawContent);
-        $decoded = $this->decodeJsonObject($content);
+        $decoded = $this->decodeJsonValue($content);
+
+        if (is_string($decoded)) {
+            return trim($decoded);
+        }
 
         if (! is_array($decoded)) {
             return $content;
@@ -265,10 +269,7 @@ PROMPT;
         return $markdown;
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function decodeJsonObject(string $content): ?array
+    private function decodeJsonValue(string $content): mixed
     {
         $candidate = trim($content);
 
@@ -278,7 +279,7 @@ PROMPT;
 
         $decoded = json_decode($candidate, true);
 
-        return is_array($decoded) ? $decoded : null;
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : null;
     }
 
     /**
@@ -342,7 +343,43 @@ PROMPT;
             ];
         }
 
-        return array_slice($notes, 0, 10);
+        return array_slice($this->expandLargeExtractedNotes($notes), 0, 10);
+    }
+
+    /**
+     * LLM が単一の長いメモに箇条書きを詰め込んだ場合の保険。
+     *
+     * @param  array<int, array{body: string, learning_goal?: string|null, note_context?: string|null, subdomain?: string|null}>  $notes
+     * @return array<int, array{body: string, learning_goal?: string|null, note_context?: string|null, subdomain?: string|null}>
+     */
+    private function expandLargeExtractedNotes(array $notes): array
+    {
+        if (count($notes) !== 1) {
+            return $notes;
+        }
+
+        $note = $notes[0];
+        $body = $note['body'];
+        preg_match_all('/^\s*(?:[-*]|\d+\.)\s+(.+)$/m', $body, $matches);
+
+        $items = collect($matches[1] ?? [])
+            ->map(fn (string $item): string => trim($item))
+            ->filter(fn (string $item): bool => $item !== '')
+            ->values();
+
+        if ($items->count() < 2) {
+            return $notes;
+        }
+
+        $prefix = trim((string) preg_replace('/^\s*(?:[-*]|\d+\.)\s+.+$/m', '', $body));
+        $context = $prefix !== '' ? Str::limit($prefix, 500, '') : null;
+
+        return $items
+            ->map(fn (string $item): array => [
+                ...$note,
+                'body' => Str::limit(($context ? $context."\n\n" : '').$item, 5000, ''),
+            ])
+            ->all();
     }
 
     /**
@@ -359,8 +396,11 @@ PROMPT;
 
 要件:
 - 1メモにつき1つの知識単位にする
+- チャット全体を1つの長いメモに要約しない
+- 箇条書きで「定義」「目的」「機能」「例」「特徴」「利点」などが並ぶ場合は、原則として項目ごとに別メモへ分割する
 - メモ本文にはカード作成に必要な定義、理由、手順、例外、比較軸を含める
 - チャットにない事実を過剰に足さない
+- フラッシュカード候補の問いの列挙は、そのまま本文に混ぜず、対応する知識単位へ統合する
 - 最大10件
 
 JSON形式:

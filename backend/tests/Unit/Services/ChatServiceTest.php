@@ -10,9 +10,12 @@ use App\Exceptions\Domain\ChatSessionNotFoundException;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Models\User;
+use App\Services\AI\AiGenerationRequest;
+use App\Services\AI\AiGenerationResult;
 use App\Services\AI\FakeAiProvider;
 use App\Services\ChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 final class ChatServiceTest extends TestCase
@@ -75,6 +78,85 @@ final class ChatServiceTest extends TestCase
         $this->assertStringContainsString('- Gemini 1.5 Flash の主な特徴は何ですか？', $content);
         $this->assertStringNotContainsString('flashcard_suggestions', $content);
         $this->assertStringNotContainsString('"answer"', $content);
+    }
+
+    public function test_send_message_unwraps_json_string_chat_reply(): void
+    {
+        $this->app->instance(
+            AiProviderInterface::class,
+            FakeAiProvider::make(forceRawContent: json_encode(
+                "EmDash についてです。\n\n- 定義: CMS の一種です。",
+                JSON_UNESCAPED_UNICODE
+            )),
+        );
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+
+        $result = app(ChatService::class)->sendMessage(
+            userId: $user->id,
+            chatSessionId: $session->id,
+            content: 'EmDash について教えて',
+        );
+
+        $content = $result['assistant_message']->content;
+
+        $this->assertSame("EmDash についてです。\n\n- 定義: CMS の一種です。", $content);
+        $this->assertNotSame('"', $content[0]);
+        $this->assertStringNotContainsString('\\n', $content);
+    }
+
+    public function test_materialize_splits_single_bulleted_note_into_multiple_notes(): void
+    {
+        Queue::fake();
+        $this->app->instance(AiProviderInterface::class, new class implements AiProviderInterface
+        {
+            public function name(): string
+            {
+                return 'fake';
+            }
+
+            public function supportsJsonSchema(): bool
+            {
+                return false;
+            }
+
+            public function generate(AiGenerationRequest $request): AiGenerationResult
+            {
+                return new AiGenerationResult(
+                    rawContent: json_encode([
+                        'notes' => [[
+                            'body' => "CMS の基本。\n\n- 定義: コンテンツを管理するソフトウェア。\n- 目的: 非エンジニアでも更新できるようにする。\n- 例: WordPress や Drupal。",
+                            'learning_goal' => 'CMS を理解する',
+                            'note_context' => 'チャットから作成',
+                            'subdomain' => 'CMS',
+                        ]],
+                    ], JSON_UNESCAPED_UNICODE),
+                    provider: 'fake',
+                    model: $request->model,
+                    inputTokens: 100,
+                    outputTokens: 100,
+                    costUsd: 0.0,
+                    durationMs: 1,
+                );
+            }
+        });
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'user',
+            'content' => 'CMS について教えて',
+        ]);
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'assistant',
+            'content' => "CMS の基本。\n\n- 定義: コンテンツを管理するソフトウェア。\n- 目的: 非エンジニアでも更新できるようにする。\n- 例: WordPress や Drupal。",
+        ]);
+
+        $result = app(ChatService::class)->materializeNotesAndGenerate($user->id, $session->id);
+
+        $this->assertCount(3, $result['notes']);
+        $this->assertStringContainsString('定義: コンテンツを管理するソフトウェア。', $result['notes'][0]->body);
+        $this->assertStringContainsString('目的: 非エンジニアでも更新できるようにする。', $result['notes'][1]->body);
+        $this->assertStringContainsString('例: WordPress や Drupal。', $result['notes'][2]->body);
     }
 
     public function test_send_message_persists_failed_assistant_message_when_ai_fails(): void

@@ -33,6 +33,9 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
   const materialize = useMaterializeChatNotes(selectedId);
   const [content, setContent] = useState("");
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
+  const [materializedSessionIds, setMaterializedSessionIds] = useState<Set<number>>(
+    () => new Set()
+  );
 
   async function handleNewChat() {
     try {
@@ -79,6 +82,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key !== "Enter" || event.shiftKey) return;
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
     event.preventDefault();
     void submitMessage();
   }
@@ -89,6 +93,9 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
       const noteCount = result.notes.length;
       const generated = result.dispatched.length;
       onMaterialized?.(result);
+      if (selectedId !== null) {
+        setMaterializedSessionIds((ids) => new Set(ids).add(selectedId));
+      }
       setActiveId(null);
       setContent("");
       toast.success(`${noteCount}件のメモを作成し、${generated}件の候補生成を開始しました`);
@@ -112,6 +119,8 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
 
   const messages = activeSession?.messages ?? [];
   const canMaterialize = messages.some((message) => message.role === "assistant");
+  const isMaterializedSession =
+    selectedId !== null && materializedSessionIds.has(selectedId);
 
   return (
     <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
@@ -143,14 +152,19 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               size="lg"
               className="min-h-11"
               onClick={handleMaterialize}
-              disabled={!canMaterialize || materialize.isPending || sendMessage.isPending}
+              disabled={
+                !canMaterialize ||
+                isMaterializedSession ||
+                materialize.isPending ||
+                sendMessage.isPending
+              }
             >
               {materialize.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : (
                 <Sparkles className="size-4" aria-hidden />
               )}
-              {CHAT_MATERIALIZE_LABEL}
+              {isMaterializedSession ? "カード化済み" : CHAT_MATERIALIZE_LABEL}
             </Button>
           </header>
 
