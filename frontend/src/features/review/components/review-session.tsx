@@ -46,31 +46,31 @@ const RATING_HINTS: Record<ReviewRating, string> = {
 };
 
 const RATING_DISPLAY_LABELS: Record<ReviewRating, string> = {
-  again: "やり直し",
+  again: "もう一度",
   hard: "難しい",
-  good: "思い出せた",
-  easy: "簡単すぎ",
+  good: "できた",
+  easy: "簡単",
 };
 
 const RATING_DESCRIPTIONS: Record<ReviewRating, string> = {
-  again: "答えられない",
-  hard: "迷った・時間がかかった",
-  good: "標準の評価",
-  easy: "すぐ答えられた",
+  again: "覚え直す",
+  hard: "迷った",
+  good: "標準",
+  easy: "余裕",
 };
 
 const RATING_BUTTON_CLASSES: Record<ReviewRating, string> = {
-  again: "order-3 min-h-14 md:order-1 md:min-h-16",
-  hard: "order-1 col-span-2 min-h-20 shadow-sm md:order-2 md:col-span-3 md:min-h-24",
-  good: "order-2 col-span-2 min-h-20 shadow-sm md:order-3 md:col-span-3 md:min-h-24",
-  easy: "order-4 min-h-14 md:order-4 md:min-h-16",
+  again: "order-3 min-h-16 md:order-1 md:min-h-20",
+  hard: "order-1 min-h-16 shadow-sm md:order-2 md:min-h-24",
+  good: "order-2 min-h-16 shadow-sm md:order-3 md:min-h-24",
+  easy: "order-4 min-h-16 md:order-4 md:min-h-20",
 };
 
 const RATING_LABEL_CLASSES: Record<ReviewRating, string> = {
-  again: "text-sm font-semibold leading-tight",
+  again: "text-sm font-bold leading-tight md:text-base",
   hard: "text-base font-bold leading-tight md:text-lg",
   good: "text-base font-bold leading-tight md:text-lg",
-  easy: "text-sm font-semibold leading-tight",
+  easy: "text-sm font-bold leading-tight md:text-base",
 };
 
 function ReviewExitBar() {
@@ -371,7 +371,7 @@ export function ReviewSession() {
   if (!current) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 pb-40 md:pb-0">
       <ReviewExitBar />
 
       {extraMode && (
@@ -485,27 +485,27 @@ export function ReviewSession() {
         </div>
       ) : (
         <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
-          <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 md:grid-cols-8">
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-4 md:gap-3">
             {REVIEW_RATINGS.map((rating) => (
               <button
                 key={rating}
                 type="button"
                 onClick={() => handleRate(rating)}
                 disabled={answerMutation.isPending}
-                className={`${RATING_CLASSES[rating]} ${RATING_BUTTON_CLASSES[rating]} rounded-md border px-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50`}
+                className={`${RATING_CLASSES[rating]} ${RATING_BUTTON_CLASSES[rating]} flex min-w-0 flex-col items-center justify-center rounded-md border px-2 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 md:px-3`}
                 aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
                 aria-label={`${REVIEW_RATING_LABELS[rating]}、${RATING_DESCRIPTIONS[rating]}、次回 ${RATING_HINTS[rating]}`}
               >
-                <span className={`block ${RATING_LABEL_CLASSES[rating]}`}>
+                <span className={`block max-w-full truncate ${RATING_LABEL_CLASSES[rating]}`}>
                   {RATING_DISPLAY_LABELS[rating]}
                 </span>
-                <span className="mt-1 block text-[11px] leading-tight opacity-80 md:text-xs">
+                <span className="mt-1 hidden text-[11px] leading-tight opacity-80 sm:block md:text-xs">
                   {RATING_DESCRIPTIONS[rating]}
                 </span>
                 <span className="mt-1 block text-[11px] leading-tight opacity-80">
                   {RATING_HINTS[rating]}
                 </span>
-                <kbd className="mt-1 inline-flex rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75 md:mt-2">
+                <kbd className="mt-1 hidden rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75 md:mt-2 md:inline-flex">
                   {REVIEW_RATING_SHORTCUTS[rating]}
                 </kbd>
               </button>
