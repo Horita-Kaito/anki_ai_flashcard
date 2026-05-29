@@ -90,7 +90,7 @@ final class ChatService implements ChatServiceInterface
                 maxOutputTokens: 1800,
             ));
             $this->recordChatUsage($userId, 'chat-reply', $result);
-            $assistantContent = trim($result->rawContent);
+            $assistantContent = $this->normalizeChatReplyContent($result->rawContent);
             $assistantMetadata = [
                 'status' => 'success',
                 'provider' => $result->provider,
@@ -229,7 +229,56 @@ Answer the user's question accurately and concisely in Japanese unless the user 
 Prefer explanations that expose definitions, contrasts, causes, procedures, exceptions, and examples that can later become flashcards.
 When a useful learning point appears, end with a short suggestion that it can be turned into cards.
 If the user switches to a completely different topic, answer normally but suggest starting a new chat before cardizing.
+Return natural Markdown only. Do not return JSON, code fences, or fields such as answer / flashcard_suggestions.
+Use short paragraphs, bullet lists, and bold labels where they improve readability.
 PROMPT;
+    }
+
+    private function normalizeChatReplyContent(string $rawContent): string
+    {
+        $content = trim($rawContent);
+        $decoded = $this->decodeJsonObject($content);
+
+        if (! is_array($decoded)) {
+            return $content;
+        }
+
+        $answer = $decoded['answer'] ?? null;
+        if (! is_string($answer) || trim($answer) === '') {
+            return $content;
+        }
+
+        $markdown = trim($answer);
+        $suggestions = $decoded['flashcard_suggestions'] ?? [];
+
+        if (is_array($suggestions)) {
+            $items = collect($suggestions)
+                ->filter(fn (mixed $item): bool => is_string($item) && trim($item) !== '')
+                ->map(fn (string $item): string => '- '.trim($item))
+                ->values();
+
+            if ($items->isNotEmpty()) {
+                $markdown .= "\n\n---\n\n**カード化しやすい問い**\n\n".$items->implode("\n");
+            }
+        }
+
+        return $markdown;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function decodeJsonObject(string $content): ?array
+    {
+        $candidate = trim($content);
+
+        if (preg_match('/^```(?:json)?\s*(.*?)\s*```$/s', $candidate, $matches) === 1) {
+            $candidate = trim($matches[1]);
+        }
+
+        $decoded = json_decode($candidate, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 
     /**
