@@ -159,6 +159,61 @@ final class ChatServiceTest extends TestCase
         $this->assertStringContainsString('例: WordPress や Drupal。', $result['notes'][2]->body);
     }
 
+    public function test_materialize_splits_single_labeled_paragraph_note_into_multiple_notes(): void
+    {
+        Queue::fake();
+        $this->app->instance(AiProviderInterface::class, new class implements AiProviderInterface
+        {
+            public function name(): string
+            {
+                return 'fake';
+            }
+
+            public function supportsJsonSchema(): bool
+            {
+                return false;
+            }
+
+            public function generate(AiGenerationRequest $request): AiGenerationResult
+            {
+                return new AiGenerationResult(
+                    rawContent: json_encode([
+                        'notes' => [[
+                            'body' => "ETag の基本。\n\n**定義:** HTTP リソースの特定バージョンを識別する値。\n\n目的: キャッシュ検証で 304 Not Modified を返せるようにする。\n条件付きリクエストにも使う。\n\n例: If-None-Match と組み合わせる。",
+                            'learning_goal' => 'ETag を理解する',
+                            'note_context' => 'チャットから作成',
+                            'subdomain' => 'HTTP',
+                        ]],
+                    ], JSON_UNESCAPED_UNICODE),
+                    provider: 'fake',
+                    model: $request->model,
+                    inputTokens: 100,
+                    outputTokens: 100,
+                    costUsd: 0.0,
+                    durationMs: 1,
+                );
+            }
+        });
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'user',
+            'content' => 'ETag について教えて',
+        ]);
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'assistant',
+            'content' => "ETag の基本。\n\n**定義:** HTTP リソースの特定バージョンを識別する値。\n\n目的: キャッシュ検証で 304 Not Modified を返せるようにする。\n条件付きリクエストにも使う。\n\n例: If-None-Match と組み合わせる。",
+        ]);
+
+        $result = app(ChatService::class)->materializeNotesAndGenerate($user->id, $session->id);
+
+        $this->assertCount(3, $result['notes']);
+        $this->assertStringContainsString('**定義:** HTTP リソースの特定バージョンを識別する値。', $result['notes'][0]->body);
+        $this->assertStringContainsString('目的: キャッシュ検証で 304 Not Modified を返せるようにする。', $result['notes'][1]->body);
+        $this->assertStringContainsString('条件付きリクエストにも使う。', $result['notes'][1]->body);
+        $this->assertStringContainsString('例: If-None-Match と組み合わせる。', $result['notes'][2]->body);
+    }
+
     public function test_materialize_does_not_split_procedure_bullets_without_learning_labels(): void
     {
         Queue::fake();

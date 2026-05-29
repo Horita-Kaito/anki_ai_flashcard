@@ -452,19 +452,13 @@ PROMPT;
 
         $note = $notes[0];
         $body = $note['body'];
-        preg_match_all('/^\s*(?:[-*]|\d+\.)\s+(.+)$/m', $body, $matches);
-
-        $items = collect($matches[1] ?? [])
-            ->map(fn (string $item): string => trim($item))
-            ->filter(fn (string $item): bool => $item !== '')
-            ->filter(fn (string $item): bool => $this->isFlashcardReadySplitItem($item))
-            ->values();
+        $items = collect($this->extractFlashcardReadySections($body));
 
         if ($items->count() < 2) {
             return $notes;
         }
 
-        $prefix = trim((string) preg_replace('/^\s*(?:[-*]|\d+\.)\s+.+$/m', '', $body));
+        $prefix = $this->extractSectionPrefix($body);
         $context = $prefix !== '' ? Str::limit($prefix, 500, '') : null;
 
         return $items
@@ -475,9 +469,57 @@ PROMPT;
             ->all();
     }
 
+    /** @return array<int, string> */
+    private function extractFlashcardReadySections(string $body): array
+    {
+        $sections = [];
+        $current = [];
+
+        foreach (preg_split('/\R/u', $body) ?: [] as $line) {
+            $normalized = trim((string) preg_replace('/^\s*(?:[-*]|\d+\.)\s+/', '', $line));
+
+            if ($this->isFlashcardReadySplitItem($normalized)) {
+                if ($current !== []) {
+                    $sections[] = trim(implode("\n", $current));
+                }
+                $current = [$normalized];
+
+                continue;
+            }
+
+            if ($current !== []) {
+                $current[] = $line;
+            }
+        }
+
+        if ($current !== []) {
+            $sections[] = trim(implode("\n", $current));
+        }
+
+        return collect($sections)
+            ->filter(fn (string $section): bool => $section !== '')
+            ->values()
+            ->all();
+    }
+
+    private function extractSectionPrefix(string $body): string
+    {
+        $prefixLines = [];
+
+        foreach (preg_split('/\R/u', $body) ?: [] as $line) {
+            $normalized = trim((string) preg_replace('/^\s*(?:[-*]|\d+\.)\s+/', '', $line));
+            if ($this->isFlashcardReadySplitItem($normalized)) {
+                break;
+            }
+            $prefixLines[] = $line;
+        }
+
+        return trim(implode("\n", $prefixLines));
+    }
+
     private function isFlashcardReadySplitItem(string $item): bool
     {
-        return preg_match('/^(定義|意味|目的|機能|特徴|利点|メリット|デメリット|用途|役割|原因|理由|比較|注意点|例外|仕組み|例)\s*[:：]/u', $item) === 1;
+        return preg_match('/^(?:\*\*)?(定義|意味|目的|機能|特徴|利点|メリット|デメリット|用途|役割|原因|理由|比較|注意点|例外|仕組み|例)(?:\*\*)?\s*[:：]/u', $item) === 1;
     }
 
     /**
