@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { fetchNoteSeed } from "./endpoints";
 
 export const noteSeedKeys = {
@@ -11,5 +11,15 @@ export function useNoteSeed(id: number) {
     queryKey: noteSeedKeys.detail(id),
     queryFn: () => fetchNoteSeed(id),
     enabled: Number.isFinite(id) && id > 0,
+  });
+}
+
+export function useNoteSeeds(ids: number[]) {
+  return useQueries({
+    queries: ids.map((id) => ({
+      queryKey: noteSeedKeys.detail(id),
+      queryFn: () => fetchNoteSeed(id),
+      enabled: Number.isFinite(id) && id > 0,
+    })),
   });
 }

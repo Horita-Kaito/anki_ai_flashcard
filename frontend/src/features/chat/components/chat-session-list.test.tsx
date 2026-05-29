@@ -36,4 +36,26 @@ describe("ChatSessionList", () => {
 
     expect(onDelete).toHaveBeenCalledWith(session.id);
   });
+
+  it("削除に失敗した場合は確認ダイアログを閉じない", async () => {
+    const user = userEvent.setup();
+    const onDelete = vi.fn().mockRejectedValue(new Error("failed"));
+
+    render(
+      <ChatSessionList
+        sessions={[session]}
+        activeId={session.id}
+        isLoading={false}
+        isCreating={false}
+        onCreate={vi.fn()}
+        onSelect={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    await user.click(screen.getByRole("button", { name: "HTTP キャッシュを削除" }));
+    await user.click(screen.getByRole("button", { name: "削除する" }));
+
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  });
 });

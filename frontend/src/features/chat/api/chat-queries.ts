@@ -22,6 +22,25 @@ export const chatKeys = {
   detail: (id: number) => [...chatKeys.all, "detail", id] as const,
 };
 
+function removeChatSessionFromList(
+  current: PaginatedResponse<ChatSession> | undefined,
+  id: number
+): PaginatedResponse<ChatSession> | undefined {
+  if (!current) return current;
+  const nextData = current.data.filter((session) => session.id !== id);
+
+  return {
+    ...current,
+    data: nextData,
+    meta: {
+      ...current.meta,
+      total: current.data.length === nextData.length
+        ? current.meta.total
+        : Math.max(current.meta.total - 1, 0),
+    },
+  };
+}
+
 export function useChatSessions() {
   return useQuery({
     queryKey: chatKeys.list(),
@@ -54,17 +73,9 @@ export function useDeleteChatSession() {
     mutationFn: (id: number) => deleteChatSession(id),
     onSuccess: (_data, id) => {
       qc.removeQueries({ queryKey: chatKeys.detail(id) });
-      qc.setQueryData<PaginatedResponse<ChatSession>>(chatKeys.list(), (current) => {
-        if (!current) return current;
-        return {
-          ...current,
-          data: current.data.filter((session) => session.id !== id),
-          meta: {
-            ...current.meta,
-            total: Math.max(current.meta.total - 1, 0),
-          },
-        };
-      });
+      qc.setQueryData<PaginatedResponse<ChatSession>>(chatKeys.list(), (current) =>
+        removeChatSessionFromList(current, id)
+      );
       qc.invalidateQueries({ queryKey: chatKeys.list() });
     },
   });
@@ -101,10 +112,16 @@ export function useMaterializeChatNotes(chatSessionId: number | null) {
       if (!chatSessionId) throw new Error("チャットが選択されていません");
       return materializeChatNotes(chatSessionId);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      result.notes.forEach((note) => {
+        qc.setQueryData(noteSeedKeys.detail(note.id), note);
+      });
       if (chatSessionId) {
         qc.removeQueries({ queryKey: chatKeys.detail(chatSessionId) });
+        qc.setQueryData<PaginatedResponse<ChatSession>>(chatKeys.list(), (current) =>
+          removeChatSessionFromList(current, chatSessionId)
+        );
         qc.invalidateQueries({ queryKey: chatKeys.list() });
       }
     },

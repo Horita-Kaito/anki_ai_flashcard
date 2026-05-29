@@ -22,9 +22,11 @@ export function ChatMessageList({
     return <p className="text-sm text-muted-foreground">読み込み中...</p>;
   }
 
+  const hasPendingActivity = pendingUserMessage !== null || isAssistantThinking;
+
   return (
     <>
-      {messages.length === 0 ? (
+      {messages.length === 0 && !hasPendingActivity ? (
         <div className="grid min-h-64 place-items-center text-center">
           <div className="max-w-sm space-y-2">
             <p className="text-base font-medium">知りたいことを質問してください</p>

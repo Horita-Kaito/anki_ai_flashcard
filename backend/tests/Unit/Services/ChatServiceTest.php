@@ -159,6 +159,59 @@ final class ChatServiceTest extends TestCase
         $this->assertStringContainsString('例: WordPress や Drupal。', $result['notes'][2]->body);
     }
 
+    public function test_materialize_does_not_split_procedure_bullets_without_learning_labels(): void
+    {
+        Queue::fake();
+        $this->app->instance(AiProviderInterface::class, new class implements AiProviderInterface
+        {
+            public function name(): string
+            {
+                return 'fake';
+            }
+
+            public function supportsJsonSchema(): bool
+            {
+                return false;
+            }
+
+            public function generate(AiGenerationRequest $request): AiGenerationResult
+            {
+                return new AiGenerationResult(
+                    rawContent: json_encode([
+                        'notes' => [[
+                            'body' => "復習手順。\n\n- まず未処理の候補を確認する。\n- 次に採用するカードを選ぶ。\n- 最後に復習キューへ戻る。",
+                            'learning_goal' => '復習手順を理解する',
+                            'note_context' => 'チャットから作成',
+                            'subdomain' => '復習',
+                        ]],
+                    ], JSON_UNESCAPED_UNICODE),
+                    provider: 'fake',
+                    model: $request->model,
+                    inputTokens: 100,
+                    outputTokens: 100,
+                    costUsd: 0.0,
+                    durationMs: 1,
+                );
+            }
+        });
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'user',
+            'content' => '復習手順を教えて',
+        ]);
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'assistant',
+            'content' => "復習手順。\n\n- まず未処理の候補を確認する。\n- 次に採用するカードを選ぶ。\n- 最後に復習キューへ戻る。",
+        ]);
+
+        $result = app(ChatService::class)->materializeNotesAndGenerate($user->id, $session->id);
+
+        $this->assertCount(1, $result['notes']);
+        $this->assertStringContainsString('まず未処理の候補を確認する。', $result['notes'][0]->body);
+        $this->assertStringContainsString('最後に復習キューへ戻る。', $result['notes'][0]->body);
+    }
+
     public function test_send_message_persists_failed_assistant_message_when_ai_fails(): void
     {
         $this->app->instance(

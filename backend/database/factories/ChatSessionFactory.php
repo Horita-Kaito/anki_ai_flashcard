@@ -23,6 +23,7 @@ final class ChatSessionFactory extends Factory
             'title' => $this->faker->sentence(4),
             'domain_template_id' => null,
             'deck_id' => null,
+            'materialized_at' => null,
         ];
     }
 }

@@ -214,6 +214,24 @@ final class ChatControllerTest extends TestCase
         );
     }
 
+    public function test_カード化処理中のチャットは再メモ化できない(): void
+    {
+        config(['ai.default_provider' => 'fake']);
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create([
+            'materialized_at' => now(),
+        ]);
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'assistant',
+            'content' => 'ETag はリソース表現の識別子です。',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/chats/{$session->id}/materialize-notes", [])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'CHAT_ALREADY_MATERIALIZED');
+    }
+
     public function test_他ユーザーのチャットへメッセージ送信できない(): void
     {
         config(['ai.default_provider' => 'fake']);

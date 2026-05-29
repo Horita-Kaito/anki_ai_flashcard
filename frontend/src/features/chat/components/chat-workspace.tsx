@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useMemo, useState } from "react";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
   useSendChatMessage,
 } from "../api/chat-queries";
 import { CHAT_MATERIALIZE_LABEL } from "../constants";
+import { ChatComposer } from "./chat-composer";
 import { ChatMessageList } from "./chat-message-list";
 import { ChatSessionList } from "./chat-session-list";
 import type { MaterializeChatNotesResult } from "../api/endpoints";
@@ -33,9 +34,15 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
   const materialize = useMaterializeChatNotes(selectedId);
   const [content, setContent] = useState("");
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
-  const [materializedSessionIds, setMaterializedSessionIds] = useState<Set<number>>(
-    () => new Set()
-  );
+  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const messages = activeSession?.messages ?? [];
+  const canMaterialize = messages.some((message) => message.role === "assistant");
+
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (!container) return;
+    container.scrollTop = container.scrollHeight;
+  }, [messages.length, pendingPrompt, sendMessage.isPending, sessionLoading]);
 
   async function handleNewChat() {
     try {
@@ -80,22 +87,12 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
     }
   }
 
-  function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key !== "Enter" || event.shiftKey) return;
-    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229) return;
-    event.preventDefault();
-    void submitMessage();
-  }
-
   async function handleMaterialize() {
     try {
       const result = await materialize.mutateAsync();
       const noteCount = result.notes.length;
       const generated = result.dispatched.length;
       onMaterialized?.(result);
-      if (selectedId !== null) {
-        setMaterializedSessionIds((ids) => new Set(ids).add(selectedId));
-      }
       setActiveId(null);
       setContent("");
       toast.success(`${noteCount}件のメモを作成し、${generated}件の候補生成を開始しました`);
@@ -114,13 +111,9 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
       toast.success("チャットを削除しました");
     } catch {
       toast.error("チャットの削除に失敗しました");
+      throw new Error("Failed to delete chat session");
     }
   }
-
-  const messages = activeSession?.messages ?? [];
-  const canMaterialize = messages.some((message) => message.role === "assistant");
-  const isMaterializedSession =
-    selectedId !== null && materializedSessionIds.has(selectedId);
 
   return (
     <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
@@ -154,7 +147,6 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               onClick={handleMaterialize}
               disabled={
                 !canMaterialize ||
-                isMaterializedSession ||
                 materialize.isPending ||
                 sendMessage.isPending
               }
@@ -164,11 +156,11 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               ) : (
                 <Sparkles className="size-4" aria-hidden />
               )}
-              {isMaterializedSession ? "カード化済み" : CHAT_MATERIALIZE_LABEL}
+              {CHAT_MATERIALIZE_LABEL}
             </Button>
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
             <ChatMessageList
               messages={messages}
               isLoading={sessionLoading}
@@ -178,30 +170,13 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
           </div>
 
           <form onSubmit={handleSubmit} className="border-t p-3 pb-28 md:pb-3">
-            <div className="flex gap-2">
-              <textarea
-                aria-label="質問"
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                onKeyDown={handleComposerKeyDown}
-                placeholder="質問を入力"
-                rows={2}
-                className="min-h-16 flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              />
-              <Button
-                type="submit"
-                size="icon-lg"
-                className="min-h-11 min-w-11 self-end"
-                disabled={sendMessage.isPending || createSession.isPending || content.trim() === ""}
-                aria-label="送信"
-              >
-                {sendMessage.isPending ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="size-4" aria-hidden />
-                )}
-              </Button>
-            </div>
+            <ChatComposer
+              value={content}
+              isSending={sendMessage.isPending}
+              isCreating={createSession.isPending}
+              onChange={setContent}
+              onSubmit={() => void submitMessage()}
+            />
           </form>
         </div>
       </section>

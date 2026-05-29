@@ -21,7 +21,16 @@ class ChatSession extends Model
         'title',
         'domain_template_id',
         'deck_id',
+        'materialized_at',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'materialized_at' => 'datetime',
+        ];
+    }
 
     /** @return BelongsTo<User, self> */
     public function user(): BelongsTo

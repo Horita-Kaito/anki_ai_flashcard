@@ -21,6 +21,15 @@ final class EloquentChatSessionRepository extends AbstractUserScopedEloquentRepo
         return $this->userScopedQuery($userId)->where('id', $chatSessionId)->first();
     }
 
+    public function findForUserForUpdate(int $userId, int $chatSessionId): ?ChatSession
+    {
+        /** @var ChatSession|null */
+        return $this->userScopedQuery($userId)
+            ->where('id', $chatSessionId)
+            ->lockForUpdate()
+            ->first();
+    }
+
     public function findForUserWithMessages(int $userId, int $chatSessionId): ?ChatSession
     {
         /** @var ChatSession|null */
@@ -33,6 +42,7 @@ final class EloquentChatSessionRepository extends AbstractUserScopedEloquentRepo
     public function paginateForUser(int $userId, int $perPage = 20): LengthAwarePaginator
     {
         return $this->userScopedQuery($userId)
+            ->whereNull('materialized_at')
             ->withCount('messages')
             ->orderByDesc('updated_at')
             ->paginate($perPage);

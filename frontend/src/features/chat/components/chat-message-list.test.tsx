@@ -14,6 +14,21 @@ const assistantMessage: ChatMessage = {
 };
 
 describe("ChatMessageList", () => {
+  it("初回送信待ちの間は空状態を隠す", () => {
+    render(
+      <ChatMessageList
+        messages={[]}
+        isLoading={false}
+        pendingUserMessage="CMS とは?"
+        isAssistantThinking
+      />
+    );
+
+    expect(screen.queryByText("知りたいことを質問してください")).not.toBeInTheDocument();
+    expect(screen.getByText("CMS とは?")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("回答を組み立てています");
+  });
+
   it("AI 応答待ちの間、ユーザー入力と思考中表示を描画する", () => {
     render(
       <ChatMessageList

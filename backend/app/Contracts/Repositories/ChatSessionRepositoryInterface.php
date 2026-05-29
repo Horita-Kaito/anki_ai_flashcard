@@ -11,6 +11,8 @@ interface ChatSessionRepositoryInterface
 {
     public function findForUser(int $userId, int $chatSessionId): ?ChatSession;
 
+    public function findForUserForUpdate(int $userId, int $chatSessionId): ?ChatSession;
+
     public function findForUserWithMessages(int $userId, int $chatSessionId): ?ChatSession;
 
     /** @return LengthAwarePaginator<int, ChatSession> */

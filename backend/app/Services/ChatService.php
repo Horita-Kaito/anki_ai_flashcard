@@ -12,6 +12,7 @@ use App\Contracts\Services\AI\AiProviderInterface;
 use App\Contracts\Services\ChatServiceInterface;
 use App\Exceptions\Domain\AiGenerationFailedException;
 use App\Exceptions\Domain\AiUsageLimitExceededException;
+use App\Exceptions\Domain\ChatSessionAlreadyMaterializedException;
 use App\Exceptions\Domain\ChatSessionNotFoundException;
 use App\Exceptions\Domain\GenerationAlreadyInFlightException;
 use App\Models\AiGenerationLog;
@@ -135,33 +136,41 @@ final class ChatService implements ChatServiceInterface
         $session = $this->getForUser($userId, $chatSessionId);
         $messages = $this->messageRepository->listForSession($userId, $session->id);
         $this->assertMonthlyTokenLimit($userId);
-        $notePayloads = $this->extractNotes($userId, $session->id, $messages->all());
-
-        if ($notePayloads === []) {
-            $notePayloads[] = [
-                'body' => $this->fallbackNoteBody($messages->all()),
-                'learning_goal' => 'チャットで得た学びをカード化する',
-                'note_context' => 'チャットから作成',
-                'subdomain' => null,
-            ];
-        }
-
+        $session = $this->claimSessionForMaterialization($userId, $chatSessionId);
         $domainTemplateId = $options['domain_template_id'] ?? $session->domain_template_id;
         $defaultDeckId = $options['deck_id'] ?? $session->deck_id;
-        $notes = DB::transaction(function () use ($userId, $notePayloads, $domainTemplateId) {
-            $created = [];
-            foreach ($notePayloads as $payload) {
-                $created[] = $this->noteSeedService->createForUser($userId, [
-                    'body' => $payload['body'],
-                    'domain_template_id' => $domainTemplateId,
-                    'subdomain' => $payload['subdomain'] ?? null,
-                    'learning_goal' => $payload['learning_goal'] ?? 'チャットで得た学びを定着させる',
-                    'note_context' => $payload['note_context'] ?? 'チャットから作成',
-                ]);
+
+        try {
+            $notePayloads = $this->extractNotes($userId, $session->id, $messages->all());
+
+            if ($notePayloads === []) {
+                $notePayloads[] = [
+                    'body' => $this->fallbackNoteBody($messages->all()),
+                    'learning_goal' => 'チャットで得た学びをカード化する',
+                    'note_context' => 'チャットから作成',
+                    'subdomain' => null,
+                ];
             }
 
-            return $created;
-        });
+            $notes = DB::transaction(function () use ($userId, $notePayloads, $domainTemplateId) {
+                $created = [];
+                foreach ($notePayloads as $payload) {
+                    $created[] = $this->noteSeedService->createForUser($userId, [
+                        'body' => $payload['body'],
+                        'domain_template_id' => $domainTemplateId,
+                        'subdomain' => $payload['subdomain'] ?? null,
+                        'learning_goal' => $payload['learning_goal'] ?? 'チャットで得た学びを定着させる',
+                        'note_context' => $payload['note_context'] ?? 'チャットから作成',
+                    ]);
+                }
+
+                return $created;
+            });
+        } catch (\Throwable $e) {
+            $this->releaseMaterializationClaim($session);
+
+            throw $e;
+        }
 
         $dispatched = [];
         $skipped = [];
@@ -209,6 +218,35 @@ final class ChatService implements ChatServiceInterface
             'failed' => $failed,
             'chat_session_deleted' => true,
         ];
+    }
+
+    private function claimSessionForMaterialization(int $userId, int $chatSessionId): ChatSession
+    {
+        return DB::transaction(function () use ($userId, $chatSessionId): ChatSession {
+            $session = $this->sessionRepository->findForUserForUpdate($userId, $chatSessionId);
+            if ($session === null) {
+                throw ChatSessionNotFoundException::make($chatSessionId);
+            }
+
+            if ($session->materialized_at !== null) {
+                throw ChatSessionAlreadyMaterializedException::make($chatSessionId);
+            }
+
+            return $this->sessionRepository->update($session, [
+                'materialized_at' => now(),
+            ]);
+        });
+    }
+
+    private function releaseMaterializationClaim(ChatSession $session): void
+    {
+        if (! $session->exists) {
+            return;
+        }
+
+        $this->sessionRepository->update($session, [
+            'materialized_at' => null,
+        ]);
     }
 
     public function deleteForUser(int $userId, int $chatSessionId): void
@@ -365,6 +403,7 @@ PROMPT;
         $items = collect($matches[1] ?? [])
             ->map(fn (string $item): string => trim($item))
             ->filter(fn (string $item): bool => $item !== '')
+            ->filter(fn (string $item): bool => $this->isFlashcardReadySplitItem($item))
             ->values();
 
         if ($items->count() < 2) {
@@ -380,6 +419,11 @@ PROMPT;
                 'body' => Str::limit(($context ? $context."\n\n" : '').$item, 5000, ''),
             ])
             ->all();
+    }
+
+    private function isFlashcardReadySplitItem(string $item): bool
+    {
+        return preg_match('/^(定義|意味|目的|機能|特徴|利点|メリット|デメリット|用途|役割|原因|理由|比較|注意点|例外|仕組み|例)\s*[:：]/u', $item) === 1;
     }
 
     /**

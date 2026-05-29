@@ -33,8 +33,12 @@ export function ChatSessionList({
 
   async function handleDelete() {
     if (!deleteTarget) return;
-    await onDelete(deleteTarget.id);
-    setDeleteTarget(null);
+    try {
+      await onDelete(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch {
+      // 親コンポーネント側で toast を出す。失敗時は確認ダイアログを閉じない。
+    }
   }
 
   return (
