@@ -9,9 +9,11 @@ interface ConfirmDialogProps {
   description?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  secondaryLabel?: string;
   variant?: "default" | "destructive";
   onConfirm: () => void;
   onCancel: () => void;
+  onSecondary?: () => void;
   loading?: boolean;
 }
 
@@ -29,9 +31,11 @@ export function ConfirmDialog({
   description,
   confirmLabel = "OK",
   cancelLabel = "キャンセル",
+  secondaryLabel,
   variant = "default",
   onConfirm,
   onCancel,
+  onSecondary,
   loading = false,
 }: ConfirmDialogProps) {
   useEffect(() => {
@@ -75,7 +79,7 @@ export function ConfirmDialog({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className={onSecondary ? "grid gap-2 md:grid-cols-3" : "grid grid-cols-2 gap-2"}>
           <Button
             type="button"
             variant="outline"
@@ -86,6 +90,18 @@ export function ConfirmDialog({
           >
             {cancelLabel}
           </Button>
+          {onSecondary && secondaryLabel && (
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="min-h-12"
+              onClick={onSecondary}
+              disabled={loading}
+            >
+              {secondaryLabel}
+            </Button>
+          )}
           <Button
             type="button"
             variant={variant === "destructive" ? "destructive" : "default"}

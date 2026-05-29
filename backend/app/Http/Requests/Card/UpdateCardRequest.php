@@ -40,6 +40,7 @@ final class UpdateCardRequest extends FormRequest
             'card_type' => ['sometimes', Rule::in(CardType::values())],
             'is_suspended' => ['sometimes', 'boolean'],
             'scheduler' => ['sometimes', Rule::in(Card::schedulers())],
+            'reset_schedule' => ['sometimes', 'boolean'],
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => [
                 'integer',

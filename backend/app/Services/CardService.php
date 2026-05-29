@@ -89,7 +89,9 @@ final class CardService
 
         /** @var array<int, int>|null $tagIds */
         $tagIds = $attributes['tag_ids'] ?? null;
+        $resetSchedule = (bool) ($attributes['reset_schedule'] ?? false);
         unset($attributes['tag_ids']);
+        unset($attributes['reset_schedule']);
 
         if ($tagIds !== null) {
             $this->assertTagsOwnedByUser($userId, $tagIds);
@@ -97,8 +99,9 @@ final class CardService
 
         // scheduler を変更する場合は学習進捗の初期化が必要 (SM-2 と FSRS で
         // 状態変数が互換でないため、書き換えるとアルゴリズムが壊れる)。
-        $shouldResetSchedule = isset($attributes['scheduler'])
-            && $attributes['scheduler'] !== $card->scheduler;
+        $shouldResetSchedule = $resetSchedule || (
+            isset($attributes['scheduler']) && $attributes['scheduler'] !== $card->scheduler
+        );
 
         return DB::transaction(function () use ($card, $attributes, $tagIds, $shouldResetSchedule) {
             $updated = $this->cardRepository->update($card, $attributes);

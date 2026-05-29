@@ -61,6 +61,7 @@ export function useUpdateCard(id: number) {
     onSuccess: (data) => {
       qc.setQueryData(cardKeys.detail(id), data);
       qc.invalidateQueries({ queryKey: cardKeys.all });
+      qc.invalidateQueries({ queryKey: ["review"] });
     },
   });
 }

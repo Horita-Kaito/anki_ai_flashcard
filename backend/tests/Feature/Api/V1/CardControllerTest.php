@@ -244,6 +244,46 @@ final class CardControllerTest extends TestCase
             ->assertJsonPath('data.schedule.stability', 7.5);
     }
 
+    public function test_reset_schedule_指定で内容更新時に学習進捗をリセットできる(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+
+        $response = $this->actingAs($user)->postJson('/api/v1/cards', [
+            'deck_id' => $deck->id,
+            'question' => 'Q',
+            'answer' => 'A',
+            'card_type' => 'basic_qa',
+            'scheduler' => 'fsrs',
+        ]);
+        $cardId = $response->json('data.id');
+
+        CardSchedule::where('card_id', $cardId)->update([
+            'state' => 'review',
+            'repetitions' => 4,
+            'interval_days' => 10,
+            'stability' => 10.5,
+            'difficulty' => 6.5,
+            'lapse_count' => 1,
+            'due_at' => now()->addDays(10),
+            'last_reviewed_at' => now()->subDay(),
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$cardId}", [
+                'question' => 'updated',
+                'reset_schedule' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.question', 'updated')
+            ->assertJsonPath('data.schedule.state', 'new')
+            ->assertJsonPath('data.schedule.repetitions', 0)
+            ->assertJsonPath('data.schedule.interval_days', 0)
+            ->assertJsonPath('data.schedule.lapse_count', 0)
+            ->assertJsonPath('data.schedule.stability', null)
+            ->assertJsonPath('data.schedule.difficulty', null);
+    }
+
     public function test_scheduler_を_fsrs_から_sm2_に戻すと_fsr_s_状態がクリアされる(): void
     {
         $user = User::factory()->create();

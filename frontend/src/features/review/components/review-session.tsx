@@ -9,6 +9,7 @@ import {
   Home,
   Layers,
   NotebookPen,
+  Pencil,
   RotateCcw,
   Sparkles,
 } from "lucide-react";
@@ -409,7 +410,14 @@ export function ReviewSession() {
         </div>
       )}
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Link
+          href={`/cards/${current.id}?next=/review`}
+          className={`${buttonVariants({ variant: "ghost", size: "sm" })} min-h-11 text-muted-foreground`}
+        >
+          <Pencil className="size-4 mr-1" aria-hidden />
+          編集
+        </Link>
         <Button
           variant="ghost"
           size="sm"

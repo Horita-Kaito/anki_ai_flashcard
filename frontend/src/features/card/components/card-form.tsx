@@ -71,11 +71,36 @@ export function CardForm({
   const [pendingValues, setPendingValues] = useState<CreateCardInput | null>(
     null
   );
+  const [pendingContentValues, setPendingContentValues] =
+    useState<CreateCardInput | null>(null);
 
-  async function persistValues(values: CreateCardInput): Promise<void> {
+  const hasLearningProgress =
+    !!card?.schedule &&
+    (card.schedule.repetitions > 0 ||
+      card.schedule.interval_days > 0 ||
+      card.schedule.state !== "new");
+
+  function hasCardContentChanged(values: CreateCardInput): boolean {
+    if (!card) return false;
+
+    return (
+      values.question !== card.question ||
+      values.answer !== card.answer ||
+      (values.explanation ?? "") !== (card.explanation ?? "") ||
+      values.card_type !== card.card_type
+    );
+  }
+
+  async function persistValues(
+    values: CreateCardInput,
+    resetSchedule = false
+  ): Promise<void> {
     try {
       if (isEdit) {
-        await updateMutation.mutateAsync(values);
+        await updateMutation.mutateAsync({
+          ...values,
+          reset_schedule: resetSchedule,
+        });
         toast.success("カードを更新しました");
       } else {
         await createMutation.mutateAsync(values);
@@ -96,6 +121,10 @@ export function CardForm({
       values.scheduler !== card.scheduler
     ) {
       setPendingValues(values);
+      return;
+    }
+    if (isEdit && hasLearningProgress && hasCardContentChanged(values)) {
+      setPendingContentValues(values);
       return;
     }
     await persistValues(values);
@@ -311,6 +340,31 @@ export function CardForm({
           // mutation 進行中はキャンセルさせない (バックエンド処理が走っているため)
           if (updateMutation.isPending) return;
           setPendingValues(null);
+        }}
+        loading={updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={pendingContentValues !== null}
+        title="学習進捗をリセットしますか？"
+        description="問題文・回答・補足説明などを直すと、これまでの正答履歴と現在の内容がずれることがあります。大きく意味を変えた場合はリセット、誤字や軽い表現修正だけならそのまま保存できます。"
+        cancelLabel="戻る"
+        secondaryLabel="そのまま保存"
+        confirmLabel="リセットして保存"
+        variant="destructive"
+        onConfirm={async () => {
+          if (!pendingContentValues) return;
+          await persistValues(pendingContentValues, true);
+          setPendingContentValues(null);
+        }}
+        onSecondary={async () => {
+          if (!pendingContentValues) return;
+          await persistValues(pendingContentValues, false);
+          setPendingContentValues(null);
+        }}
+        onCancel={() => {
+          if (updateMutation.isPending) return;
+          setPendingContentValues(null);
         }}
         loading={updateMutation.isPending}
       />

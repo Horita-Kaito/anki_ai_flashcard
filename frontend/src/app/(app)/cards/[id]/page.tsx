@@ -14,12 +14,16 @@ import { SchedulerBadge } from "@/shared/ui/scheduler-badge";
 
 export default function CardEditPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ next?: string }>;
 }) {
   const router = useRouter();
   const { id } = use(params);
+  const { next } = use(searchParams);
   const cardId = Number(id);
+  const redirectTo = next?.startsWith("/") && !next.startsWith("//") ? next : "/cards";
   const { data: card, isLoading, isError } = useCard(cardId);
   const deleteMutation = useDeleteCard();
 
@@ -85,7 +89,7 @@ export default function CardEditPage({
           )}
         </header>
 
-        <CardForm card={card} />
+        <CardForm card={card} redirectTo={redirectTo} />
 
         <section
           aria-labelledby="danger-zone"

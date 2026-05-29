@@ -15,6 +15,7 @@ export const createCardSchema = z.object({
   card_type: z.enum(CARD_TYPES),
   is_suspended: z.boolean().optional(),
   scheduler: z.enum(SCHEDULERS).optional(),
+  reset_schedule: z.boolean().optional(),
   tag_ids: z.array(z.number().int()).optional(),
 });
 export type CreateCardInput = z.infer<typeof createCardSchema>;
