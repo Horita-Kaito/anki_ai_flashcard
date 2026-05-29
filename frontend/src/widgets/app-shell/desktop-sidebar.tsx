@@ -14,6 +14,7 @@ import {
   BookOpen,
   BarChart3,
   ShieldCheck,
+  MessagesSquare,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useCurrentUser } from "@/features/auth/api/auth-queries";
@@ -21,6 +22,7 @@ import { useCurrentUser } from "@/features/auth/api/auth-queries";
 const learningItems = [
   { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
   { href: "/notes", label: "メモ", icon: NotebookPen },
+  { href: "/chat", label: "チャット", icon: MessagesSquare },
   { href: "/review", label: "復習", icon: GraduationCap },
 ] as const;
 

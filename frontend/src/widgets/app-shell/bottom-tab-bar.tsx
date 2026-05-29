@@ -10,6 +10,7 @@ import {
   GraduationCap,
   MoreHorizontal,
   BookOpen,
+  MessagesSquare,
   FileText,
   Tag,
   BarChart3,
@@ -23,11 +24,12 @@ import { useCurrentUser } from "@/features/auth/api/auth-queries";
 const tabs = [
   { href: "/dashboard", label: "ホーム", icon: LayoutDashboard },
   { href: "/notes", label: "メモ", icon: NotebookPen },
+  { href: "/chat", label: "チャット", icon: MessagesSquare },
   { href: "/review", label: "復習", icon: GraduationCap },
-  { href: "/decks", label: "デッキ", icon: Layers },
 ] as const;
 
 const moreItems = [
+  { href: "/decks", label: "デッキ", icon: Layers },
   { href: "/cards", label: "カード", icon: BookOpen },
   { href: "/templates", label: "テンプレート", icon: FileText },
   { href: "/tags", label: "タグ", icon: Tag },

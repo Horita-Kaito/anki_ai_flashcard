@@ -63,7 +63,7 @@ final class CardGenerationService
      *   - 1 chunk: 従来通り単一ログ + 単一 Job
      *   - N chunks: 親ログ 1 件 + 子ログ N 件、各子に対して Job を dispatch
      *
-     * @param  array{domain_template_id?: int|null, regenerate?: bool, additional?: bool}  $options
+     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool}  $options
      *
      * @throws AiUsageLimitExceededException
      * @throws GenerationAlreadyInFlightException
@@ -83,6 +83,7 @@ final class CardGenerationService
         $regenerate = (bool) ($options['regenerate'] ?? false);
         $additional = (bool) ($options['additional'] ?? false);
         $domainTemplateId = $options['domain_template_id'] ?? null;
+        $defaultDeckId = $options['default_deck_id'] ?? null;
 
         if ($chunksTotal <= 1) {
             // 単一チャンク: 従来通り
@@ -98,6 +99,7 @@ final class CardGenerationService
 
             GenerateCardCandidatesJob::dispatch($log->id, [
                 'domain_template_id' => $domainTemplateId,
+                'default_deck_id' => $defaultDeckId,
                 'regenerate' => $regenerate,
                 'additional' => $additional,
                 'chunk_text' => $chunks[0] ?? (string) $note->body,
@@ -134,6 +136,7 @@ final class CardGenerationService
 
             GenerateCardCandidatesJob::dispatch($child->id, [
                 'domain_template_id' => $domainTemplateId,
+                'default_deck_id' => $defaultDeckId,
                 // chunk 単位では「既存候補との重複回避 (additional)」と「pending 全 reject (regenerate)」は
                 // 最初の chunk でのみ適用する。2 つ目以降の chunk で同じ操作をすると先 chunk の結果を消してしまう。
                 'regenerate' => $regenerate && $i === 0,
@@ -152,7 +155,7 @@ final class CardGenerationService
      *
      * 子ログ (parent_log_id IS NOT NULL) を処理した場合、最後に親ログの集約を更新する。
      *
-     * @param  array{domain_template_id?: int|null, regenerate?: bool, additional?: bool, chunk_text?: string, chunk_index?: int, chunks_total?: int}  $options
+     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool, chunk_text?: string, chunk_index?: int, chunks_total?: int}  $options
      * @return array<int, AiCardCandidate>
      *
      * @throws AiGenerationFailedException
@@ -178,6 +181,10 @@ final class CardGenerationService
         $chunksTotal = $options['chunks_total'] ?? null;
 
         $decks = $this->deckRepository->idsAndNamesForUser($note->user_id);
+        $deckIds = array_column($decks, 'id');
+        $defaultDeckId = in_array($options['default_deck_id'] ?? null, $deckIds, true)
+            ? (int) $options['default_deck_id']
+            : null;
         $existingQuestions = $additional
             ? $this->candidateRepository
                 ->listForNoteSeed($note->user_id, $note->id, null)
@@ -229,10 +236,8 @@ final class CardGenerationService
         }
 
         $parsed = $parseResult->items;
-        $deckIds = array_column($decks, 'id');
-
         try {
-            $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds) {
+            $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds, $defaultDeckId) {
                 if ($regenerate) {
                     $this->candidateRepository->rejectPendingForNoteSeed($note->user_id, $note->id);
                 }
@@ -253,7 +258,7 @@ final class CardGenerationService
                         'confidence' => $data['confidence'],
                         'suggested_deck_id' => in_array($data['suggested_deck_id'] ?? null, $deckIds, true)
                             ? $data['suggested_deck_id']
-                            : null,
+                            : $defaultDeckId,
                         'status' => CandidateStatus::Pending->value,
                         'raw_response' => $data,
                     ]);

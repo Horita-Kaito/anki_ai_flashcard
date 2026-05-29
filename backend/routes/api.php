@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\SystemSettingController;
 use App\Http\Controllers\Api\V1\AiCardCandidateController;
 use App\Http\Controllers\Api\V1\CardController;
+use App\Http\Controllers\Api\V1\ChatController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeckController;
 use App\Http\Controllers\Api\V1\DomainTemplateController;
@@ -51,6 +52,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('domain-templates', DomainTemplateController::class);
         Route::apiResource('note-seeds', NoteSeedController::class);
         Route::apiResource('cards', CardController::class);
+        Route::apiResource('chats', ChatController::class)->only(['index', 'store', 'show', 'destroy']);
         Route::post('cards/{id}/archive', [CardController::class, 'archive']);
         Route::post('cards/{id}/unarchive', [CardController::class, 'unarchive']);
 
@@ -63,6 +65,8 @@ Route::prefix('v1')->group(function () {
 
         // AI 候補 (生成系は rate limit を強めに)
         Route::middleware('throttle:ai-generation')->group(function () {
+            Route::post('chats/{id}/messages', [ChatController::class, 'sendMessage']);
+            Route::post('chats/{id}/materialize-notes', [ChatController::class, 'materializeNotes']);
             Route::post('note-seeds/{id}/generate-candidates', [
                 AiCardCandidateController::class, 'generate',
             ]);
