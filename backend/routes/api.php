@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\SystemSettingController;
 use App\Http\Controllers\Api\V1\AiCardCandidateController;
 use App\Http\Controllers\Api\V1\CardController;
+use App\Http\Controllers\Api\V1\ChatCardizationBatchController;
 use App\Http\Controllers\Api\V1\ChatController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DeckController;
@@ -53,6 +54,8 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('note-seeds', NoteSeedController::class);
         Route::apiResource('cards', CardController::class);
         Route::apiResource('chats', ChatController::class)->only(['index', 'store', 'show', 'destroy']);
+        Route::apiResource('chat-cardization-batches', ChatCardizationBatchController::class)
+            ->only(['index', 'show']);
         Route::post('cards/{id}/archive', [CardController::class, 'archive']);
         Route::post('cards/{id}/unarchive', [CardController::class, 'unarchive']);
 

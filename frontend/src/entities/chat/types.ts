@@ -20,3 +20,17 @@ export interface ChatSession {
   created_at: string | null;
   updated_at: string | null;
 }
+
+export interface ChatCardizationBatch {
+  id: number;
+  source_chat_session_id: number | null;
+  source_chat_session_title: string | null;
+  domain_template_id: number | null;
+  deck_id: number | null;
+  notes_count: number;
+  dispatched_count: number;
+  failed_count: number;
+  status: string;
+  created_at: string | null;
+  updated_at: string | null;
+}

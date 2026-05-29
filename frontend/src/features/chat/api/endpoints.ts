@@ -8,14 +8,25 @@ import { paginatedResponseSchema } from "@/shared/types/pagination-schema";
 import type { PaginatedResponse } from "@/shared/types/pagination";
 import type { NoteSeed } from "@/entities/note-seed/types";
 import { noteSeedResponseSchema } from "@/entities/note-seed/schemas";
-import { chatMessageSchema, chatSessionSchema } from "@/entities/chat/schemas";
-import type { ChatMessage, ChatSession } from "@/entities/chat/types";
+import {
+  chatCardizationBatchSchema,
+  chatMessageSchema,
+  chatSessionSchema,
+} from "@/entities/chat/schemas";
+import type {
+  ChatCardizationBatch,
+  ChatMessage,
+  ChatSession,
+} from "@/entities/chat/types";
 import type {
   CreateChatSessionInput,
   SendChatMessageInput,
 } from "../schemas/chat-schemas";
 
 const paginatedChatSessionSchema = paginatedResponseSchema(chatSessionSchema);
+const paginatedChatCardizationBatchSchema = paginatedResponseSchema(
+  chatCardizationBatchSchema
+);
 
 export async function fetchChatSessions(
   page = 1,
@@ -65,6 +76,7 @@ export interface MaterializeChatNotesResult {
   skipped: Array<{ note_seed_id: number; reason: string; existing_log_id?: number }>;
   failed: Array<{ note_seed_id: number; reason: string; code?: string }>;
   chat_session_deleted: boolean;
+  batch: ChatCardizationBatch;
 }
 
 export async function materializeChatNotes(
@@ -78,8 +90,33 @@ export async function materializeChatNotes(
   );
   return {
     ...res.data.data,
+    batch: chatCardizationBatchSchema.parse(res.data.data.batch),
     notes: parseApiListResponse(noteSeedResponseSchema, {
       data: { data: res.data.data.notes },
+    }),
+  };
+}
+
+export async function fetchChatCardizationBatches(
+  page = 1,
+  perPage = 5
+): Promise<PaginatedResponse<ChatCardizationBatch>> {
+  const res = await apiClient.get("/chat-cardization-batches", {
+    params: { page, per_page: perPage },
+  });
+  return parseApiResponse(paginatedChatCardizationBatchSchema, res.data);
+}
+
+export async function fetchChatCardizationBatch(
+  id: number
+): Promise<ChatCardizationBatch & { notes: NoteSeed[] }> {
+  const res = await apiClient.get(`/chat-cardization-batches/${id}`);
+  const data = res.data.data;
+
+  return {
+    ...chatCardizationBatchSchema.parse(data),
+    notes: parseApiListResponse(noteSeedResponseSchema, {
+      data: { data: data.notes ?? [] },
     }),
   };
 }

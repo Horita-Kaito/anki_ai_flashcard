@@ -5,6 +5,8 @@ import type { PaginatedResponse } from "@/shared/types/pagination";
 import {
   createChatSession,
   deleteChatSession,
+  fetchChatCardizationBatch,
+  fetchChatCardizationBatches,
   fetchChatSession,
   fetchChatSessions,
   materializeChatNotes,
@@ -20,6 +22,9 @@ export const chatKeys = {
   all: ["chats"] as const,
   list: () => [...chatKeys.all, "list"] as const,
   detail: (id: number) => [...chatKeys.all, "detail", id] as const,
+  cardizationBatchList: () => [...chatKeys.all, "cardization-batches"] as const,
+  cardizationBatchDetail: (id: number) =>
+    [...chatKeys.cardizationBatchList(), "detail", id] as const,
 };
 
 function removeChatSessionFromList(
@@ -52,6 +57,21 @@ export function useChatSession(id: number | null) {
   return useQuery({
     queryKey: chatKeys.detail(id ?? 0),
     queryFn: () => fetchChatSession(id ?? 0),
+    enabled: id !== null && Number.isFinite(id) && id > 0,
+  });
+}
+
+export function useChatCardizationBatches() {
+  return useQuery({
+    queryKey: chatKeys.cardizationBatchList(),
+    queryFn: () => fetchChatCardizationBatches(1, 5),
+  });
+}
+
+export function useChatCardizationBatch(id: number | null) {
+  return useQuery({
+    queryKey: chatKeys.cardizationBatchDetail(id ?? 0),
+    queryFn: () => fetchChatCardizationBatch(id ?? 0),
     enabled: id !== null && Number.isFinite(id) && id > 0,
   });
 }
@@ -114,6 +134,8 @@ export function useMaterializeChatNotes(chatSessionId: number | null) {
     },
     onSuccess: (result) => {
       qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      qc.invalidateQueries({ queryKey: chatKeys.cardizationBatchList() });
+      qc.setQueryData(chatKeys.cardizationBatchDetail(result.batch.id), result.batch);
       result.notes.forEach((note) => {
         qc.setQueryData(noteSeedKeys.detail(note.id), note);
       });

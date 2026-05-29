@@ -9,6 +9,7 @@ use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardReviewRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Contracts\Repositories\ChatCardizationBatchRepositoryInterface;
 use App\Contracts\Repositories\ChatMessageRepositoryInterface;
 use App\Contracts\Repositories\ChatSessionRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
@@ -26,6 +27,7 @@ use App\Repositories\EloquentAiGenerationLogRepository;
 use App\Repositories\EloquentCardRepository;
 use App\Repositories\EloquentCardReviewRepository;
 use App\Repositories\EloquentCardScheduleRepository;
+use App\Repositories\EloquentChatCardizationBatchRepository;
 use App\Repositories\EloquentChatMessageRepository;
 use App\Repositories\EloquentChatSessionRepository;
 use App\Repositories\EloquentDeckRepository;
@@ -69,6 +71,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         AiCardCandidateRepositoryInterface::class => EloquentAiCardCandidateRepository::class,
         AiGenerationLogRepositoryInterface::class => EloquentAiGenerationLogRepository::class,
         CardReviewRepositoryInterface::class => EloquentCardReviewRepository::class,
+        ChatCardizationBatchRepositoryInterface::class => EloquentChatCardizationBatchRepository::class,
         ChatSessionRepositoryInterface::class => EloquentChatSessionRepository::class,
         ChatMessageRepositoryInterface::class => EloquentChatMessageRepository::class,
 

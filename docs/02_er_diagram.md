@@ -9,6 +9,7 @@ erDiagram
     users ||--o{ tags : "has many"
     users ||--o{ note_seeds : "has many"
     users ||--o{ ai_card_candidates : "has many"
+    users ||--o{ chat_cardization_batches : "has many"
     users ||--o{ domain_templates : "has many"
     users ||--o{ card_schedules : "has many"
     users ||--o{ card_reviews : "has many"
@@ -27,7 +28,10 @@ erDiagram
     tags ||--o{ card_tag : "tagged to"
 
     note_seeds ||--o{ ai_card_candidates : "generates"
+    note_seeds ||--o{ chat_cardization_batch_note_seed : "included in"
     note_seeds }o--o| domain_templates : "uses template"
+
+    chat_cardization_batches ||--o{ chat_cardization_batch_note_seed : "has notes"
 
     user_settings }o--o| domain_templates : "default template"
 
@@ -109,6 +113,33 @@ erDiagram
         varchar status
         json raw_response
         varchar prompt_version
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    chat_cardization_batches {
+        bigint id PK
+        bigint user_id FK
+        bigint source_chat_session_id FK
+        varchar source_chat_session_title
+        bigint domain_template_id FK
+        bigint deck_id FK
+        int notes_count
+        int dispatched_count
+        int failed_count
+        varchar status
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    chat_cardization_batch_note_seed {
+        bigint id PK
+        bigint user_id FK
+        bigint chat_cardization_batch_id FK
+        bigint note_seed_id FK
+        bigint ai_generation_log_id FK
+        varchar generation_status
+        text failure_reason
         timestamp created_at
         timestamp updated_at
     }
@@ -262,6 +293,41 @@ erDiagram
 | updated_at | TIMESTAMP | | |
 
 **INDEX**: `idx_note_seeds_user_id` (user_id)
+
+### chat_cardization_batches
+
+| カラム | 型 | 制約 | 説明 |
+|--------|------|------|------|
+| id | BIGINT UNSIGNED | PK, AUTO_INCREMENT | |
+| user_id | BIGINT UNSIGNED | FK(users.id), NOT NULL | 所有者 |
+| source_chat_session_id | BIGINT UNSIGNED | FK(chat_sessions.id), NULLABLE | 元チャット。現行フローではチャット削除後 null |
+| source_chat_session_title | VARCHAR(255) | NULLABLE | 履歴表示用タイトル |
+| domain_template_id | BIGINT UNSIGNED | FK(domain_templates.id), NULLABLE | 分野テンプレート |
+| deck_id | BIGINT UNSIGNED | FK(decks.id), NULLABLE | 生成候補の既定デッキ |
+| notes_count | INT UNSIGNED | NOT NULL, DEFAULT 0 | 作成メモ数 |
+| dispatched_count | INT UNSIGNED | NOT NULL, DEFAULT 0 | 候補生成開始数 |
+| failed_count | INT UNSIGNED | NOT NULL, DEFAULT 0 | 候補生成開始失敗数 |
+| status | VARCHAR(255) | NOT NULL, DEFAULT 'completed' | completed/partial_failed |
+| created_at | TIMESTAMP | | |
+| updated_at | TIMESTAMP | | |
+
+**INDEX**: `idx_chat_card_batches_user_created` (user_id, created_at), `idx_chat_card_batches_user_status` (user_id, status)
+
+### chat_cardization_batch_note_seed
+
+| カラム | 型 | 制約 | 説明 |
+|--------|------|------|------|
+| id | BIGINT UNSIGNED | PK, AUTO_INCREMENT | |
+| user_id | BIGINT UNSIGNED | FK(users.id), NOT NULL | 所有者 |
+| chat_cardization_batch_id | BIGINT UNSIGNED | FK(chat_cardization_batches.id), NOT NULL | batch |
+| note_seed_id | BIGINT UNSIGNED | FK(note_seeds.id), NOT NULL | 作成メモ |
+| ai_generation_log_id | BIGINT UNSIGNED | FK(ai_generation_logs.id), NULLABLE | 候補生成ログ |
+| generation_status | VARCHAR(255) | NOT NULL, DEFAULT 'queued' | queued/failed/not_started 等 |
+| failure_reason | TEXT | NULLABLE | 失敗理由 |
+| created_at | TIMESTAMP | | |
+| updated_at | TIMESTAMP | | |
+
+**INDEX**: `uniq_chat_card_batch_note_seed` (chat_cardization_batch_id, note_seed_id), `idx_chat_card_batch_notes_user_created` (user_id, created_at)
 
 ### ai_card_candidates
 

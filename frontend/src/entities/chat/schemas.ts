@@ -20,3 +20,18 @@ export const chatSessionSchema = z.object({
   created_at: z.string().nullable(),
   updated_at: z.string().nullable(),
 });
+
+export const chatCardizationBatchSchema = z.object({
+  id: z.number(),
+  source_chat_session_id: z.number().nullable(),
+  source_chat_session_title: z.string().nullable(),
+  domain_template_id: z.number().nullable(),
+  deck_id: z.number().nullable(),
+  notes_count: z.number(),
+  dispatched_count: z.number(),
+  failed_count: z.number(),
+  status: z.string(),
+  notes: z.array(z.unknown()).optional(),
+  created_at: z.string().nullable(),
+  updated_at: z.string().nullable(),
+});

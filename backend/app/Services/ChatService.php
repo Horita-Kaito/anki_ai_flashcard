@@ -16,6 +16,7 @@ use App\Exceptions\Domain\ChatSessionAlreadyMaterializedException;
 use App\Exceptions\Domain\ChatSessionNotFoundException;
 use App\Exceptions\Domain\GenerationAlreadyInFlightException;
 use App\Models\AiGenerationLog;
+use App\Models\ChatCardizationBatch;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Services\AI\AiGenerationRequest;
@@ -32,6 +33,7 @@ final class ChatService implements ChatServiceInterface
         private readonly ChatMessageRepositoryInterface $messageRepository,
         private readonly NoteSeedService $noteSeedService,
         private readonly CardGenerationService $generationService,
+        private readonly ChatCardizationBatchService $batchService,
         private readonly AiGenerationLogRepositoryInterface $logRepository,
         private readonly SystemSettingRepositoryInterface $systemSettingRepository,
         private readonly AiProviderInterface $aiProvider,
@@ -175,6 +177,7 @@ final class ChatService implements ChatServiceInterface
         $dispatched = [];
         $skipped = [];
         $failed = [];
+        $generationRows = [];
         foreach ($notes as $note) {
             try {
                 $log = $this->generationService->dispatchGeneration($note, [
@@ -188,11 +191,23 @@ final class ChatService implements ChatServiceInterface
                     'log_id' => $log->id,
                     'status' => $log->status,
                 ];
+                $generationRows[$note->id] = [
+                    'note_seed_id' => $note->id,
+                    'ai_generation_log_id' => $log->id,
+                    'generation_status' => $log->status,
+                    'failure_reason' => null,
+                ];
             } catch (GenerationAlreadyInFlightException $e) {
                 $skipped[] = [
                     'note_seed_id' => $note->id,
                     'reason' => $e->userMessage(),
                     'existing_log_id' => $e->existingLog->id,
+                ];
+                $generationRows[$note->id] = [
+                    'note_seed_id' => $note->id,
+                    'ai_generation_log_id' => $e->existingLog->id,
+                    'generation_status' => $e->existingLog->status,
+                    'failure_reason' => $e->userMessage(),
                 ];
             } catch (AiUsageLimitExceededException $e) {
                 $failed[] = [
@@ -200,14 +215,52 @@ final class ChatService implements ChatServiceInterface
                     'reason' => $e->userMessage(),
                     'code' => $e->errorCode(),
                 ];
+                $generationRows[$note->id] = [
+                    'note_seed_id' => $note->id,
+                    'ai_generation_log_id' => null,
+                    'generation_status' => 'failed',
+                    'failure_reason' => $e->userMessage(),
+                ];
                 break;
             } catch (\Throwable $e) {
                 $failed[] = [
                     'note_seed_id' => $note->id,
                     'reason' => $e->getMessage(),
                 ];
+                $generationRows[$note->id] = [
+                    'note_seed_id' => $note->id,
+                    'ai_generation_log_id' => null,
+                    'generation_status' => 'failed',
+                    'failure_reason' => $e->getMessage(),
+                ];
             }
         }
+
+        foreach ($notes as $note) {
+            if (isset($generationRows[$note->id])) {
+                continue;
+            }
+
+            $generationRows[$note->id] = [
+                'note_seed_id' => $note->id,
+                'ai_generation_log_id' => null,
+                'generation_status' => 'not_started',
+                'failure_reason' => null,
+            ];
+        }
+
+        $batch = $this->batchService->createForUser($userId, [
+            'source_chat_session_id' => null,
+            'source_chat_session_title' => $session->title,
+            'domain_template_id' => $domainTemplateId,
+            'deck_id' => $defaultDeckId,
+            'notes_count' => count($notes),
+            'dispatched_count' => count($dispatched),
+            'failed_count' => count($failed),
+            'status' => count($failed) > 0
+                ? ChatCardizationBatch::STATUS_PARTIAL_FAILED
+                : ChatCardizationBatch::STATUS_COMPLETED,
+        ], array_values($generationRows));
 
         $this->sessionRepository->delete($session);
 
@@ -217,6 +270,7 @@ final class ChatService implements ChatServiceInterface
             'skipped' => $skipped,
             'failed' => $failed,
             'chat_session_deleted' => true,
+            'batch' => $batch,
         ];
     }
 

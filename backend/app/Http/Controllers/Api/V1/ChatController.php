@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Chat\MaterializeChatNotesRequest;
 use App\Http\Requests\Chat\SendChatMessageRequest;
 use App\Http\Requests\Chat\StoreChatSessionRequest;
+use App\Http\Resources\ChatCardizationBatchResource;
 use App\Http\Resources\ChatMessageResource;
 use App\Http\Resources\ChatSessionResource;
 use App\Http\Resources\NoteSeedResource;
@@ -83,6 +84,7 @@ final class ChatController extends Controller
                 'skipped' => $result['skipped'],
                 'failed' => $result['failed'],
                 'chat_session_deleted' => $result['chat_session_deleted'],
+                'batch' => (new ChatCardizationBatchResource($result['batch']))->toArray($request),
             ],
         ], 202);
     }

@@ -537,7 +537,50 @@ UI 側で確認ダイアログを介してから送信する想定。
 
 ---
 
-## 5. AI候補系 API
+## 5. チャット系 API
+
+### GET /api/chats
+チャット一覧取得。メモ化済みで削除されたチャットは含まれない。
+
+---
+
+### POST /api/chats/{id}/materialize-notes
+チャット内容からメモを作成し、カード候補生成を開始する。
+
+**Response 202**:
+```json
+{
+  "data": {
+    "notes": [{ "id": 1, "body": "...", "note_context": "チャットから作成" }],
+    "dispatched": [{ "note_seed_id": 1, "log_id": 10, "status": "queued" }],
+    "skipped": [],
+    "failed": [],
+    "chat_session_deleted": true,
+    "batch": {
+      "id": 1,
+      "source_chat_session_title": "ETag の相談",
+      "notes_count": 1,
+      "dispatched_count": 1,
+      "failed_count": 0,
+      "status": "completed"
+    }
+  }
+}
+```
+
+---
+
+### GET /api/chat-cardization-batches
+チャット由来カード化 batch の履歴一覧取得。`per_page` は最大20。
+
+---
+
+### GET /api/chat-cardization-batches/{id}
+カード化 batch 詳細取得。紐づく `notes` を含めて返す。
+
+---
+
+## 6. AI候補系 API
 
 ### POST /api/note-seeds/{id}/generate-candidates
 AI候補生成
@@ -761,7 +804,7 @@ AI候補生成
 
 ---
 
-## 6. 学習セッション系 API
+## 7. 学習セッション系 API
 
 ### GET /api/review-sessions/today
 今日の復習対象カード取得
@@ -891,7 +934,7 @@ AI候補生成
 
 ---
 
-## 7. 分野テンプレート系 API
+## 8. 分野テンプレート系 API
 
 ### GET /api/domain-templates
 テンプレート一覧取得
@@ -959,7 +1002,7 @@ AI候補生成
 
 ---
 
-## 8. タグ系 API
+## 9. タグ系 API
 
 ### GET /api/tags
 タグ一覧取得 (全タグ、ページネーションなし)
@@ -988,7 +1031,7 @@ AI候補生成
 
 ---
 
-## 9. ユーザー設定 API
+## 10. ユーザー設定 API
 
 ### GET /api/settings
 設定取得
@@ -1017,7 +1060,7 @@ AI候補生成
 
 ---
 
-## 10. 管理者専用 API
+## 11. 管理者専用 API
 
 `can:access-admin` ゲート (`config('admin.emails')` に含まれる email のみ) を通過する必要がある。
 未認証は 401、認証済みでも管理者でなければ 403。

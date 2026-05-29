@@ -138,11 +138,29 @@ final class ChatControllerTest extends TestCase
         $response->assertAccepted()
             ->assertJsonCount(1, 'data.notes')
             ->assertJsonPath('data.dispatched.0.status', 'queued')
-            ->assertJsonPath('data.chat_session_deleted', true);
+            ->assertJsonPath('data.chat_session_deleted', true)
+            ->assertJsonPath('data.batch.notes_count', 1)
+            ->assertJsonPath('data.batch.dispatched_count', 1)
+            ->assertJsonPath('data.batch.status', 'completed');
 
         $this->assertDatabaseHas('note_seeds', [
             'user_id' => $user->id,
             'note_context' => 'チャットから作成',
+        ]);
+        $batchId = $response->json('data.batch.id');
+        $noteId = $response->json('data.notes.0.id');
+        $this->assertDatabaseHas('chat_cardization_batches', [
+            'id' => $batchId,
+            'user_id' => $user->id,
+            'source_chat_session_title' => $session->title,
+            'notes_count' => 1,
+            'dispatched_count' => 1,
+        ]);
+        $this->assertDatabaseHas('chat_cardization_batch_note_seed', [
+            'user_id' => $user->id,
+            'chat_cardization_batch_id' => $batchId,
+            'note_seed_id' => $noteId,
+            'generation_status' => 'queued',
         ]);
         $this->assertDatabaseHas('ai_generation_logs', [
             'user_id' => $user->id,
