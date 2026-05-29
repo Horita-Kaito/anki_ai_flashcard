@@ -44,6 +44,34 @@ const RATING_HINTS: Record<ReviewRating, string> = {
   easy: "12日",
 };
 
+const RATING_DISPLAY_LABELS: Record<ReviewRating, string> = {
+  again: "やり直し",
+  hard: "難しい",
+  good: "思い出せた",
+  easy: "簡単すぎ",
+};
+
+const RATING_DESCRIPTIONS: Record<ReviewRating, string> = {
+  again: "答えられない",
+  hard: "迷った・時間がかかった",
+  good: "標準の評価",
+  easy: "すぐ答えられた",
+};
+
+const RATING_BUTTON_CLASSES: Record<ReviewRating, string> = {
+  again: "order-3 min-h-14 md:order-1 md:min-h-16",
+  hard: "order-1 col-span-2 min-h-20 shadow-sm md:order-2 md:col-span-3 md:min-h-24",
+  good: "order-2 col-span-2 min-h-20 shadow-sm md:order-3 md:col-span-3 md:min-h-24",
+  easy: "order-4 min-h-14 md:order-4 md:min-h-16",
+};
+
+const RATING_LABEL_CLASSES: Record<ReviewRating, string> = {
+  again: "text-sm font-semibold leading-tight",
+  hard: "text-base font-bold leading-tight md:text-lg",
+  good: "text-base font-bold leading-tight md:text-lg",
+  easy: "text-sm font-semibold leading-tight",
+};
+
 function ReviewExitBar() {
   return (
     <nav
@@ -449,23 +477,27 @@ export function ReviewSession() {
         </div>
       ) : (
         <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2 md:grid-cols-8">
             {REVIEW_RATINGS.map((rating) => (
               <button
                 key={rating}
                 type="button"
                 onClick={() => handleRate(rating)}
                 disabled={answerMutation.isPending}
-                className={`${RATING_CLASSES[rating]} min-h-16 rounded-md border px-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50`}
+                className={`${RATING_CLASSES[rating]} ${RATING_BUTTON_CLASSES[rating]} rounded-md border px-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50`}
                 aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
+                aria-label={`${REVIEW_RATING_LABELS[rating]}、${RATING_DESCRIPTIONS[rating]}、次回 ${RATING_HINTS[rating]}`}
               >
-                <span className="block text-sm font-semibold leading-tight md:text-base">
-                  {REVIEW_RATING_LABELS[rating]}
+                <span className={`block ${RATING_LABEL_CLASSES[rating]}`}>
+                  {RATING_DISPLAY_LABELS[rating]}
                 </span>
-                <span className="block text-[11px] leading-tight opacity-80">
+                <span className="mt-1 block text-[11px] leading-tight opacity-80 md:text-xs">
+                  {RATING_DESCRIPTIONS[rating]}
+                </span>
+                <span className="mt-1 block text-[11px] leading-tight opacity-80">
                   {RATING_HINTS[rating]}
                 </span>
-                <kbd className="mt-1 inline-flex rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75">
+                <kbd className="mt-1 inline-flex rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75 md:mt-2">
                   {REVIEW_RATING_SHORTCUTS[rating]}
                 </kbd>
               </button>
