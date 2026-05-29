@@ -19,8 +19,7 @@ import {
   useGenerationStatus,
   useRegenerateCandidates,
 } from "../api/ai-candidate-queries";
-import { BatchAdoptBar } from "./batch-adopt-bar";
-import { CandidateCard } from "./candidate-card";
+import { CandidateReviewList } from "./candidate-review-list";
 import { toAiErrorMessage, toAsyncFailureMessage } from "../lib/ai-error-message";
 import { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
 import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
@@ -110,8 +109,6 @@ export function GenerateCandidatesView({
 
   const pendingCandidates =
     candidates?.filter((c) => c.status === "pending") ?? [];
-  const historyCandidates =
-    candidates?.filter((c) => c.status !== "pending") ?? [];
   const hasPending = pendingCandidates.length > 0;
   const hasAnyCandidates = (candidates?.length ?? 0) > 0;
   const progressSteps = ["構造化", "方針読込", "生成", "判定"] as const;
@@ -371,53 +368,10 @@ export function GenerateCandidatesView({
             : "まだ候補がありません。上のボタンで AI 生成を開始してください。"}
         </p>
       ) : (
-        <>
-          {hasPending && (
-            <section
-              aria-labelledby="pending-section"
-              className="space-y-3"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <h2 id="pending-section" className="font-medium">
-                  未採用候補 ({pendingCandidates.length})
-                </h2>
-                <BatchAdoptBar
-                  candidateIds={pendingCandidates.map((c) => c.id)}
-                />
-              </div>
-              <div className="space-y-3">
-                {pendingCandidates.map((c) => (
-                  <CandidateCard
-                    key={c.id}
-                    candidate={c}
-                    defaultDeckId={undefined}
-                    ordinal={pendingCandidates.indexOf(c) + 1}
-                    total={pendingCandidates.length}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {historyCandidates.length > 0 && (
-            <section
-              aria-labelledby="history-section"
-              className="space-y-3"
-            >
-              <h2
-                id="history-section"
-                className="text-sm font-medium text-muted-foreground"
-              >
-                履歴 ({historyCandidates.length})
-              </h2>
-              <div className="space-y-3">
-                {historyCandidates.map((c) => (
-                  <CandidateCard key={c.id} candidate={c} />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
+        <CandidateReviewList
+          candidates={candidates}
+          idPrefix={`note-${noteSeedId}-candidates`}
+        />
       )}
     </div>
   );

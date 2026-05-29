@@ -30,6 +30,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
   const sendMessage = useSendChatMessage(activeId);
   const materialize = useMaterializeChatNotes(selectedId);
   const [content, setContent] = useState("");
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
   async function handleNewChat() {
     try {
@@ -47,6 +48,8 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
     if (!trimmed) return;
 
     let sessionId = selectedId;
+    setPendingPrompt(trimmed);
+    setContent("");
     try {
       if (sessionId === null) {
         const session = await createSession.mutateAsync({
@@ -59,9 +62,11 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
         input: { content: trimmed },
         overrideChatSessionId: sessionId,
       });
-      setContent("");
     } catch {
+      setContent(trimmed);
       toast.error("送信に失敗しました");
+    } finally {
+      setPendingPrompt(null);
     }
   }
 
@@ -110,7 +115,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               size="lg"
               className="min-h-11"
               onClick={handleMaterialize}
-              disabled={!canMaterialize || materialize.isPending}
+              disabled={!canMaterialize || materialize.isPending || sendMessage.isPending}
             >
               {materialize.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -125,11 +130,12 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
             <ChatMessageList
               messages={messages}
               isLoading={sessionLoading}
-              materializeResult={materialize.data}
+              pendingUserMessage={pendingPrompt}
+              isAssistantThinking={sendMessage.isPending && pendingPrompt !== null}
             />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t p-3">
+          <form onSubmit={handleSubmit} className="border-t p-3 pb-28 md:pb-3">
             <div className="flex gap-2">
               <textarea
                 aria-label="質問"

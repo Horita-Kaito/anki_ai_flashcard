@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 const hiddenPatterns = [
   /^\/\w+\/new$/,       // /notes/new, /decks/new, /cards/new, /templates/new
   /^\/\w+\/\d+$/,       // /notes/123, /cards/123 (編集画面)
+  /^\/chat$/,            // チャット入力欄
   /^\/review$/,          // 復習セッション
   /^\/settings$/,        // 設定
 ];

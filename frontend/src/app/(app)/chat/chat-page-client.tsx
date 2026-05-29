@@ -14,10 +14,22 @@ export function ChatPageClient() {
     <PageShell
       title="チャット"
       description="質問から得た学びをメモ化し、カード候補生成までつなげます。"
+      maxWidth="7xl"
     >
-      <div className="space-y-6">
+      <div
+        className={
+          materialized
+            ? "grid items-start gap-4 pb-28 md:pb-0 xl:grid-cols-[minmax(0,1fr)_25rem]"
+            : "pb-28 md:pb-0"
+        }
+      >
         <ChatWorkspace onMaterialized={setMaterialized} />
-        {materialized && <ChatCandidateReview notes={materialized.notes} />}
+        {materialized && (
+          <ChatCandidateReview
+            notes={materialized.notes}
+            onClose={() => setMaterialized(null)}
+          />
+        )}
       </div>
     </PageShell>
   );

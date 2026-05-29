@@ -5,6 +5,7 @@ const WIDTH_CLASSES = {
   "2xl": "max-w-2xl",
   "4xl": "max-w-4xl",
   "5xl": "max-w-5xl",
+  "7xl": "max-w-7xl",
 } as const;
 
 interface PageShellProps {
