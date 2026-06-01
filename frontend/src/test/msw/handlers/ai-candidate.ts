@@ -57,6 +57,7 @@ function buildCandidates(
     rationale: "テスト用",
     explanation: null,
     confidence: 0.8,
+    quality_warnings: [],
     suggested_deck_id: null,
     status: "pending",
     created_at: new Date().toISOString(),

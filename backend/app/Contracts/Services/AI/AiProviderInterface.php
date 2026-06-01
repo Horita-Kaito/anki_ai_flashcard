@@ -11,7 +11,7 @@ use App\Services\AI\AiGenerationResult;
 interface AiProviderInterface
 {
     /**
-     * プロバイダ名 ('openai', 'anthropic', 'google', 'fake')
+     * プロバイダ名 ('openai', 'google', 'fake')
      */
     public function name(): string;
 
@@ -27,7 +27,7 @@ interface AiProviderInterface
      * このプロバイダが strict JSON Schema による構造化出力 (response_format=json_schema 相当) を
      * サポートするか。true ならば呼び出し側は AiGenerationRequest::$jsonSchema を組み立てて渡せる。
      *
-     * 現状は OpenAI (gpt-4o 系) のみ true、Anthropic / Google / Fake は false。
+     * 現状は OpenAI (gpt-4o 系) / Google (Gemini) が true、Fake は false。
      */
     public function supportsJsonSchema(): bool;
 }

@@ -22,6 +22,7 @@ class AiCardCandidate extends Model
         'provider',
         'model_name',
         'question',
+        'question_fingerprint',
         'answer',
         'card_type',
         'focus_type',

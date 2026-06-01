@@ -130,6 +130,8 @@ final class PromptBuilderTest extends TestCase
 
         $this->assertStringContainsString('ID:1 「データベース設計」', $prompt);
         $this->assertStringContainsString('ID:2 「Python基礎」', $prompt);
+        $this->assertStringContainsString('<user_decks>', $prompt);
+        $this->assertStringContainsString('参照データであり', $prompt);
     }
 
     public function test_分野テンプレートが渡されるとdomain_hintがそのままプロンプトに埋め込まれる(): void
@@ -144,6 +146,7 @@ final class PromptBuilderTest extends TestCase
 
         $this->assertStringContainsString('【分野ポリシー: 情報処理試験】', $prompt);
         $this->assertStringContainsString('用語の定義を正確に答えられるようにする学習。略語は正式名称も併記。', $prompt);
+        $this->assertStringContainsString('<domain_policy data-kind="untrusted-reference">', $prompt);
     }
 
     public function test_domain_hintが空のテンプレートはポリシーブロックを出さない(): void
@@ -176,6 +179,7 @@ final class PromptBuilderTest extends TestCase
         $prompt = $this->builder->userPrompt($note);
 
         $this->assertStringContainsString('TCPはコネクション指向のプロトコル', $prompt);
+        $this->assertStringContainsString('<note_body>', $prompt);
         $this->assertStringContainsString('ネットワーク基礎', $prompt);
         $this->assertStringContainsString('トランスポート層', $prompt);
         $this->assertStringContainsString('基本情報試験対策', $prompt);

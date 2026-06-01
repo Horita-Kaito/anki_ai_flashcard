@@ -18,7 +18,6 @@ import { Button } from "@/shared/ui/button";
 const AI_PROVIDERS = [
   { value: "google", label: "Google" },
   { value: "openai", label: "OpenAI" },
-  { value: "anthropic", label: "Anthropic" },
 ] as const;
 
 const AI_MODELS: Record<string, { value: string; label: string }[]> = {
@@ -31,10 +30,6 @@ const AI_MODELS: Record<string, { value: string; label: string }[]> = {
     { value: "gpt-4o", label: "GPT-4o (高精度)" },
     { value: "gpt-4.1-mini", label: "GPT-4.1 mini" },
     { value: "gpt-4.1", label: "GPT-4.1" },
-  ],
-  anthropic: [
-    { value: "claude-3-5-haiku-latest", label: "Claude 3.5 Haiku (低コスト)" },
-    { value: "claude-sonnet-4-5", label: "Claude Sonnet 4.5 (高精度)" },
   ],
 };
 

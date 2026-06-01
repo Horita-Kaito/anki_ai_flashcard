@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const updateUserSettingSchema = z.object({
   default_domain_template_id: z.number().int().nullable().optional(),
-  default_ai_provider: z.enum(["openai", "anthropic", "google"]).optional(),
+  default_ai_provider: z.enum(["openai", "google"]).optional(),
   default_ai_model: z.string().max(100).optional(),
   /**
    * FSRS 用の目標想起率。0.7〜0.97 (典型 0.9 = 復習時に 90% で想起できる間隔を狙う)。

@@ -22,6 +22,7 @@ const candidate: AiCardCandidate = {
   rationale: "概念の定義を確認するため",
   explanation: null,
   confidence: 0.9,
+  quality_warnings: [],
   suggested_deck_id: null,
   status: "pending",
   created_at: "2026-06-01T00:00:00+00:00",
@@ -29,6 +30,21 @@ const candidate: AiCardCandidate = {
 };
 
 describe("CandidateCard", () => {
+  it("品質警告を採用前に表示する", () => {
+    renderWithProviders(
+      <CandidateCard
+        candidate={{
+          ...candidate,
+          quality_warnings: ["answer_exposed_in_question"],
+        }}
+      />
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "問題文に答えが含まれている可能性があります"
+    );
+  });
+
   it("デッキを選択すると候補をカードとして採用できる", async () => {
     let adoptedBody: unknown;
     server.use(

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CARD_TYPES } from "@/entities/card/types";
-import { CANDIDATE_STATUSES } from "./types";
+import { CANDIDATE_STATUSES, QUALITY_WARNINGS } from "./types";
 
 export const aiCardCandidateResponseSchema = z
   .object({
@@ -16,6 +16,7 @@ export const aiCardCandidateResponseSchema = z
     rationale: z.string().nullable(),
     explanation: z.string().nullable(),
     confidence: z.number().nullable(),
+    quality_warnings: z.array(z.enum(QUALITY_WARNINGS)).default([]),
     suggested_deck_id: z.number().nullable(),
     status: z.enum(CANDIDATE_STATUSES),
     created_at: z.string().nullable(),

@@ -678,6 +678,7 @@ AI候補生成
       "focus_type": "definition",
       "rationale": "...",
       "confidence": 0.92,
+      "quality_warnings": ["answer_exposed_in_question"],
       "status": "pending",
       "provider": "openai",
       "model_name": "gpt-4o-mini",
@@ -686,6 +687,8 @@ AI候補生成
   ]
 }
 ```
+
+`quality_warnings` は AI 候補の採用を禁止するものではなく、人間レビューで確認すべき点を示す。現在は `answer_exposed_in_question`、`answer_too_long`、`cloze_answer_mismatch` を返す。
 
 ---
 

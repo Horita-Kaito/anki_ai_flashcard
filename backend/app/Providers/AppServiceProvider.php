@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Contracts\Services\AI\AiProviderInterface;
+use App\Contracts\Services\AI\AiRuntimeResolverInterface;
+use App\Contracts\Services\AI\CandidateQualityValidatorInterface;
 use App\Models\User;
+use App\Services\AI\AiRuntimeResolver;
 use App\Services\AI\CandidateParser;
+use App\Services\AI\CandidateQualityValidator;
 use App\Services\AI\FakeAiProvider;
 use App\Services\AI\GoogleAiProvider;
 use App\Services\AI\OpenAiProvider;
@@ -27,16 +31,22 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PromptBuilder::class, fn () => PromptBuilder::fromConfig());
         $this->app->singleton(CandidateParser::class, fn () => new CandidateParser);
         $this->app->singleton(PricingCalculator::class, fn () => PricingCalculator::fromConfig());
+        $this->app->bind(CandidateQualityValidatorInterface::class, CandidateQualityValidator::class);
+        $this->app->bind(AiRuntimeResolverInterface::class, AiRuntimeResolver::class);
+
+        $this->app->bind('ai.provider.fake', fn ($app) => $app->make(FakeAiProvider::class));
+        $this->app->bind('ai.provider.openai', fn () => OpenAiProvider::fromConfig());
+        $this->app->bind('ai.provider.google', fn () => GoogleAiProvider::fromConfig());
 
         // AiProviderInterface は config('ai.default_provider') で具象を選択
         $this->app->bind(AiProviderInterface::class, function ($app) {
             $provider = config('ai.default_provider', 'openai');
 
             return match ($provider) {
-                'fake' => $app->make(FakeAiProvider::class),
-                'openai' => OpenAiProvider::fromConfig(),
-                'anthropic' => $app->make(FakeAiProvider::class),
-                'google' => GoogleAiProvider::fromConfig(),
+                'fake' => $app->make('ai.provider.fake'),
+                'openai' => $app->make('ai.provider.openai'),
+                'google' => $app->make('ai.provider.google'),
+                'anthropic' => throw new \LogicException('Anthropic AI provider is not implemented'),
                 default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
             };
         });

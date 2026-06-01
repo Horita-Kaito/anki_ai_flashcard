@@ -7,11 +7,14 @@ namespace App\Services;
 use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Contracts\Services\AI\CandidateQualityValidatorInterface;
 use App\Enums\CandidateStatus;
+use App\Exceptions\Domain\AiCardCandidateDuplicateQuestionException;
 use App\Exceptions\Domain\AiCardCandidateNotAdoptableException;
 use App\Exceptions\Domain\AiCardCandidateNotFoundException;
 use App\Models\AiCardCandidate;
 use App\Models\Card;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,6 +28,7 @@ final class AiCardCandidateService
         private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly CardRepositoryInterface $cardRepository,
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
+        private readonly CandidateQualityValidatorInterface $qualityValidator,
     ) {}
 
     /**
@@ -51,7 +55,11 @@ final class AiCardCandidateService
     {
         $candidate = $this->getForUser($userId, $candidateId);
 
-        return $this->candidateRepository->update($candidate, $attributes);
+        if (isset($attributes['question']) && $candidate->status !== CandidateStatus::Rejected) {
+            $attributes['question_fingerprint'] = $this->qualityValidator->fingerprint($attributes['question']);
+        }
+
+        return $this->updateCandidate($candidate, $attributes);
     }
 
     /**
@@ -65,6 +73,7 @@ final class AiCardCandidateService
 
         return $this->candidateRepository->update($candidate, [
             'status' => CandidateStatus::Rejected->value,
+            'question_fingerprint' => null,
         ]);
     }
 
@@ -77,8 +86,9 @@ final class AiCardCandidateService
     {
         $candidate = $this->getForUser($userId, $candidateId);
 
-        return $this->candidateRepository->update($candidate, [
+        return $this->updateCandidate($candidate, [
             'status' => CandidateStatus::Pending->value,
+            'question_fingerprint' => $this->qualityValidator->fingerprint($candidate->question),
         ]);
     }
 
@@ -141,6 +151,24 @@ final class AiCardCandidateService
     private function uniqueIds(array $candidateIds): array
     {
         return array_values(array_unique($candidateIds));
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     *
+     * @throws AiCardCandidateDuplicateQuestionException
+     */
+    private function updateCandidate(AiCardCandidate $candidate, array $attributes): AiCardCandidate
+    {
+        try {
+            return $this->candidateRepository->update($candidate, $attributes);
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), 'question_fingerprint')) {
+                throw AiCardCandidateDuplicateQuestionException::make();
+            }
+
+            throw $e;
+        }
     }
 
     /**

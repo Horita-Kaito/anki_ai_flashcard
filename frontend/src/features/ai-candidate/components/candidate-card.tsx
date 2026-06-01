@@ -23,6 +23,12 @@ interface CandidateCardProps {
   total?: number;
 }
 
+const QUALITY_WARNING_LABELS = {
+  answer_exposed_in_question: "問題文に答えが含まれている可能性があります",
+  answer_too_long: "回答が長いため、分割または短縮を確認してください",
+  cloze_answer_mismatch: "穴埋め箇所と回答が一致していません",
+} as const;
+
 export function CandidateCard({
   candidate,
   defaultDeckId,
@@ -232,6 +238,19 @@ export function CandidateCard({
         </div>
       ) : (
         <div className="space-y-3">
+          {candidate.quality_warnings.length > 0 && (
+            <div
+              className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100"
+              role="alert"
+            >
+              <p className="font-medium">採用前に確認してください</p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                {candidate.quality_warnings.map((warning) => (
+                  <li key={warning}>{QUALITY_WARNING_LABELS[warning]}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {candidate.card_type === "cloze_like" ? (
             <p className="knowledge-text text-lg font-medium leading-relaxed">
               <ClozeText text={question} mode="front" />

@@ -11,6 +11,8 @@ use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
 use App\Contracts\Repositories\SystemSettingRepositoryInterface;
 use App\Contracts\Services\AI\AiProviderInterface;
+use App\Contracts\Services\AI\AiRuntimeResolverInterface;
+use App\Contracts\Services\AI\CandidateQualityValidatorInterface;
 use App\Enums\CandidateStatus;
 use App\Exceptions\Domain\AiGenerationFailedException;
 use App\Exceptions\Domain\AiUsageLimitExceededException;
@@ -44,7 +46,7 @@ use Illuminate\Support\Facades\DB;
 final class CardGenerationService
 {
     public function __construct(
-        private readonly AiProviderInterface $aiProvider,
+        private readonly AiRuntimeResolverInterface $runtimeResolver,
         private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly AiGenerationLogRepositoryInterface $logRepository,
         private readonly DomainTemplateRepositoryInterface $templateRepository,
@@ -54,6 +56,7 @@ final class CardGenerationService
         private readonly PromptBuilder $promptBuilder,
         private readonly CandidateParser $parser,
         private readonly ChunkSplitter $chunkSplitter,
+        private readonly CandidateQualityValidatorInterface $qualityValidator,
     ) {}
 
     /**
@@ -79,7 +82,7 @@ final class CardGenerationService
 
         $chunks = $this->chunkSplitter->split((string) $note->body);
         $chunksTotal = count($chunks);
-        $model = (string) config('ai.default_model', 'gpt-4o-mini');
+        $model = $this->runtimeResolver->resolveForUser($note->user_id)->model;
         $regenerate = (bool) ($options['regenerate'] ?? false);
         $additional = (bool) ($options['additional'] ?? false);
         $domainTemplateId = $options['domain_template_id'] ?? null;
@@ -174,6 +177,7 @@ final class CardGenerationService
         }
 
         $template = $this->resolveTemplate($note, $options);
+        $runtime = $this->runtimeResolver->resolveForUser($note->user_id);
         $regenerate = (bool) ($options['regenerate'] ?? false);
         $additional = (bool) ($options['additional'] ?? false);
         $chunkText = $options['chunk_text'] ?? null;
@@ -207,18 +211,18 @@ final class CardGenerationService
         $request = new AiGenerationRequest(
             systemPrompt: $this->promptBuilder->systemPrompt($template, $decks),
             userPrompt: $this->promptBuilder->userPrompt($note, $userPromptOptions),
-            model: (string) config('ai.default_model', 'gpt-4o-mini'),
+            model: $runtime->model,
             temperature: (float) config('ai.generation.temperature', 0.6),
             maxOutputTokens: (int) config('ai.generation.max_output_tokens', 16000),
             // 構造化出力を支えるプロバイダ (OpenAI strict json_schema 等) には schema を渡す。
             // 非対応プロバイダはプロンプト指示のみに頼る。
-            jsonSchema: $this->aiProvider->supportsJsonSchema()
+            jsonSchema: $runtime->provider->supportsJsonSchema()
                 ? CandidateJsonSchema::forOpenAi()
                 : null,
         );
 
         try {
-            [$result, $parseResult] = $this->callAndParseWithRetry($request);
+            [$result, $parseResult] = $this->callAndParseWithRetry($runtime->provider, $request);
         } catch (AiGenerationFailedException $e) {
             // call と parse のどちらの失敗かを error_reason の prefix で識別できるよう、
             // call 系 (TIMEOUT/RATE_LIMITED/SAFETY_BLOCKED/MAX_TOKENS/GENERIC) と
@@ -235,21 +239,26 @@ final class CardGenerationService
             throw $e;
         }
 
-        $parsed = $parseResult->items;
+        $parsed = $this->qualityValidator->validate($parseResult->items);
         try {
             $candidates = DB::transaction(function () use ($note, $result, $parsed, $log, $regenerate, $deckIds, $defaultDeckId) {
                 if ($regenerate) {
                     $this->candidateRepository->rejectPendingForNoteSeed($note->user_id, $note->id);
                 }
 
+                $deduplicated = $this->qualityValidator->excludeExistingQuestions(
+                    $parsed,
+                    $this->candidateRepository->listActiveQuestionsForNoteSeed($note->user_id, $note->id),
+                );
                 $candidates = [];
-                foreach ($parsed as $data) {
-                    $candidates[] = $this->candidateRepository->create($note->user_id, [
+                foreach ($deduplicated as $data) {
+                    $candidate = $this->candidateRepository->createIfActiveQuestionUnique($note->user_id, [
                         'note_seed_id' => $note->id,
                         'ai_generation_log_id' => $log->id,
                         'provider' => $result->provider,
                         'model_name' => $result->model,
                         'question' => $data['question'],
+                        'question_fingerprint' => $this->qualityValidator->fingerprint($data['question']),
                         'answer' => $data['answer'],
                         'card_type' => $data['card_type'],
                         'focus_type' => $data['focus_type'],
@@ -262,6 +271,9 @@ final class CardGenerationService
                         'status' => CandidateStatus::Pending->value,
                         'raw_response' => $data,
                     ]);
+                    if ($candidate !== null) {
+                        $candidates[] = $candidate;
+                    }
                 }
 
                 return $candidates;
@@ -294,7 +306,7 @@ final class CardGenerationService
             'error_reason' => $parseResult->truncated
                 ? mb_substr('[PARTIAL] '.($parseResult->debugDetail ?? ''), 0, 2000)
                 : null,
-            'candidates_count' => count($parsed),
+            'candidates_count' => count($candidates),
         ]);
         $this->updateParentAggregateIfChild($log);
 
@@ -453,7 +465,7 @@ final class CardGenerationService
      *
      * @return array{0: AiGenerationResult, 1: ParseResult}
      */
-    private function callAndParseWithRetry(AiGenerationRequest $request): array
+    private function callAndParseWithRetry(AiProviderInterface $provider, AiGenerationRequest $request): array
     {
         $maxRetries = (int) config('ai.generation.max_retries', 2);
         $attempt = 0;
@@ -462,7 +474,7 @@ final class CardGenerationService
 
         while ($attempt <= $maxRetries) {
             try {
-                $result = $this->aiProvider->generate($request);
+                $result = $provider->generate($request);
                 $parseResult = $this->parser->parse($result->rawContent);
 
                 return [$result, $parseResult];

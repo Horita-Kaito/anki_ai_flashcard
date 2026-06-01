@@ -50,6 +50,53 @@ final class ChatServiceTest extends TestCase
         $this->assertSame(2, ChatMessage::query()->where('chat_session_id', $session->id)->count());
     }
 
+    public function test_send_message_preserves_roles_in_bounded_json_transcript(): void
+    {
+        $provider = new class implements AiProviderInterface
+        {
+            public ?AiGenerationRequest $lastRequest = null;
+
+            public function name(): string
+            {
+                return 'fake';
+            }
+
+            public function supportsJsonSchema(): bool
+            {
+                return false;
+            }
+
+            public function generate(AiGenerationRequest $request): AiGenerationResult
+            {
+                $this->lastRequest = $request;
+
+                return new AiGenerationResult(
+                    rawContent: '回答',
+                    provider: 'fake',
+                    model: $request->model,
+                    inputTokens: 1,
+                    outputTokens: 1,
+                    costUsd: 0.0,
+                    durationMs: 1,
+                );
+            }
+        };
+        $this->app->instance(AiProviderInterface::class, $provider);
+        $user = User::factory()->create();
+        $session = ChatSession::factory()->for($user)->create();
+        ChatMessage::factory()->for($user)->for($session)->create([
+            'role' => 'assistant',
+            'content' => '前の回答',
+        ]);
+
+        app(ChatService::class)->sendMessage($user->id, $session->id, '次の質問');
+
+        $prompt = $provider->lastRequest?->userPrompt ?? '';
+        $this->assertStringContainsString('<chat_transcript data-kind="untrusted-reference">', $prompt);
+        $this->assertStringContainsString('"role":"assistant","content":"前の回答"', $prompt);
+        $this->assertStringContainsString('"role":"user","content":"次の質問"', $prompt);
+    }
+
     public function test_send_message_formats_json_chat_reply_as_markdown(): void
     {
         $this->app->instance(

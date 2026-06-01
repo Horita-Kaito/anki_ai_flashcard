@@ -38,10 +38,7 @@ final class GoogleAiProvider implements AiProviderInterface
 
     public function supportsJsonSchema(): bool
     {
-        // Gemini にも responseSchema があるが、本プロジェクトでは未実装のため false 固定。
-        // 必要になったら本メソッドを true に変えて generate() 側で
-        // generationConfig.responseSchema を組み立てる。
-        return false;
+        return true;
     }
 
     private const FALLBACK_MODELS = [
@@ -97,11 +94,14 @@ final class GoogleAiProvider implements AiProviderInterface
                             ],
                         ],
                     ],
-                    'generationConfig' => [
+                    'generationConfig' => array_filter([
                         'temperature' => $request->temperature,
                         'maxOutputTokens' => $request->maxOutputTokens,
                         'responseMimeType' => 'application/json',
-                    ],
+                        'responseSchema' => $request->jsonSchema !== null
+                            ? $this->toGoogleSchema($request->jsonSchema['schema'] ?? [])
+                            : null,
+                    ], fn (mixed $value): bool => $value !== null),
                 ]);
         } catch (ConnectionException $e) {
             throw AiGenerationFailedException::timeout('google');
@@ -178,5 +178,39 @@ final class GoogleAiProvider implements AiProviderInterface
             costUsd: $this->pricing->calculate('google', $model, $inputTokens, $outputTokens),
             durationMs: $durationMs,
         );
+    }
+
+    /**
+     * Gemini responseSchema uses an OpenAPI-compatible subset. Convert nullable
+     * union types from the OpenAI schema into Gemini's nullable flag.
+     *
+     * @param  array<string, mixed>  $schema
+     * @return array<string, mixed>
+     */
+    private function toGoogleSchema(array $schema): array
+    {
+        unset($schema['additionalProperties']);
+
+        if (isset($schema['type']) && is_array($schema['type'])) {
+            $types = array_values(array_filter($schema['type'], fn (string $type): bool => $type !== 'null'));
+            $schema['type'] = count($types) === 1 ? $types[0] : $types;
+            $schema['nullable'] = true;
+        }
+
+        if (isset($schema['enum']) && is_array($schema['enum'])) {
+            $schema['enum'] = array_values(array_filter($schema['enum'], fn (mixed $value): bool => $value !== null));
+        }
+
+        if (isset($schema['properties']) && is_array($schema['properties'])) {
+            $schema['properties'] = collect($schema['properties'])
+                ->map(fn (array $property): array => $this->toGoogleSchema($property))
+                ->all();
+        }
+
+        if (isset($schema['items']) && is_array($schema['items'])) {
+            $schema['items'] = $this->toGoogleSchema($schema['items']);
+        }
+
+        return $schema;
     }
 }

@@ -46,7 +46,7 @@ final class PricingCalculator
                         'input_tokens' => $inputTokens,
                         'output_tokens' => $outputTokens,
                     ]);
-                } catch (\RuntimeException) {
+                } catch (\Throwable) {
                     // facade root not set (pure PHPUnit unit test) は無視
                 }
             }

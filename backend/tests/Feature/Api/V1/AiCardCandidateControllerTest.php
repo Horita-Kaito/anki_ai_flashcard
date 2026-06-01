@@ -13,6 +13,8 @@ use App\Models\Deck;
 use App\Models\NoteSeed;
 use App\Models\SystemSetting;
 use App\Models\User;
+use App\Models\UserSetting;
+use App\Services\AI\CandidateQualityValidator;
 use App\Services\AI\FakeAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -99,6 +101,30 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertGreaterThan(0, $log->output_tokens);
         // FakeAiProvider: 900 input + 300 output @ $0.15/$0.60 per 1M = $0.000315
         $this->assertEqualsWithDelta(0.000315, (float) $log->cost_usd, 0.0000001);
+    }
+
+    public function test_ユーザー設定のmodelが生成ログへ反映される(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        UserSetting::create([
+            'user_id' => $user->id,
+            'default_ai_provider' => 'openai',
+            'default_ai_model' => 'gpt-4.1-mini',
+        ]);
+        $note = NoteSeed::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/generate-candidates")
+            ->assertAccepted();
+
+        $this->assertDatabaseHas('ai_generation_logs', [
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'model_name' => 'gpt-4.1-mini',
+            'status' => 'queued',
+        ]);
     }
 
     public function test_進行中ジョブがあれば409を返す(): void
@@ -194,6 +220,24 @@ final class AiCardCandidateControllerTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
+    public function test_候補一覧で品質警告を取得できる(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'raw_response' => [
+                'quality_warnings' => ['answer_exposed_in_question'],
+            ],
+        ])->create();
+
+        $this->actingAs($user)
+            ->getJson("/api/v1/note-seeds/{$note->id}/candidates")
+            ->assertOk()
+            ->assertJsonPath('data.0.quality_warnings.0', 'answer_exposed_in_question');
+    }
+
     public function test_候補を編集できる(): void
     {
         $user = User::factory()->create();
@@ -210,6 +254,11 @@ final class AiCardCandidateControllerTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.question', 'after');
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'question_fingerprint' => app(CandidateQualityValidator::class)->fingerprint('after'),
+        ]);
     }
 
     public function test_候補を却下できる(): void
@@ -219,12 +268,68 @@ final class AiCardCandidateControllerTest extends TestCase
         $candidate = AiCardCandidate::factory()->state([
             'user_id' => $user->id,
             'note_seed_id' => $note->id,
+            'question_fingerprint' => app(CandidateQualityValidator::class)->fingerprint('却下対象'),
+            'question' => '却下対象',
         ])->create();
 
         $this->actingAs($user)
             ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/reject")
             ->assertOk()
             ->assertJsonPath('data.status', 'rejected');
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'question_fingerprint' => null,
+        ]);
+    }
+
+    public function test_却下候補を復元するとfingerprintが再設定される(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => '復元対象',
+            'question_fingerprint' => null,
+            'status' => 'rejected',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/restore")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'pending');
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'question_fingerprint' => app(CandidateQualityValidator::class)->fingerprint('復元対象'),
+        ]);
+    }
+
+    public function test_復元時に同じ問題文のactive候補があれば409(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $fingerprint = app(CandidateQualityValidator::class)->fingerprint('同じ問い');
+        AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => '同じ問い',
+            'question_fingerprint' => $fingerprint,
+            'status' => 'pending',
+        ])->create();
+        $rejected = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => ' 同じ問い ',
+            'question_fingerprint' => null,
+            'status' => 'rejected',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$rejected->id}/restore")
+            ->assertConflict()
+            ->assertJsonPath('message', '同じ問題文の有効な候補が既に存在します。');
     }
 
     public function test_候補を採用してカード化できる(): void
@@ -332,6 +437,46 @@ final class AiCardCandidateControllerTest extends TestCase
         // 元の 2件は pending のまま、新しい 3件も pending
         $this->assertSame(5, AiCardCandidate::where('status', 'pending')->count());
         $this->assertSame(0, AiCardCandidate::where('status', 'rejected')->count());
+    }
+
+    public function test_追加生成では保存済み候補と同じ問いを重複保存しない(): void
+    {
+        $this->app->bind(AiProviderInterface::class, fn () => FakeAiProvider::make(candidates: [
+            [
+                'question' => ' DI とは何ですか？ ',
+                'answer' => '依存性注入です',
+                'card_type' => 'basic_qa',
+                'focus_type' => 'definition',
+                'rationale' => '重複候補',
+                'confidence' => 0.9,
+            ],
+            [
+                'question' => 'IoC とは何ですか？',
+                'answer' => '制御の反転です',
+                'card_type' => 'basic_qa',
+                'focus_type' => 'definition',
+                'rationale' => '新規候補',
+                'confidence' => 0.9,
+            ],
+        ]));
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => 'DIとは何ですか?',
+            'status' => 'pending',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/note-seeds/{$note->id}/additional-candidates")
+            ->assertAccepted();
+
+        $this->assertSame(2, AiCardCandidate::where('status', 'pending')->count());
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'note_seed_id' => $note->id,
+            'question' => 'IoC とは何ですか？',
+        ]);
     }
 
     public function test_複数候補を一括採用できる(): void

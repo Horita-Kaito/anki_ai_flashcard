@@ -19,10 +19,20 @@ interface AiCardCandidateRepositoryInterface
     /** @return Collection<int, AiCardCandidate> */
     public function listForNoteSeed(int $userId, int $noteSeedId, ?string $status = null): Collection;
 
+    /** @return array<int, string> */
+    public function listActiveQuestionsForNoteSeed(int $userId, int $noteSeedId): array;
+
     /**
      * @param  array<string, mixed>  $attributes
      */
     public function create(int $userId, array $attributes): AiCardCandidate;
+
+    /**
+     * DB 一意制約により同じ active 問題文が既にある場合は null を返す。
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function createIfActiveQuestionUnique(int $userId, array $attributes): ?AiCardCandidate;
 
     /**
      * @param  array<string, mixed>  $attributes

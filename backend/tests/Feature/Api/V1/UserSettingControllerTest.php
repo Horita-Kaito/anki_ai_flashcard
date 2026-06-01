@@ -36,12 +36,22 @@ final class UserSettingControllerTest extends TestCase
 
         $this->actingAs($user)
             ->putJson('/api/v1/settings', [
-                'default_ai_provider' => 'anthropic',
-                'default_ai_model' => 'claude-3-5-haiku-latest',
+                'default_ai_provider' => 'google',
+                'default_ai_model' => 'gemini-2.5-flash',
             ])
             ->assertOk()
-            ->assertJsonPath('data.default_ai_provider', 'anthropic')
-            ->assertJsonPath('data.default_ai_model', 'claude-3-5-haiku-latest');
+            ->assertJsonPath('data.default_ai_provider', 'google')
+            ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
+    }
+
+    public function test_未実装のanthropicは422(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/settings', ['default_ai_provider' => 'anthropic'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['default_ai_provider']);
     }
 
     public function test_無効な_a_iプロバイダで422(): void

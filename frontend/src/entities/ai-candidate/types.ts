@@ -2,6 +2,12 @@ import type { CardType } from "@/entities/card/types";
 
 export const CANDIDATE_STATUSES = ["pending", "adopted", "rejected"] as const;
 export type CandidateStatus = (typeof CANDIDATE_STATUSES)[number];
+export const QUALITY_WARNINGS = [
+  "answer_exposed_in_question",
+  "answer_too_long",
+  "cloze_answer_mismatch",
+] as const;
+export type QualityWarning = (typeof QUALITY_WARNINGS)[number];
 
 export interface AiCardCandidate {
   id: number;
@@ -16,6 +22,7 @@ export interface AiCardCandidate {
   rationale: string | null;
   explanation: string | null;
   confidence: number | null;
+  quality_warnings: QualityWarning[];
   suggested_deck_id: number | null;
   status: CandidateStatus;
   created_at: string | null;

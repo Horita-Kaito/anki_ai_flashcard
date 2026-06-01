@@ -27,6 +27,7 @@ final class AiCardCandidateFactory extends Factory
             'provider' => 'fake',
             'model_name' => 'gpt-4o-mini',
             'question' => $this->faker->sentence().'?',
+            'question_fingerprint' => null,
             'answer' => $this->faker->sentence(),
             'card_type' => 'basic_qa',
             'focus_type' => 'definition',
