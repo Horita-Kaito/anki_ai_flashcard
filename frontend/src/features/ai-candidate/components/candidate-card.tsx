@@ -159,10 +159,14 @@ export function CandidateCard({
       {editing ? (
         <div className="space-y-3 pb-[env(safe-area-inset-bottom)]">
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label
+              htmlFor={`candidate-${candidate.id}-question`}
+              className="text-xs font-medium text-muted-foreground"
+            >
               問題文
             </label>
             <textarea
+              id={`candidate-${candidate.id}-question`}
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               rows={2}
@@ -170,10 +174,14 @@ export function CandidateCard({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label
+              htmlFor={`candidate-${candidate.id}-answer`}
+              className="text-xs font-medium text-muted-foreground"
+            >
               回答
             </label>
             <textarea
+              id={`candidate-${candidate.id}-answer`}
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               rows={2}
@@ -181,10 +189,14 @@ export function CandidateCard({
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
+            <label
+              htmlFor={`candidate-${candidate.id}-explanation`}
+              className="text-xs font-medium text-muted-foreground"
+            >
               補足説明 (任意)
             </label>
             <textarea
+              id={`candidate-${candidate.id}-explanation`}
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
               rows={3}
