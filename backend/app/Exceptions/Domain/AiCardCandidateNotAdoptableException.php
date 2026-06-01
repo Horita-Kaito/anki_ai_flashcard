@@ -13,6 +13,13 @@ final class AiCardCandidateNotAdoptableException extends DomainException
         );
     }
 
+    public static function invalidTransition(int $candidateId, string $status, string $targetStatus): self
+    {
+        return new self(
+            "候補(id={$candidateId})はstatus={$status}からstatus={$targetStatus}へ変更できません。"
+        );
+    }
+
     public function statusCode(): int
     {
         return 409;

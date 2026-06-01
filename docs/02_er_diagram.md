@@ -247,7 +247,6 @@ erDiagram
 | source_note_seed_id | BIGINT UNSIGNED | FK(note_seeds.id), NULLABLE | 元メモ |
 | source_ai_candidate_id | BIGINT UNSIGNED | FK(ai_card_candidates.id), NULLABLE | 元AI候補 |
 | question | TEXT | NOT NULL | 問題文 |
-| question_fingerprint | CHAR(64) | NULLABLE | active 候補の問題文正規化 SHA-256。重複防止用 |
 | answer | TEXT | NOT NULL | 回答 |
 | explanation | TEXT | NULLABLE | 補足説明 |
 | card_type | VARCHAR(50) | NOT NULL, DEFAULT 'basic_qa' | カード種別 |
@@ -341,6 +340,7 @@ erDiagram
 | provider | VARCHAR(50) | NOT NULL | AIプロバイダ名 |
 | model_name | VARCHAR(100) | NOT NULL | 使用モデル名 |
 | question | TEXT | NOT NULL | 生成問題文 |
+| question_fingerprint | CHAR(64) | NULLABLE | active 候補の問題文正規化 SHA-256。重複防止用 |
 | answer | TEXT | NOT NULL | 生成回答 |
 | card_type | VARCHAR(50) | NOT NULL | カード種別 |
 | focus_type | VARCHAR(50) | NULLABLE | 観点タイプ |
@@ -349,10 +349,10 @@ erDiagram
 | status | VARCHAR(20) | NOT NULL, DEFAULT 'pending' | pending/adopted/rejected |
 | raw_response | JSON | NULLABLE | AI生レスポンス |
 | prompt_version | VARCHAR(20) | NULLABLE | プロンプトバージョン |
-
-**UNIQUE**: `idx_candidates_user_note_question_fingerprint` (user_id, note_seed_id, question_fingerprint)。`pending` / `adopted` の active 候補だけ fingerprint を保持し、`rejected` は NULL にする。
 | created_at | TIMESTAMP | | |
 | updated_at | TIMESTAMP | | |
+
+**UNIQUE**: `idx_candidates_user_note_question_fingerprint` (user_id, note_seed_id, question_fingerprint)。`pending` / `adopted` の active 候補だけ fingerprint を保持し、`rejected` は NULL にする。
 
 **INDEX**: `idx_candidates_note_seed` (note_seed_id), `idx_candidates_status` (status)
 

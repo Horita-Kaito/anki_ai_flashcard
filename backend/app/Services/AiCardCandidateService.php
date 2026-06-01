@@ -58,6 +58,9 @@ final class AiCardCandidateService
         if (isset($attributes['question']) && $candidate->status !== CandidateStatus::Rejected) {
             $attributes['question_fingerprint'] = $this->qualityValidator->fingerprint($attributes['question']);
         }
+        if (array_intersect(['question', 'answer', 'card_type'], array_keys($attributes)) !== []) {
+            $attributes['raw_response'] = $this->rawResponseWithUpdatedWarnings($candidate, $attributes);
+        }
 
         return $this->updateCandidate($candidate, $attributes);
     }
@@ -70,6 +73,13 @@ final class AiCardCandidateService
     public function rejectForUser(int $userId, int $candidateId): AiCardCandidate
     {
         $candidate = $this->getForUser($userId, $candidateId);
+        if ($candidate->status !== CandidateStatus::Pending) {
+            throw AiCardCandidateNotAdoptableException::invalidTransition(
+                $candidateId,
+                $candidate->status->value,
+                CandidateStatus::Rejected->value,
+            );
+        }
 
         return $this->candidateRepository->update($candidate, [
             'status' => CandidateStatus::Rejected->value,
@@ -85,6 +95,13 @@ final class AiCardCandidateService
     public function restoreForUser(int $userId, int $candidateId): AiCardCandidate
     {
         $candidate = $this->getForUser($userId, $candidateId);
+        if ($candidate->status !== CandidateStatus::Rejected) {
+            throw AiCardCandidateNotAdoptableException::invalidTransition(
+                $candidateId,
+                $candidate->status->value,
+                CandidateStatus::Pending->value,
+            );
+        }
 
         return $this->updateCandidate($candidate, [
             'status' => CandidateStatus::Pending->value,
@@ -169,6 +186,23 @@ final class AiCardCandidateService
 
             throw $e;
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function rawResponseWithUpdatedWarnings(AiCardCandidate $candidate, array $attributes): array
+    {
+        $validated = $this->qualityValidator->validate([[
+            'question' => $attributes['question'] ?? $candidate->question,
+            'answer' => $attributes['answer'] ?? $candidate->answer,
+            'card_type' => $attributes['card_type'] ?? $candidate->card_type?->value ?? 'basic_qa',
+        ]]);
+        $rawResponse = $candidate->raw_response ?? [];
+        $rawResponse['quality_warnings'] = $validated[0]['quality_warnings'] ?? [];
+
+        return $rawResponse;
     }
 
     /**

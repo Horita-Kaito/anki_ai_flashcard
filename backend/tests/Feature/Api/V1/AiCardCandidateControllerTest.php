@@ -261,6 +261,34 @@ final class AiCardCandidateControllerTest extends TestCase
         ]);
     }
 
+    public function test_候補編集時に品質警告が再計算される(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'answer' => str_repeat('長', 81),
+            'raw_response' => [
+                'quality_warnings' => ['answer_too_long'],
+            ],
+        ])->create();
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/ai-card-candidates/{$candidate->id}", [
+                'answer' => '短い回答',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.quality_warnings', []);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/ai-card-candidates/{$candidate->id}", [
+                'answer' => str_repeat('長', 81),
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.quality_warnings.0', 'answer_too_long');
+    }
+
     public function test_候補を却下できる(): void
     {
         $user = User::factory()->create();
@@ -303,6 +331,46 @@ final class AiCardCandidateControllerTest extends TestCase
         $this->assertDatabaseHas('ai_card_candidates', [
             'id' => $candidate->id,
             'question_fingerprint' => app(CandidateQualityValidator::class)->fingerprint('復元対象'),
+        ]);
+    }
+
+    public function test_採用済み候補は却下できない(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'status' => 'adopted',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/reject")
+            ->assertConflict();
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'status' => 'adopted',
+        ]);
+    }
+
+    public function test_採用済み候補は復元できない(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'status' => 'adopted',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/restore")
+            ->assertConflict();
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'status' => 'adopted',
         ]);
     }
 

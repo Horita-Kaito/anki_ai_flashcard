@@ -16,10 +16,14 @@ final class EloquentUserSettingRepository implements UserSettingRepositoryInterf
 
     public function createDefault(int $userId): UserSetting
     {
+        $provider = $this->defaultProvider();
+
         return UserSetting::create([
             'user_id' => $userId,
-            'default_ai_provider' => config('ai.default_provider', 'openai'),
-            'default_ai_model' => config('ai.default_model', 'gpt-4o-mini'),
+            'default_ai_provider' => $provider,
+            'default_ai_model' => $provider === config('ai.default_provider', 'openai')
+                ? config('ai.default_model', 'gpt-4o-mini')
+                : $this->defaultModel($provider),
         ]);
     }
 
@@ -33,5 +37,20 @@ final class EloquentUserSettingRepository implements UserSettingRepositoryInterf
         $setting->update($attributes);
 
         return $setting->refresh();
+    }
+
+    private function defaultProvider(): string
+    {
+        $provider = config('ai.default_provider', 'openai');
+
+        return in_array($provider, ['openai', 'google'], true) ? $provider : 'openai';
+    }
+
+    private function defaultModel(string $provider): string
+    {
+        return match ($provider) {
+            'google' => 'gemini-2.5-flash',
+            default => 'gpt-4o-mini',
+        };
     }
 }

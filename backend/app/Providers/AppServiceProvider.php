@@ -41,13 +41,14 @@ final class AppServiceProvider extends ServiceProvider
         // AiProviderInterface は config('ai.default_provider') で具象を選択
         $this->app->bind(AiProviderInterface::class, function ($app) {
             $provider = config('ai.default_provider', 'openai');
+            if (! in_array($provider, ['fake', 'openai', 'google'], true)) {
+                $provider = 'openai';
+            }
 
             return match ($provider) {
                 'fake' => $app->make('ai.provider.fake'),
                 'openai' => $app->make('ai.provider.openai'),
                 'google' => $app->make('ai.provider.google'),
-                'anthropic' => throw new \LogicException('Anthropic AI provider is not implemented'),
-                default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
             };
         });
     }

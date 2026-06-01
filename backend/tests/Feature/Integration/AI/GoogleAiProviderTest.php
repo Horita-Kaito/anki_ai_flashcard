@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 final class GoogleAiProviderTest extends TestCase
 {
-    public function test_json_schemaをgemini_response_schema形式で渡す(): void
+    public function test_json_schemaをgemini_response_json_schema形式で渡す(): void
     {
         Http::fake([
             'generativelanguage.googleapis.com/*' => Http::response([
@@ -47,13 +47,15 @@ final class GoogleAiProviderTest extends TestCase
         ));
 
         Http::assertSent(function ($request): bool {
-            $schema = $request->data()['generationConfig']['responseSchema'];
+            $generationConfig = $request->data()['generationConfig'];
+            $schema = $generationConfig['responseJsonSchema'];
             $item = $schema['properties']['candidates']['items'];
 
             return $schema['type'] === 'object'
-                && ! isset($schema['additionalProperties'])
-                && $item['properties']['explanation']['type'] === 'string'
-                && $item['properties']['explanation']['nullable'] === true;
+                && $schema['additionalProperties'] === false
+                && $item['additionalProperties'] === false
+                && $item['properties']['explanation']['type'] === ['string', 'null']
+                && ! isset($generationConfig['responseSchema']);
         });
     }
 }
