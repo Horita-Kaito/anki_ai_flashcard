@@ -9,6 +9,8 @@ struct NoteDetailView: View {
     @State private var isLoadingCandidates = false
     @State private var isGenerating = false
     @State private var errorMessage: String?
+    @State private var selectedCandidate: AiCardCandidate?
+    @State private var adoptedCardMessage: String?
 
     var body: some View {
         List {
@@ -51,6 +53,13 @@ struct NoteDetailView: View {
                 }
             }
 
+            if let adoptedCardMessage {
+                Section {
+                    Label(adoptedCardMessage, systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+            }
+
             Section("候補") {
                 if isLoadingCandidates {
                     ProgressView()
@@ -62,7 +71,9 @@ struct NoteDetailView: View {
                     )
                 } else {
                     ForEach(candidates) { candidate in
-                        CandidateRow(candidate: candidate)
+                        CandidateRow(candidate: candidate) {
+                            selectedCandidate = candidate
+                        }
                     }
                 }
             }
@@ -86,6 +97,16 @@ struct NoteDetailView: View {
         .task {
             await loadCandidates()
             await loadStatus()
+        }
+        .sheet(item: $selectedCandidate) { candidate in
+            CandidateAdoptionView(candidate: candidate) { card in
+                adoptedCardMessage = "カード #\(card.id) を採用しました"
+                Task {
+                    await loadCandidates()
+                    await loadStatus()
+                }
+            }
+            .environmentObject(session)
         }
     }
 
@@ -182,6 +203,7 @@ private struct GenerationStatusRow: View {
 
 private struct CandidateRow: View {
     let candidate: AiCardCandidate
+    let onAdopt: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -209,7 +231,20 @@ private struct CandidateRow: View {
             }
             .font(.caption)
             .foregroundStyle(.secondary)
+
+            Button {
+                onAdopt()
+            } label: {
+                Label(adoptButtonTitle, systemImage: "checkmark.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(candidate.status == "adopted")
         }
         .padding(.vertical, 6)
+    }
+
+    private var adoptButtonTitle: String {
+        candidate.status == "adopted" ? "採用済み" : "カードに採用"
     }
 }

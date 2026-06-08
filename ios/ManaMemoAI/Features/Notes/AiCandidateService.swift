@@ -30,4 +30,26 @@ final class AiCandidateService {
         )
         return envelope.data
     }
+
+    func adopt(
+        candidateId: Int,
+        deckId: Int,
+        question: String,
+        answer: String,
+        explanation: String?
+    ) async throws -> Card {
+        let request = AdoptCandidateRequest(
+            deckId: deckId,
+            question: question,
+            answer: answer,
+            explanation: explanation,
+            scheduler: "fsrs"
+        )
+        let envelope: APIEnvelope<Card> = try await apiClient.request(
+            "ai-card-candidates/\(candidateId)/adopt",
+            method: .post,
+            body: request
+        )
+        return envelope.data
+    }
 }

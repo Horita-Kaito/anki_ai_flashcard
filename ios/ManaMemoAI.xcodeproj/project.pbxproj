@@ -33,6 +33,7 @@
 		000000000000000000000118 /* AiCandidateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000019 /* AiCandidateModels.swift */; };
 		000000000000000000000119 /* AiCandidateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001A /* AiCandidateService.swift */; };
 		00000000000000000000011A /* NoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001B /* NoteDetailView.swift */; };
+		00000000000000000000011B /* CandidateAdoptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001C /* CandidateAdoptionView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -63,6 +64,7 @@
 		000000000000000000000019 /* AiCandidateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiCandidateModels.swift; sourceTree = "<group>"; };
 		00000000000000000000001A /* AiCandidateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiCandidateService.swift; sourceTree = "<group>"; };
 		00000000000000000000001B /* NoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailView.swift; sourceTree = "<group>"; };
+		00000000000000000000001C /* CandidateAdoptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateAdoptionView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -193,6 +195,7 @@
 				000000000000000000000019 /* AiCandidateModels.swift */,
 				00000000000000000000001A /* AiCandidateService.swift */,
 				00000000000000000000001B /* NoteDetailView.swift */,
+				00000000000000000000001C /* CandidateAdoptionView.swift */,
 			);
 			path = Notes;
 			sourceTree = "<group>";
@@ -324,6 +327,7 @@
 				000000000000000000000118 /* AiCandidateModels.swift in Sources */,
 				000000000000000000000119 /* AiCandidateService.swift in Sources */,
 				00000000000000000000011A /* NoteDetailView.swift in Sources */,
+				00000000000000000000011B /* CandidateAdoptionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -40,3 +40,27 @@ struct AiGenerationStatus: Decodable, Equatable {
 struct GenerateCandidatesRequest: Encodable {
     let domainTemplateId: Int?
 }
+
+struct AdoptCandidateRequest: Encodable {
+    let deckId: Int
+    let question: String
+    let answer: String
+    let explanation: String?
+    let scheduler: String
+}
+
+struct Card: Decodable, Identifiable, Equatable {
+    let id: Int
+    let deckId: Int
+    let domainTemplateId: Int?
+    let sourceNoteSeedId: Int?
+    let sourceAiCandidateId: Int?
+    let question: String
+    let answer: String
+    let explanation: String?
+    let cardType: String?
+    let isSuspended: Bool
+    let scheduler: String
+    let createdAt: Date?
+    let updatedAt: Date?
+}
