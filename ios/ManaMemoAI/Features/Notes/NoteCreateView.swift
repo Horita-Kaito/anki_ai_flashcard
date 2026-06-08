@@ -2,11 +2,17 @@ import SwiftUI
 
 struct NoteCreateView: View {
     @EnvironmentObject private var session: AuthSessionStore
+    @Environment(\.dismiss) private var dismiss
     @State private var bodyText = ""
     @State private var learningGoal = ""
     @State private var isSubmitting = false
     @State private var errorMessage: String?
     @State private var savedNote: NoteSeed?
+    let onSaved: ((NoteSeed) -> Void)?
+
+    init(onSaved: ((NoteSeed) -> Void)? = nil) {
+        self.onSaved = onSaved
+    }
 
     var body: some View {
         Form {
@@ -53,6 +59,15 @@ struct NoteCreateView: View {
             }
         }
         .navigationTitle("メモ作成")
+        .toolbar {
+            if onSaved != nil {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("閉じる") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 
     private func save() async {
@@ -61,12 +76,14 @@ struct NoteCreateView: View {
         savedNote = nil
 
         do {
-            savedNote = try await session.makeNoteSeedService().create(
+            let note = try await session.makeNoteSeedService().create(
                 body: bodyText,
                 learningGoal: learningGoal
             )
+            savedNote = note
             bodyText = ""
             learningGoal = ""
+            onSaved?(note)
         } catch {
             errorMessage = error.localizedDescription
         }

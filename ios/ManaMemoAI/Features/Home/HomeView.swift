@@ -1,38 +1,31 @@
 import SwiftUI
 
 struct HomeView: View {
-    @EnvironmentObject private var session: AuthSessionStore
     let user: User
 
     var body: some View {
-        NavigationStack {
-            List {
-                Section("アカウント") {
-                    LabeledContent("名前", value: user.name)
-                    LabeledContent("メール", value: user.email)
+        TabView {
+            NoteListView()
+                .tabItem {
+                    Label("メモ", systemImage: "note.text")
                 }
 
-                Section("次に実装する画面") {
-                    NavigationLink("デッキ一覧") {
-                        DeckListView()
-                    }
-                    NavigationLink("メモ作成") {
-                        NoteCreateView()
-                    }
-                    NavigationLink("復習") {
-                        PlaceholderView(title: "復習")
-                    }
+            DeckListView()
+                .tabItem {
+                    Label("デッキ", systemImage: "rectangle.stack")
                 }
 
-                Section {
-                    Button("ログアウト", role: .destructive) {
-                        Task {
-                            await session.logout()
-                        }
-                    }
-                }
+            NavigationStack {
+                PlaceholderView(title: "復習")
             }
-            .navigationTitle("ホーム")
+            .tabItem {
+                Label("復習", systemImage: "checkmark.circle")
+            }
+
+            SettingsView(user: user)
+                .tabItem {
+                    Label("設定", systemImage: "gearshape")
+                }
         }
     }
 }

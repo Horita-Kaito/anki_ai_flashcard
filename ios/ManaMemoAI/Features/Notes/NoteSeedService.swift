@@ -8,6 +8,11 @@ final class NoteSeedService {
         self.apiClient = apiClient
     }
 
+    func list() async throws -> [NoteSeed] {
+        let envelope: APIEnvelope<[NoteSeed]> = try await apiClient.request("note-seeds")
+        return envelope.data
+    }
+
     func create(body: String, learningGoal: String?) async throws -> NoteSeed {
         let request = CreateNoteSeedRequest(
             body: body,
