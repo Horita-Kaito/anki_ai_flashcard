@@ -12,6 +12,7 @@ struct NoteDetailView: View {
     @State private var adoptedCardMessage: String?
     @State private var generationErrorMessage: String?
     @State private var generationSourceMessage: String?
+    @State private var generationTask: Task<Void, Never>?
 
     private var candidates: [LocalAiCardCandidate] {
         allCandidates
@@ -33,7 +34,7 @@ struct NoteDetailView: View {
 
             Section {
                 Button {
-                    generate()
+                    isGenerating ? cancelGeneration() : generate()
                 } label: {
                     HStack {
                         if isGenerating {
@@ -41,10 +42,9 @@ struct NoteDetailView: View {
                         } else {
                             Image(systemName: "sparkles")
                         }
-                        Text(isGenerating ? "生成中" : "ローカルAI候補を生成")
+                        Text(isGenerating ? "生成を停止" : "ローカルAI候補を生成")
                     }
                 }
-                .disabled(isGenerating)
 
                 LabeledContent("実行場所", value: "このiPhone")
                 LabeledContent("モデル", value: llmSettings.selectedModel.displayName)
@@ -96,16 +96,21 @@ struct NoteDetailView: View {
                 _ = card
             }
         }
+        .onDisappear {
+            cancelGeneration()
+        }
     }
 
     private func generate() {
+        generationTask?.cancel()
         isGenerating = true
         generationErrorMessage = nil
         generationSourceMessage = nil
 
-        Task {
+        generationTask = Task {
             do {
                 let result = try await LocalCandidateGenerationService().generate(from: note, settings: llmSettings)
+                try Task.checkCancellation()
 
                 for draft in result.drafts {
                     let candidate = LocalAiCardCandidate(
@@ -120,12 +125,24 @@ struct NoteDetailView: View {
 
                 note.updatedAt = .now
                 generationSourceMessage = result.source.message
+            } catch is CancellationError {
+                generationSourceMessage = "生成を停止しました"
             } catch {
                 generationErrorMessage = error.localizedDescription
             }
 
             isGenerating = false
+            generationTask = nil
         }
+    }
+
+    private func cancelGeneration() {
+        guard generationTask != nil else {
+            return
+        }
+
+        generationTask?.cancel()
+        generationSourceMessage = "生成を停止しています"
     }
 }
 

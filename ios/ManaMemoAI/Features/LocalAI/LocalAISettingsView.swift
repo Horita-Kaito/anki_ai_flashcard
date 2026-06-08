@@ -4,7 +4,7 @@ struct LocalAISettingsView: View {
     @ObservedObject var settings: LocalLLMSettingsStore
     @StateObject private var modelStore = LocalLLMModelStore()
 
-    private let runtimeDiagnostics = LlamaFrameworkRuntime().diagnostics
+    private let runtimeDiagnostics = LlamaFrameworkRuntime.shared.diagnostics
 
     var body: some View {
         List {

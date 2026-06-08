@@ -2,6 +2,8 @@ import Foundation
 import llama
 
 actor LlamaFrameworkRuntime: LocalLLMRuntime {
+    static let shared = LlamaFrameworkRuntime()
+
     nonisolated let diagnostics = LocalLLMRuntimeDiagnostics(
         state: .ready,
         title: "LlamaFramework接続済み",
@@ -9,22 +11,20 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
     )
 
     private var didInitializeBackend = false
+    private var cachedModelURL: URL?
+    private var cachedModelPointer: OpaquePointer?
 
-    func generateText(for request: LocalLLMGenerationRequest) async throws -> String {
-        initializeBackendIfNeeded()
-
-        var modelParams = llama_model_default_params()
-        modelParams.n_gpu_layers = 99
-        modelParams.use_mmap = true
-
-        guard let model = request.modelURL.path.withCString({ path in
-            llama_model_load_from_file(path, modelParams)
-        }) else {
-            throw LocalLLMGenerationError.modelLoadFailed
-        }
-        defer {
+    deinit {
+        if let model = cachedModelPointer {
             llama_model_free(model)
         }
+    }
+
+    func generateText(for request: LocalLLMGenerationRequest) async throws -> String {
+        try Task.checkCancellation()
+        initializeBackendIfNeeded()
+
+        let model = try loadModel(for: request)
 
         var contextParams = llama_context_default_params()
         contextParams.n_ctx = UInt32(request.options.contextTokens)
@@ -45,6 +45,7 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         guard !promptTokens.isEmpty else {
             throw LocalLLMGenerationError.emptyPrompt
         }
+        try Task.checkCancellation()
 
         var batch = llama_batch_init(Int32(max(promptTokens.count, 1)), 0, 1)
         defer {
@@ -71,6 +72,8 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         var nextPosition = Int32(promptTokens.count)
 
         for _ in 0..<request.options.maxTokens {
+            try Task.checkCancellation()
+
             let token = llama_sampler_sample(sampler, context, -1)
             if llama_vocab_is_eog(vocab, token) {
                 break
@@ -84,6 +87,32 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         }
 
         return generated.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func loadModel(for request: LocalLLMGenerationRequest) throws -> OpaquePointer {
+        if let cachedModelPointer, cachedModelURL == request.modelURL {
+            return cachedModelPointer
+        }
+
+        if let model = cachedModelPointer {
+            llama_model_free(model)
+            cachedModelPointer = nil
+            cachedModelURL = nil
+        }
+
+        var modelParams = llama_model_default_params()
+        modelParams.n_gpu_layers = 99
+        modelParams.use_mmap = true
+
+        guard let model = request.modelURL.path.withCString({ path in
+            llama_model_load_from_file(path, modelParams)
+        }) else {
+            throw LocalLLMGenerationError.modelLoadFailed
+        }
+
+        cachedModelURL = request.modelURL
+        cachedModelPointer = model
+        return model
     }
 
     private func initializeBackendIfNeeded() {

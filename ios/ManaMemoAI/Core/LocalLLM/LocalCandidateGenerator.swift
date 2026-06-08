@@ -12,7 +12,7 @@ enum LocalCandidateGenerator {
     static func generate(
         from note: LocalNoteSeed,
         settings: LocalLLMSettingsStore,
-        runtime: LocalLLMRuntime = UnavailableLocalLLMRuntime(),
+        runtime: LocalLLMRuntime = LlamaFrameworkRuntime.shared,
         fileLocator: LocalLLMModelFileLocator = LocalLLMModelFileLocator()
     ) async throws -> [LocalCandidateDraft] {
         let service = LocalCandidateGenerationService(runtime: runtime, fileLocator: fileLocator)

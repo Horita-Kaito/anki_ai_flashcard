@@ -16,7 +16,7 @@ struct LocalCandidateGenerationService {
     private let fileLocator: LocalLLMModelFileLocator
 
     init(
-        runtime: LocalLLMRuntime = LlamaFrameworkRuntime(),
+        runtime: LocalLLMRuntime = LlamaFrameworkRuntime.shared,
         fileLocator: LocalLLMModelFileLocator = LocalLLMModelFileLocator()
     ) {
         self.runtime = runtime
@@ -61,6 +61,8 @@ struct LocalCandidateGenerationService {
                 drafts: drafts,
                 source: .localLLM(modelName: model.displayName)
             )
+        } catch let error as CancellationError {
+            throw error
         } catch {
             return try fallbackOrThrow(from: note, settings: settings, error: error)
         }
