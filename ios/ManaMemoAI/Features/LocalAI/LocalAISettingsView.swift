@@ -65,8 +65,18 @@ struct LocalAISettingsView: View {
                     Button("モデルを削除", role: .destructive) {
                         modelStore.delete(settings.selectedModel)
                     }
-                case .downloading:
-                    ProgressView("ダウンロード中")
+                case .downloading(let progress):
+                    VStack(alignment: .leading, spacing: 10) {
+                        ProgressView(value: progress.fractionCompleted) {
+                            Text("ダウンロード中 \(progress.percentage)%")
+                        }
+                        Text(downloadProgressText(progress))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        Button("ダウンロードを停止", role: .cancel) {
+                            modelStore.cancelDownload(for: settings.selectedModel)
+                        }
+                    }
                 case .missing, .failed:
                     Button {
                         modelStore.download(settings.selectedModel)
@@ -100,12 +110,29 @@ struct LocalAISettingsView: View {
         case .downloaded:
             Label("モデル保存済み", systemImage: "checkmark.circle")
                 .foregroundStyle(.green)
-        case .downloading:
-            Label("ダウンロード中", systemImage: "arrow.down.circle")
+        case .downloading(let progress):
+            Label("ダウンロード中 \(progress.percentage)%", systemImage: "arrow.down.circle")
                 .foregroundStyle(.secondary)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
                 .foregroundStyle(.red)
         }
+    }
+
+    private func downloadProgressText(_ progress: LocalLLMModelStore.DownloadProgress) -> String {
+        let completed = byteFormatter.string(fromByteCount: progress.completedBytes)
+        guard progress.totalBytes > 0 else {
+            return "\(completed) 取得済み"
+        }
+
+        let total = byteFormatter.string(fromByteCount: progress.totalBytes)
+        return "\(completed) / \(total)"
+    }
+
+    private var byteFormatter: ByteCountFormatter {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter
     }
 }

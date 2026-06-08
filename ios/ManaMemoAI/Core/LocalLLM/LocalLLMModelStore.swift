@@ -6,15 +6,26 @@ final class LocalLLMModelStore: ObservableObject {
     enum State: Equatable {
         case missing
         case downloaded(URL)
-        case downloading
+        case downloading(DownloadProgress)
         case failed(String)
+    }
+
+    struct DownloadProgress: Equatable {
+        let fractionCompleted: Double
+        let completedBytes: Int64
+        let totalBytes: Int64
+
+        var percentage: Int {
+            Int((fractionCompleted * 100).rounded())
+        }
     }
 
     @Published private(set) var state: State = .missing
 
     private let fileManager: FileManager
     private let fileLocator: LocalLLMModelFileLocator
-    private var downloadTask: Task<Void, Never>?
+    private var downloadTask: URLSessionDownloadTask?
+    private var progressTask: Task<Void, Never>?
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
@@ -27,15 +38,23 @@ final class LocalLLMModelStore: ObservableObject {
     }
 
     func download(_ model: LocalLLMModelSpec) {
-        guard case .downloading = state else {
-            startDownload(model)
+        if case .downloading = state {
             return
         }
+
+        startDownload(model)
+    }
+
+    func cancelDownload(for model: LocalLLMModelSpec) {
+        downloadTask?.cancel()
+        downloadTask = nil
+        progressTask?.cancel()
+        progressTask = nil
+        refresh(for: model)
     }
 
     func delete(_ model: LocalLLMModelSpec) {
-        downloadTask?.cancel()
-        downloadTask = nil
+        cancelDownload(for: model)
 
         do {
             let fileURL = localURL(for: model)
@@ -58,30 +77,85 @@ final class LocalLLMModelStore: ObservableObject {
             return
         }
 
-        state = .downloading
-        downloadTask = Task { [weak self] in
-            do {
+        let initialProgress = DownloadProgress(fractionCompleted: 0, completedBytes: 0, totalBytes: -1)
+        state = .downloading(initialProgress)
+
+        let task = URLSession.shared.downloadTask(with: downloadURL) { [weak self] temporaryURL, _, error in
+            Task { @MainActor [weak self] in
                 guard let self else {
                     return
                 }
 
-                let (temporaryURL, _) = try await URLSession.shared.download(from: downloadURL)
-                try self.fileManager.createDirectory(
-                    at: self.fileLocator.modelsDirectory,
-                    withIntermediateDirectories: true
-                )
+                self.progressTask?.cancel()
+                self.progressTask = nil
+                self.downloadTask = nil
 
-                let destinationURL = self.localURL(for: model)
-                if self.fileManager.fileExists(atPath: destinationURL.path) {
-                    try self.fileManager.removeItem(at: destinationURL)
+                if let error = error as? URLError, error.code == .cancelled {
+                    self.refresh(for: model)
+                    return
                 }
-                try self.fileManager.moveItem(at: temporaryURL, to: destinationURL)
-                self.state = .downloaded(destinationURL)
-            } catch is CancellationError {
-                self?.state = .missing
-            } catch {
-                self?.state = .failed(error.localizedDescription)
+
+                if let error {
+                    self.state = .failed(error.localizedDescription)
+                    return
+                }
+
+                guard let temporaryURL else {
+                    self.state = .failed("ダウンロードしたファイルを保存できませんでした")
+                    return
+                }
+
+                self.finishDownload(from: temporaryURL, model: model)
             }
+        }
+
+        downloadTask = task
+        progressTask = Task { [weak self, weak task] in
+            do {
+                while !Task.isCancelled {
+                    guard let task else {
+                        break
+                    }
+
+                    let progress = task.progress
+                    let snapshot = DownloadProgress(
+                        fractionCompleted: progress.fractionCompleted.isFinite ? progress.fractionCompleted : 0,
+                        completedBytes: progress.completedUnitCount,
+                        totalBytes: progress.totalUnitCount
+                    )
+
+                    await MainActor.run { [weak self] in
+                        self?.state = .downloading(snapshot)
+                    }
+
+                    try await Task.sleep(for: .milliseconds(300))
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                await MainActor.run { [weak self] in
+                    self?.state = .failed(error.localizedDescription)
+                }
+            }
+        }
+        task.resume()
+    }
+
+    private func finishDownload(from temporaryURL: URL, model: LocalLLMModelSpec) {
+        do {
+            try fileManager.createDirectory(
+                at: fileLocator.modelsDirectory,
+                withIntermediateDirectories: true
+            )
+
+            let destinationURL = localURL(for: model)
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            try fileManager.moveItem(at: temporaryURL, to: destinationURL)
+            state = .downloaded(destinationURL)
+        } catch {
+            state = .failed(error.localizedDescription)
         }
     }
 }

@@ -26,6 +26,8 @@ redis_data/
 
 # Xcode
 DerivedData/
+ios/build/
+ios/**/build/
 *.xcuserstate
 *.xcuserdata/
 *.moved-aside

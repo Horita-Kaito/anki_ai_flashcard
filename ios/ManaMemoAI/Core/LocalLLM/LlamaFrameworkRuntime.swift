@@ -14,12 +14,6 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
     private var cachedModelURL: URL?
     private var cachedModelPointer: OpaquePointer?
 
-    deinit {
-        if let model = cachedModelPointer {
-            llama_model_free(model)
-        }
-    }
-
     func generateText(for request: LocalLLMGenerationRequest) async throws -> String {
         try Task.checkCancellation()
         initializeBackendIfNeeded()
