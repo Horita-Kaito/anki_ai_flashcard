@@ -9,6 +9,7 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 ## Stack
 
 - Frontend: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui
+- iOS: SwiftUI, Swift 6, iOS 17+, Xcode project under `ios/`
 - Backend: Laravel API, PHP 8.3+, Sanctum SPA cookie auth
 - Data: MySQL 8.0, Redis
 - AI runtime: provider abstraction for OpenAI / Google / Anthropic-compatible expansion
@@ -21,6 +22,7 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 - Redesign brief: `docs/11_design_redesign_brief.md`
 - API contract: `docs/03_api_specification.md`
 - Frontend architecture: `docs/05_frontend_design.md`
+- iOS architecture: `docs/12_ios_design.md`
 - Backend architecture: `docs/06_backend_design.md`
 - Testing policy: `docs/07_testing_strategy.md`
 - Runtime AI settings: `backend/config/ai.php`
@@ -38,6 +40,7 @@ If this file, a skill, and a design document disagree, follow the design documen
 - Laravel classes should be `final` by default and use constructor property promotion.
 - Frontend follows Feature-Sliced Design: `app` -> `widgets` -> `features` -> `entities` -> `shared`.
 - Feature-to-feature imports are not allowed. Share cross-feature code through `entities` or `shared`.
+- iOS follows SwiftUI `App` / `Core` / `Features` / `Shared`; native auth uses Sanctum Bearer Token and Keychain.
 - AI candidates are never auto-saved as accepted cards. Human review is required.
 - AI generation routes use the named limiter `throttle:ai-generation`.
 
@@ -55,6 +58,8 @@ Use the matching skill before writing files when the task matches the row.
 | Add a new migration file | `api-new-migration` |
 | Review frontend code before commit/PR | `ui-review` |
 | Review backend code before commit/PR | `api-review` |
+| Create `ios/ManaMemoAI/Features/<new>/` or a major new SwiftUI screen | `ios-new-feature` |
+| Review iOS code before commit/PR | `ios-review` |
 
 Small edits to existing files, bug fixes, docs, and config-only changes do not need a scaffold skill unless the change becomes a broad refactor.
 
