@@ -56,6 +56,7 @@
 		00000000000000000000012F /* LocalLLMGenerationRepairer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002F /* LocalLLMGenerationRepairer.swift */; };
 		000000000000000000000130 /* LocalLLMOutputParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* LocalLLMOutputParserTests.swift */; };
 		000000000000000000000131 /* LocalLLMGenerationRepairerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */; };
+		000000000000000000000132 /* ReviewSchedulerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000033 /* ReviewSchedulerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,6 +120,7 @@
 		000000000000000000000030 /* LocalLLMOutputParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMOutputParserTests.swift; sourceTree = "<group>"; };
 		000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationRepairerTests.swift; sourceTree = "<group>"; };
 		000000000000000000000032 /* ManaMemoAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaMemoAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000033 /* ReviewSchedulerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewSchedulerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -361,6 +363,7 @@
 			children = (
 				000000000000000000000030 /* LocalLLMOutputParserTests.swift */,
 				000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */,
+				000000000000000000000033 /* ReviewSchedulerTests.swift */,
 			);
 			path = ManaMemoAITests;
 			sourceTree = "<group>";
@@ -524,6 +527,7 @@
 			files = (
 				000000000000000000000130 /* LocalLLMOutputParserTests.swift in Sources */,
 				000000000000000000000131 /* LocalLLMGenerationRepairerTests.swift in Sources */,
+				000000000000000000000132 /* ReviewSchedulerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
