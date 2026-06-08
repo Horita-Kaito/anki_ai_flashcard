@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Query private var notes: [LocalNoteSeed]
     @Query private var candidates: [LocalAiCardCandidate]
     @Query private var cards: [LocalCard]
+    @StateObject private var llmSettings = LocalLLMSettingsStore()
 
     var body: some View {
         NavigationStack {
@@ -24,7 +25,11 @@ struct SettingsView: View {
 
                 Section("AI") {
                     LabeledContent("実行場所", value: "このiPhone")
-                    LabeledContent("ローカルLLM", value: "未接続")
+                    NavigationLink {
+                        LocalAISettingsView(settings: llmSettings)
+                    } label: {
+                        LabeledContent("ローカルLLM", value: llmSettings.selectedModel.displayName)
+                    }
                 }
             }
             .navigationTitle("設定")

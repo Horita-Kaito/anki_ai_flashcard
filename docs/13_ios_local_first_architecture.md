@@ -23,7 +23,13 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 
 1. SwiftData のローカルモデルへiOS主要導線を移す。
 2. ローカル候補生成インターフェースを作る。
-3. `llama.cpp` のiOS組み込みを検証する。
-4. モデル管理画面を追加する。
+3. モデル管理画面を追加する。
+4. `llama.cpp` のiOS組み込みを検証する。
 5. JSON grammar / retry / parse repair を実装する。
 6. 復習スケジュールも端末内で完結させる。
+
+## モデル候補
+
+- 既定: `Qwen2.5-3B-Instruct Q4_K_M`
+- 軽量: `Qwen2.5-1.5B-Instruct Q4_K_M`
+- 最軽量: `Qwen2.5-0.5B-Instruct Q4_K_M`
