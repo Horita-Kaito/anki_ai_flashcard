@@ -41,6 +41,8 @@
 		000000000000000000000120 /* LocalAISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000021 /* LocalAISettingsView.swift */; };
 		000000000000000000000121 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000022 /* ReviewView.swift */; };
 		000000000000000000000122 /* ReviewScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000023 /* ReviewScheduler.swift */; };
+		000000000000000000000123 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000024 /* CardListView.swift */; };
+		000000000000000000000124 /* CardEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000025 /* CardEditView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +81,8 @@
 		000000000000000000000021 /* LocalAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAISettingsView.swift; sourceTree = "<group>"; };
 		000000000000000000000022 /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
 		000000000000000000000023 /* ReviewScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewScheduler.swift; sourceTree = "<group>"; };
+		000000000000000000000024 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
+		000000000000000000000025 /* CardEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardEditView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -173,6 +177,7 @@
 				00000000000000000000030D /* Settings */,
 				00000000000000000000030E /* LocalAI */,
 				00000000000000000000030F /* Review */,
+				000000000000000000000315 /* Cards */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -241,6 +246,15 @@
 				000000000000000000000023 /* ReviewScheduler.swift */,
 			);
 			path = Review;
+			sourceTree = "<group>";
+		};
+		000000000000000000000315 /* Cards */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000024 /* CardListView.swift */,
+				000000000000000000000025 /* CardEditView.swift */,
+			);
+			path = Cards;
 			sourceTree = "<group>";
 		};
 		000000000000000000000310 /* Frameworks */ = {
@@ -388,6 +402,8 @@
 				000000000000000000000120 /* LocalAISettingsView.swift in Sources */,
 				000000000000000000000121 /* ReviewView.swift in Sources */,
 				000000000000000000000122 /* ReviewScheduler.swift in Sources */,
+				000000000000000000000123 /* CardListView.swift in Sources */,
+				000000000000000000000124 /* CardEditView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

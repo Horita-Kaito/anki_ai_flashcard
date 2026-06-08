@@ -13,10 +13,15 @@ struct HomeView: View {
                     Label("デッキ", systemImage: "rectangle.stack")
                 }
 
+            CardListView()
+                .tabItem {
+                    Label("カード", systemImage: "rectangle.on.rectangle")
+                }
+
             ReviewView()
-            .tabItem {
-                Label("復習", systemImage: "checkmark.circle")
-            }
+                .tabItem {
+                    Label("復習", systemImage: "checkmark.circle")
+                }
 
             SettingsView()
                 .tabItem {
