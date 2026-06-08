@@ -29,6 +29,12 @@ final class UserSettingService
     public function updateForUser(int $userId, array $attributes): UserSetting
     {
         $setting = $this->getOrCreateForUser($userId);
+        $provider = (string) ($attributes['default_ai_provider'] ?? $setting->default_ai_provider);
+        $models = (array) config("ai.selectable_models.{$provider}", []);
+        $model = (string) ($attributes['default_ai_model'] ?? $setting->default_ai_model);
+        if (! in_array($model, $models, true)) {
+            $attributes['default_ai_model'] = (string) ($models[0] ?? 'gpt-4o-mini');
+        }
 
         return $this->repository->update($setting, $attributes);
     }

@@ -50,6 +50,64 @@ final class UserSettingControllerTest extends TestCase
             ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
     }
 
+    public function test_providerだけを更新すると対応する既定modelへ補正される(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/settings', [
+                'default_ai_provider' => 'google',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.default_ai_provider', 'google')
+            ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
+
+        $this->assertDatabaseHas('user_settings', [
+            'user_id' => $user->id,
+            'default_ai_provider' => 'google',
+            'default_ai_model' => 'gemini-2.5-flash',
+        ]);
+    }
+
+    public function test_provider非対応modelは対応する既定modelへ補正される(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/settings', [
+                'default_ai_provider' => 'google',
+                'default_ai_model' => 'gpt-4.1-mini',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.default_ai_provider', 'google')
+            ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
+    }
+
+    public function test_未知のmodelは422(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/settings', [
+                'default_ai_model' => 'unknown-model',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['default_ai_model']);
+    }
+
+    public function test_初期設定のproviderとmodelが不整合なら既定modelへ補正される(): void
+    {
+        config()->set('ai.default_provider', 'google');
+        config()->set('ai.default_model', 'gpt-4o-mini');
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/settings')
+            ->assertOk()
+            ->assertJsonPath('data.default_ai_provider', 'google')
+            ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
+    }
+
     public function test_未実装のanthropicは422(): void
     {
         $user = User::factory()->create();
@@ -74,6 +132,22 @@ final class UserSettingControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.default_ai_provider', 'openai')
             ->assertJsonPath('data.default_ai_model', 'gpt-4o-mini');
+    }
+
+    public function test_保存済みのprovider非対応modelは既定modelとして返す(): void
+    {
+        $user = User::factory()->create();
+        UserSetting::create([
+            'user_id' => $user->id,
+            'default_ai_provider' => 'google',
+            'default_ai_model' => 'gpt-4.1-mini',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/settings')
+            ->assertOk()
+            ->assertJsonPath('data.default_ai_provider', 'google')
+            ->assertJsonPath('data.default_ai_model', 'gemini-2.5-flash');
     }
 
     public function test_既定providerが未実装anthropicでもopenaiへフォールバックする(): void

@@ -11,13 +11,6 @@ use Illuminate\Contracts\Container\Container;
 
 final class AiRuntimeResolver implements AiRuntimeResolverInterface
 {
-    private const SUPPORTED_PROVIDERS = ['openai', 'google'];
-
-    private const DEFAULT_MODELS = [
-        'openai' => 'gpt-4o-mini',
-        'google' => 'gemini-2.5-flash',
-    ];
-
     public function __construct(
         private readonly UserSettingRepositoryInterface $settingRepository,
         private readonly AiProviderInterface $defaultProvider,
@@ -35,12 +28,12 @@ final class AiRuntimeResolver implements AiRuntimeResolverInterface
             return new AiRuntime($this->defaultProvider, $model);
         }
 
-        if (! in_array($providerName, self::SUPPORTED_PROVIDERS, true)) {
+        if (! $this->isSupportedProvider($providerName)) {
             $providerName = (string) config('ai.default_provider', 'openai');
             $model = (string) config('ai.default_model', 'gpt-4o-mini');
         }
 
-        if (! in_array($providerName, self::SUPPORTED_PROVIDERS, true)) {
+        if (! $this->isSupportedProvider($providerName)) {
             $providerName = 'openai';
             $model = 'gpt-4o-mini';
         }
@@ -59,6 +52,16 @@ final class AiRuntimeResolver implements AiRuntimeResolverInterface
 
         return in_array($model, $models, true)
             ? $model
-            : self::DEFAULT_MODELS[$providerName];
+            : $this->defaultModel($providerName);
+    }
+
+    private function isSupportedProvider(string $providerName): bool
+    {
+        return array_key_exists($providerName, (array) config('ai.selectable_models', []));
+    }
+
+    private function defaultModel(string $providerName): string
+    {
+        return (string) config("ai.selectable_models.{$providerName}.0", 'gpt-4o-mini');
     }
 }

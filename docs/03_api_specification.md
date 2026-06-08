@@ -1053,6 +1053,8 @@ AI候補生成
 ```
 
 **Validation**:
+- `default_ai_provider` (任意): `openai` / `google`。
+- `default_ai_model` (任意): 選択可能モデルのみ。不整合な旧設定や provider の部分更新は provider の既定モデルへ補正する。
 - `desired_retention` (任意): FSRS の目標想起率。0.7〜0.97 (デフォルト 0.9)。
   低いほど復習頻度が下がるが忘却率が上がる、高いほど確実だが復習量が増える。
   SM-2 カードには影響しない。

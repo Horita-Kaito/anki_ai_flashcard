@@ -41,7 +41,7 @@ final class AppServiceProvider extends ServiceProvider
         // AiProviderInterface は config('ai.default_provider') で具象を選択
         $this->app->bind(AiProviderInterface::class, function ($app) {
             $provider = config('ai.default_provider', 'openai');
-            if (! in_array($provider, ['fake', 'openai', 'google'], true)) {
+            if ($provider !== 'fake' && ! array_key_exists($provider, (array) config('ai.selectable_models', []))) {
                 $provider = 'openai';
             }
 

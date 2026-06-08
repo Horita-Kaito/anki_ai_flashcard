@@ -20,6 +20,13 @@ final class AiCardCandidateNotAdoptableException extends DomainException
         );
     }
 
+    public static function notEditable(int $candidateId, string $status): self
+    {
+        return new self(
+            "候補(id={$candidateId})はstatus={$status}のため編集できません。"
+        );
+    }
+
     public function statusCode(): int
     {
         return 409;

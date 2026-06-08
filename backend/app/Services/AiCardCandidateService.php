@@ -54,8 +54,14 @@ final class AiCardCandidateService
     public function updateForUser(int $userId, int $candidateId, array $attributes): AiCardCandidate
     {
         $candidate = $this->getForUser($userId, $candidateId);
+        if ($candidate->status !== CandidateStatus::Pending) {
+            throw AiCardCandidateNotAdoptableException::notEditable(
+                $candidateId,
+                $candidate->status->value,
+            );
+        }
 
-        if (isset($attributes['question']) && $candidate->status !== CandidateStatus::Rejected) {
+        if (isset($attributes['question'])) {
             $attributes['question_fingerprint'] = $this->qualityValidator->fingerprint($attributes['question']);
         }
         if (array_intersect(['question', 'answer', 'card_type'], array_keys($attributes)) !== []) {

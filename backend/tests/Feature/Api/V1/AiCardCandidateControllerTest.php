@@ -289,6 +289,29 @@ final class AiCardCandidateControllerTest extends TestCase
             ->assertJsonPath('data.quality_warnings.0', 'answer_too_long');
     }
 
+    public function test_採用済み候補は編集できない(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => '変更前',
+            'status' => 'adopted',
+        ])->create();
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/ai-card-candidates/{$candidate->id}", [
+                'question' => '変更後',
+            ])
+            ->assertConflict();
+
+        $this->assertDatabaseHas('ai_card_candidates', [
+            'id' => $candidate->id,
+            'question' => '変更前',
+        ]);
+    }
+
     public function test_候補を却下できる(): void
     {
         $user = User::factory()->create();

@@ -326,14 +326,13 @@ AI/Scheduler のような **切替可能な依存** は設定駆動:
 ```php
 // AI プロバイダをユーザー設定 or env で切替
 $this->app->bind(AiProviderInterface::class, function ($app) {
-    $provider = config('ai.default_provider'); // fake | openai | google | anthropic
+    $provider = config('ai.default_provider'); // fake | openai | google
     return match ($provider) {
         'fake' => $app->make(FakeAiProvider::class),
         'openai' => $app->make(OpenAiProvider::class),
         'google' => $app->make(GoogleAiProvider::class),
-        // Anthropic は config 予約済み。実プロバイダ追加時に具象を差し替える。
-        'anthropic' => $app->make(FakeAiProvider::class),
-        default => throw new \InvalidArgumentException("Unknown AI provider: {$provider}"),
+        // 未実装 provider が旧環境変数に残っていれば OpenAI へフォールバックする。
+        default => $app->make(OpenAiProvider::class),
     };
 });
 ```
