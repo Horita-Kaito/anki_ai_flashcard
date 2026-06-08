@@ -85,4 +85,13 @@ final class AuthSessionStore: ObservableObject {
             )
         )
     }
+
+    func makeAiCandidateService() -> AiCandidateService {
+        AiCandidateService(
+            apiClient: APIClient(
+                baseURL: AppConfig.apiBaseURL,
+                tokenProvider: { self.tokenStore.token }
+            )
+        )
+    }
 }

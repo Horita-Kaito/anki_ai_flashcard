@@ -26,25 +26,29 @@ struct NoteListView: View {
                     )
                 } else {
                     ForEach(notes) { note in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(note.body)
-                                .font(.headline)
-                                .lineLimit(3)
+                        NavigationLink {
+                            NoteDetailView(note: note)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(note.body)
+                                    .font(.headline)
+                                    .lineLimit(3)
 
-                            HStack(spacing: 10) {
-                                if let learningGoal = note.learningGoal, !learningGoal.isEmpty {
-                                    Label(learningGoal, systemImage: "target")
-                                        .lineLimit(1)
-                                }
+                                HStack(spacing: 10) {
+                                    if let learningGoal = note.learningGoal, !learningGoal.isEmpty {
+                                        Label(learningGoal, systemImage: "target")
+                                            .lineLimit(1)
+                                    }
 
-                                if let count = note.candidatesPendingCount {
-                                    Label("\(count)", systemImage: "sparkles")
+                                    if let count = note.candidatesPendingCount {
+                                        Label("\(count)", systemImage: "sparkles")
+                                    }
                                 }
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 6)
                         }
-                        .padding(.vertical, 6)
                     }
                 }
             }
