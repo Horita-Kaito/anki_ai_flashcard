@@ -51,6 +51,8 @@
 		00000000000000000000012A /* LocalLLMRuntimeDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */; };
 		00000000000000000000012B /* LocalCandidateGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002C /* LocalCandidateGenerationService.swift */; };
 		00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002D /* LocalLLMGenerationOptions.swift */; };
+		00000000000000000000012D /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000000000902 /* LlamaFramework */; };
+		00000000000000000000012E /* LlamaFrameworkRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002E /* LlamaFrameworkRuntime.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -99,6 +101,7 @@
 		00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMRuntimeDiagnostics.swift; sourceTree = "<group>"; };
 		00000000000000000000002C /* LocalCandidateGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCandidateGenerationService.swift; sourceTree = "<group>"; };
 		00000000000000000000002D /* LocalLLMGenerationOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationOptions.swift; sourceTree = "<group>"; };
+		00000000000000000000002E /* LlamaFrameworkRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaFrameworkRuntime.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -107,6 +110,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				00000000000000000000010F /* Security.framework in Frameworks */,
+				00000000000000000000012D /* LlamaFramework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,6 +320,7 @@
 				00000000000000000000002A /* LocalLLMModelFileLocator.swift */,
 				00000000000000000000002D /* LocalLLMGenerationOptions.swift */,
 				000000000000000000000027 /* LocalLLMRuntime.swift */,
+				00000000000000000000002E /* LlamaFrameworkRuntime.swift */,
 				00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */,
 				000000000000000000000028 /* LocalLLMPromptBuilder.swift */,
 				000000000000000000000029 /* LocalLLMOutputParser.swift */,
@@ -340,6 +345,9 @@
 			dependencies = (
 			);
 			name = ManaMemoAI;
+			packageProductDependencies = (
+				000000000000000000000902 /* LlamaFramework */,
+			);
 			productName = ManaMemoAI;
 			productReference = 000000000000000000000010 /* ManaMemoAI.app */;
 			productType = "com.apple.product-type.application";
@@ -369,6 +377,9 @@
 				Base,
 			);
 			mainGroup = 000000000000000000000301;
+			packageReferences = (
+				000000000000000000000901 /* XCLocalSwiftPackageReference "LlamaFrameworkPackage" */,
+			);
 			productRefGroup = 000000000000000000000311 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -436,6 +447,7 @@
 				00000000000000000000012A /* LocalLLMRuntimeDiagnostics.swift in Sources */,
 				00000000000000000000012B /* LocalCandidateGenerationService.swift in Sources */,
 				00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */,
+				00000000000000000000012E /* LlamaFrameworkRuntime.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -648,6 +660,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-	};
+
+/* Begin XCLocalSwiftPackageReference section */
+		000000000000000000000901 /* XCLocalSwiftPackageReference "LlamaFrameworkPackage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = LlamaFrameworkPackage;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		000000000000000000000902 /* LlamaFramework */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 000000000000000000000901 /* XCLocalSwiftPackageReference "LlamaFrameworkPackage" */;
+			productName = LlamaFramework;
+		};
+/* End XCSwiftPackageProductDependency section */
+};
 	rootObject = 000000000000000000000601 /* Project object */;
 }

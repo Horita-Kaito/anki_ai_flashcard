@@ -16,7 +16,7 @@ struct LocalCandidateGenerationService {
     private let fileLocator: LocalLLMModelFileLocator
 
     init(
-        runtime: LocalLLMRuntime = UnavailableLocalLLMRuntime(),
+        runtime: LocalLLMRuntime = LlamaFrameworkRuntime(),
         fileLocator: LocalLLMModelFileLocator = LocalLLMModelFileLocator()
     ) {
         self.runtime = runtime

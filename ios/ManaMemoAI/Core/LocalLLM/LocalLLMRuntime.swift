@@ -12,6 +12,10 @@ enum LocalLLMGenerationError: LocalizedError, Equatable {
     case runtimeUnavailable
     case emptyPrompt
     case invalidResponse
+    case modelLoadFailed
+    case contextCreationFailed
+    case tokenizationFailed
+    case decodeFailed
 
     var errorDescription: String? {
         switch self {
@@ -23,6 +27,14 @@ enum LocalLLMGenerationError: LocalizedError, Equatable {
             return "生成するメモが空です。"
         case .invalidResponse:
             return "ローカルLLMの出力をカード候補として読み取れませんでした。"
+        case .modelLoadFailed:
+            return "ローカルLLMモデルを読み込めませんでした。"
+        case .contextCreationFailed:
+            return "ローカルLLMの実行コンテキストを作成できませんでした。"
+        case .tokenizationFailed:
+            return "ローカルLLMの入力トークン化に失敗しました。"
+        case .decodeFailed:
+            return "ローカルLLMの推論に失敗しました。"
         }
     }
 }
