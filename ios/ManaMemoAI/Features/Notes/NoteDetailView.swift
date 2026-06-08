@@ -11,6 +11,7 @@ struct NoteDetailView: View {
     @State private var selectedCandidate: LocalAiCardCandidate?
     @State private var adoptedCardMessage: String?
     @State private var generationErrorMessage: String?
+    @State private var generationSourceMessage: String?
 
     private var candidates: [LocalAiCardCandidate] {
         allCandidates
@@ -57,6 +58,13 @@ struct NoteDetailView: View {
                 }
             }
 
+            if let generationSourceMessage {
+                Section {
+                    Label(generationSourceMessage, systemImage: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             if let adoptedCardMessage {
                 Section {
                     Label(adoptedCardMessage, systemImage: "checkmark.circle.fill")
@@ -92,12 +100,13 @@ struct NoteDetailView: View {
     private func generate() {
         isGenerating = true
         generationErrorMessage = nil
+        generationSourceMessage = nil
 
         Task {
             do {
-                let drafts = try await LocalCandidateGenerator.generate(from: note, settings: llmSettings)
+                let result = try await LocalCandidateGenerationService().generate(from: note, settings: llmSettings)
 
-                for draft in drafts {
+                for draft in result.drafts {
                     let candidate = LocalAiCardCandidate(
                         noteSeedId: note.id,
                         question: draft.question,
@@ -109,11 +118,23 @@ struct NoteDetailView: View {
                 }
 
                 note.updatedAt = .now
+                generationSourceMessage = result.source.message
             } catch {
                 generationErrorMessage = error.localizedDescription
             }
 
             isGenerating = false
+        }
+    }
+}
+
+private extension LocalCandidateGenerationResult.Source {
+    var message: String {
+        switch self {
+        case .localLLM(let modelName):
+            return "\(modelName) で生成しました"
+        case .ruleBasedFallback:
+            return "ルールベースのフォールバックで生成しました"
         }
     }
 }

@@ -15,43 +15,8 @@ enum LocalCandidateGenerator {
         runtime: LocalLLMRuntime = UnavailableLocalLLMRuntime(),
         fileLocator: LocalLLMModelFileLocator = LocalLLMModelFileLocator()
     ) async throws -> [LocalCandidateDraft] {
-        let model = settings.selectedModel
-
-        guard let modelURL = fileLocator.downloadedURL(for: model) else {
-            if settings.usesRuleBasedFallback {
-                return generateFallback(from: note)
-            }
-
-            throw LocalLLMGenerationError.modelFileMissing(model.fileName)
-        }
-
-        let noteBody = note.body.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard !noteBody.isEmpty else {
-            throw LocalLLMGenerationError.emptyPrompt
-        }
-
-        do {
-            let prompt = LocalLLMPromptBuilder.buildPrompt(noteBody: noteBody, learningGoal: note.learningGoal)
-            let output = try await runtime.generateText(
-                for: LocalLLMGenerationRequest(
-                    prompt: prompt,
-                    model: model,
-                    modelURL: modelURL
-                )
-            )
-            let drafts = try LocalLLMOutputParser.parseCandidates(from: output)
-            guard !drafts.isEmpty else {
-                throw LocalLLMGenerationError.invalidResponse
-            }
-            return drafts
-        } catch {
-            if settings.usesRuleBasedFallback {
-                return generateFallback(from: note)
-            }
-
-            throw error
-        }
+        let service = LocalCandidateGenerationService(runtime: runtime, fileLocator: fileLocator)
+        return try await service.generate(from: note, settings: settings).drafts
     }
 
     static func generate(from note: LocalNoteSeed) -> [LocalCandidateDraft] {

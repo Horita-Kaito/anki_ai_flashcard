@@ -4,6 +4,8 @@ struct LocalAISettingsView: View {
     @ObservedObject var settings: LocalLLMSettingsStore
     @StateObject private var modelStore = LocalLLMModelStore()
 
+    private let runtimeDiagnostics = UnavailableLocalLLMRuntime().diagnostics
+
     var body: some View {
         List {
             Section("モデル") {
@@ -27,7 +29,10 @@ struct LocalAISettingsView: View {
             }
 
             Section("状態") {
-                Label("ランタイム未接続", systemImage: "cpu")
+                runtimeStateRow
+                Text(runtimeDiagnostics.detail)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 modelStateRow
             }
 
@@ -58,6 +63,11 @@ struct LocalAISettingsView: View {
         .onChange(of: settings.selectedModelId) {
             modelStore.refresh(for: settings.selectedModel)
         }
+    }
+
+    private var runtimeStateRow: some View {
+        Label(runtimeDiagnostics.title, systemImage: "cpu")
+            .foregroundStyle(runtimeDiagnostics.state == .ready ? .green : .secondary)
     }
 
     @ViewBuilder

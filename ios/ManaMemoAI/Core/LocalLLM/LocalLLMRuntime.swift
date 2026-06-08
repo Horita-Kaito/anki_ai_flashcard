@@ -27,10 +27,14 @@ enum LocalLLMGenerationError: LocalizedError, Equatable {
 }
 
 protocol LocalLLMRuntime: Sendable {
+    var diagnostics: LocalLLMRuntimeDiagnostics { get }
+
     func generateText(for request: LocalLLMGenerationRequest) async throws -> String
 }
 
 struct UnavailableLocalLLMRuntime: LocalLLMRuntime {
+    let diagnostics = LocalLLMRuntimeDiagnostics.unavailable
+
     func generateText(for request: LocalLLMGenerationRequest) async throws -> String {
         _ = request
         throw LocalLLMGenerationError.runtimeUnavailable
