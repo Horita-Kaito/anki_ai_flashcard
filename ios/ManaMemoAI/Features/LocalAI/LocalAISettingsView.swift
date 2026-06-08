@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LocalAISettingsView: View {
     @ObservedObject var settings: LocalLLMSettingsStore
+    @StateObject private var modelStore = LocalLLMModelStore()
 
     var body: some View {
         List {
@@ -27,9 +28,53 @@ struct LocalAISettingsView: View {
 
             Section("状態") {
                 Label("ランタイム未接続", systemImage: "cpu")
-                Label("モデル未ダウンロード", systemImage: "icloud.and.arrow.down")
+                modelStateRow
+            }
+
+            Section("モデルファイル") {
+                LabeledContent("保存先", value: modelStore.localURL(for: settings.selectedModel).lastPathComponent)
+
+                switch modelStore.state {
+                case .downloaded:
+                    Button("モデルを削除", role: .destructive) {
+                        modelStore.delete(settings.selectedModel)
+                    }
+                case .downloading:
+                    ProgressView("ダウンロード中")
+                case .missing, .failed:
+                    Button {
+                        modelStore.download(settings.selectedModel)
+                    } label: {
+                        Label("モデルをダウンロード", systemImage: "icloud.and.arrow.down")
+                    }
+                    .disabled(settings.selectedModel.downloadURL == nil)
+                }
             }
         }
         .navigationTitle("ローカルAI")
+        .onAppear {
+            modelStore.refresh(for: settings.selectedModel)
+        }
+        .onChange(of: settings.selectedModelId) {
+            modelStore.refresh(for: settings.selectedModel)
+        }
+    }
+
+    @ViewBuilder
+    private var modelStateRow: some View {
+        switch modelStore.state {
+        case .missing:
+            Label("モデル未ダウンロード", systemImage: "icloud.and.arrow.down")
+                .foregroundStyle(.secondary)
+        case .downloaded:
+            Label("モデル保存済み", systemImage: "checkmark.circle")
+                .foregroundStyle(.green)
+        case .downloading:
+            Label("ダウンロード中", systemImage: "arrow.down.circle")
+                .foregroundStyle(.secondary)
+        case .failed(let message):
+            Label(message, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
+        }
     }
 }

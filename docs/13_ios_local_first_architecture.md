@@ -45,3 +45,9 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 - 既定: `Qwen2.5-3B-Instruct Q4_K_M`
 - 軽量: `Qwen2.5-1.5B-Instruct Q4_K_M`
 - 最軽量: `Qwen2.5-0.5B-Instruct Q4_K_M`
+
+## モデル管理
+
+- GGUFモデルはアプリバンドルへ同梱せず、Application Support 配下の `Models/` に保存する。
+- 設定画面からモデルファイルの存在確認、ダウンロード、削除ができる。
+- 実行ランタイムはモデルファイルのローカルURLを受け取る。
