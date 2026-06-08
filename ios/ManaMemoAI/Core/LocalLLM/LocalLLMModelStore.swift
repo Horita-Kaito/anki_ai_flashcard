@@ -5,7 +5,8 @@ import Combine
 final class LocalLLMModelStore: ObservableObject {
     enum State: Equatable {
         case missing
-        case downloaded(URL)
+        case downloaded(URL, byteCount: Int64)
+        case invalid(URL, reason: String, byteCount: Int64)
         case downloading(DownloadProgress)
         case failed(String)
     }
@@ -33,8 +34,14 @@ final class LocalLLMModelStore: ObservableObject {
     }
 
     func refresh(for model: LocalLLMModelSpec) {
-        let fileURL = localURL(for: model)
-        state = fileManager.fileExists(atPath: fileURL.path) ? .downloaded(fileURL) : .missing
+        switch fileLocator.validationResult(for: model) {
+        case .missing:
+            state = .missing
+        case .valid(let fileURL, let byteCount):
+            state = .downloaded(fileURL, byteCount: byteCount)
+        case .invalid(let fileURL, let reason, let byteCount):
+            state = .invalid(fileURL, reason: reason, byteCount: byteCount)
+        }
     }
 
     func download(_ model: LocalLLMModelSpec) {
@@ -153,7 +160,7 @@ final class LocalLLMModelStore: ObservableObject {
                 try fileManager.removeItem(at: destinationURL)
             }
             try fileManager.moveItem(at: temporaryURL, to: destinationURL)
-            state = .downloaded(destinationURL)
+            refresh(for: model)
         } catch {
             state = .failed(error.localizedDescription)
         }

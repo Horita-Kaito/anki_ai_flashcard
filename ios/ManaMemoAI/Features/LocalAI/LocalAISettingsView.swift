@@ -61,9 +61,23 @@ struct LocalAISettingsView: View {
                 LabeledContent("保存先", value: modelStore.localURL(for: settings.selectedModel).lastPathComponent)
 
                 switch modelStore.state {
-                case .downloaded:
+                case .downloaded(_, let byteCount):
+                    LabeledContent("保存済み容量", value: byteFormatter.string(fromByteCount: byteCount))
                     Button("モデルを削除", role: .destructive) {
                         modelStore.delete(settings.selectedModel)
+                    }
+                case .invalid(_, let reason, let byteCount):
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(reason, systemImage: "exclamationmark.triangle")
+                            .foregroundStyle(.red)
+                        Text("保存済み容量: \(byteFormatter.string(fromByteCount: byteCount))")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                        Button("削除して再ダウンロード", role: .destructive) {
+                            modelStore.delete(settings.selectedModel)
+                            modelStore.download(settings.selectedModel)
+                        }
+                        .disabled(settings.selectedModel.downloadURL == nil)
                     }
                 case .downloading(let progress):
                     VStack(alignment: .leading, spacing: 10) {
@@ -110,6 +124,9 @@ struct LocalAISettingsView: View {
         case .downloaded:
             Label("モデル保存済み", systemImage: "checkmark.circle")
                 .foregroundStyle(.green)
+        case .invalid(_, let reason, _):
+            Label(reason, systemImage: "exclamationmark.triangle")
+                .foregroundStyle(.red)
         case .downloading(let progress):
             Label("ダウンロード中 \(progress.percentage)%", systemImage: "arrow.down.circle")
                 .foregroundStyle(.secondary)
