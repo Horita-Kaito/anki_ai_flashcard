@@ -99,6 +99,9 @@ final class LocalCard {
     var explanation: String?
     var scheduler: String
     var dueAt: Date
+    var repetitions: Int
+    var intervalDays: Int
+    var lapseCount: Int
     var createdAt: Date
     var updatedAt: Date
 
@@ -112,6 +115,9 @@ final class LocalCard {
         explanation: String? = nil,
         scheduler: String = "fsrs",
         dueAt: Date = .now,
+        repetitions: Int = 0,
+        intervalDays: Int = 0,
+        lapseCount: Int = 0,
         createdAt: Date = .now,
         updatedAt: Date = .now
     ) {
@@ -124,6 +130,9 @@ final class LocalCard {
         self.explanation = explanation
         self.scheduler = scheduler
         self.dueAt = dueAt
+        self.repetitions = repetitions
+        self.intervalDays = intervalDays
+        self.lapseCount = lapseCount
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }

@@ -28,6 +28,12 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 5. JSON grammar / retry / parse repair を実装する。
 6. 復習スケジュールも端末内で完結させる。
 
+## 復習
+
+- 採用済みカードは `LocalCard.dueAt` をもとに復習対象へ出す。
+- 評価は `again` / `hard` / `good` / `easy` の4段階を使う。
+- 初期実装は端末内の簡易SRSでよい。FSRS完全互換は後続で検討する。
+
 ## モデル候補
 
 - 既定: `Qwen2.5-3B-Instruct Q4_K_M`

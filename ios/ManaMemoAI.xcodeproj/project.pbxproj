@@ -39,6 +39,8 @@
 		00000000000000000000011E /* LocalLLMModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001F /* LocalLLMModelCatalog.swift */; };
 		00000000000000000000011F /* LocalLLMSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000020 /* LocalLLMSettingsStore.swift */; };
 		000000000000000000000120 /* LocalAISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000021 /* LocalAISettingsView.swift */; };
+		000000000000000000000121 /* ReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000022 /* ReviewView.swift */; };
+		000000000000000000000122 /* ReviewScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000023 /* ReviewScheduler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -75,6 +77,8 @@
 		00000000000000000000001F /* LocalLLMModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMModelCatalog.swift; sourceTree = "<group>"; };
 		000000000000000000000020 /* LocalLLMSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMSettingsStore.swift; sourceTree = "<group>"; };
 		000000000000000000000021 /* LocalAISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAISettingsView.swift; sourceTree = "<group>"; };
+		000000000000000000000022 /* ReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewView.swift; sourceTree = "<group>"; };
+		000000000000000000000023 /* ReviewScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewScheduler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -168,6 +172,7 @@
 				00000000000000000000030C /* Notes */,
 				00000000000000000000030D /* Settings */,
 				00000000000000000000030E /* LocalAI */,
+				00000000000000000000030F /* Review */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -227,6 +232,15 @@
 				000000000000000000000021 /* LocalAISettingsView.swift */,
 			);
 			path = LocalAI;
+			sourceTree = "<group>";
+		};
+		00000000000000000000030F /* Review */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000022 /* ReviewView.swift */,
+				000000000000000000000023 /* ReviewScheduler.swift */,
+			);
+			path = Review;
 			sourceTree = "<group>";
 		};
 		000000000000000000000310 /* Frameworks */ = {
@@ -372,6 +386,8 @@
 				00000000000000000000011E /* LocalLLMModelCatalog.swift in Sources */,
 				00000000000000000000011F /* LocalLLMSettingsStore.swift in Sources */,
 				000000000000000000000120 /* LocalAISettingsView.swift in Sources */,
+				000000000000000000000121 /* ReviewView.swift in Sources */,
+				000000000000000000000122 /* ReviewScheduler.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

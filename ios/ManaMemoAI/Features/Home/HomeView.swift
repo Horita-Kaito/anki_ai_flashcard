@@ -13,9 +13,7 @@ struct HomeView: View {
                     Label("デッキ", systemImage: "rectangle.stack")
                 }
 
-            NavigationStack {
-                PlaceholderView(title: "復習")
-            }
+            ReviewView()
             .tabItem {
                 Label("復習", systemImage: "checkmark.circle")
             }
@@ -25,14 +23,5 @@ struct HomeView: View {
                     Label("設定", systemImage: "gearshape")
                 }
         }
-    }
-}
-
-private struct PlaceholderView: View {
-    let title: String
-
-    var body: some View {
-        ContentUnavailableView(title, systemImage: "hammer")
-            .navigationTitle(title)
     }
 }
