@@ -1,46 +1,42 @@
 import SwiftUI
+import SwiftData
 
 struct CandidateAdoptionView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var session: AuthSessionStore
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \LocalDeck.displayOrder) private var decks: [LocalDeck]
 
-    let candidate: AiCardCandidate
-    let onAdopted: (Card) -> Void
+    let candidate: LocalAiCardCandidate
+    let onAdopted: (LocalCard) -> Void
 
-    @State private var decks: [Deck] = []
-    @State private var selectedDeckId: Int?
+    @State private var selectedDeckId: UUID?
     @State private var question: String
     @State private var answer: String
     @State private var explanation: String
-    @State private var isLoadingDecks = false
-    @State private var isSaving = false
-    @State private var errorMessage: String?
 
-    init(candidate: AiCardCandidate, onAdopted: @escaping (Card) -> Void) {
+    init(candidate: LocalAiCardCandidate, onAdopted: @escaping (LocalCard) -> Void) {
         self.candidate = candidate
         self.onAdopted = onAdopted
         _question = State(initialValue: candidate.question)
         _answer = State(initialValue: candidate.answer)
-        _explanation = State(initialValue: candidate.explanation ?? "")
+        _explanation = State(initialValue: candidate.rationale ?? "")
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("採用先") {
-                    if isLoadingDecks {
-                        ProgressView()
-                    } else if decks.isEmpty {
+                    if decks.isEmpty {
                         ContentUnavailableView(
                             "デッキがありません",
                             systemImage: "rectangle.stack",
-                            description: Text("先にデッキを作成してください。")
+                            description: Text("標準デッキを作成します。")
                         )
                     } else {
-                        Picker("デッキ", selection: selectedDeckBinding) {
+                        Picker("デッキ", selection: $selectedDeckId) {
                             ForEach(decks) { deck in
-                                Text(deck.path ?? deck.name)
-                                    .tag(deck.id)
+                                Text(deck.name)
+                                    .tag(Optional(deck.id))
                             }
                         }
                     }
@@ -60,13 +56,6 @@ struct CandidateAdoptionView: View {
                     TextEditor(text: $explanation)
                         .frame(minHeight: 88)
                 }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                    }
-                }
             }
             .navigationTitle("カードに採用")
             .navigationBarTitleDisplayMode(.inline)
@@ -78,87 +67,53 @@ struct CandidateAdoptionView: View {
                 }
 
                 ToolbarItem(placement: .confirmationAction) {
-                    Button {
-                        Task {
-                            await adopt()
-                        }
-                    } label: {
-                        if isSaving {
-                            ProgressView()
-                        } else {
-                            Text("採用")
-                        }
+                    Button("採用") {
+                        adopt()
                     }
                     .disabled(!canSubmit)
                 }
             }
             .task {
-                await loadDecks()
+                ensureDefaultDeck()
             }
         }
-    }
-
-    private var selectedDeckBinding: Binding<Int> {
-        Binding(
-            get: { selectedDeckId ?? decks.first?.id ?? 0 },
-            set: { selectedDeckId = $0 }
-        )
     }
 
     private var canSubmit: Bool {
         selectedDeckId != nil
             && !question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !isSaving
-            && !isLoadingDecks
     }
 
-    private func loadDecks() async {
-        isLoadingDecks = true
-        errorMessage = nil
-
-        do {
-            decks = try await session.makeDeckService().list()
-            selectedDeckId = preferredDeckId(from: decks)
-        } catch {
-            errorMessage = error.localizedDescription
+    private func ensureDefaultDeck() {
+        if let firstDeck = decks.first {
+            selectedDeckId = selectedDeckId ?? firstDeck.id
+            return
         }
 
-        isLoadingDecks = false
+        let deck = LocalDeck(name: "標準デッキ")
+        modelContext.insert(deck)
+        selectedDeckId = deck.id
     }
 
-    private func preferredDeckId(from decks: [Deck]) -> Int? {
-        if let suggestedDeckId = candidate.suggestedDeckId,
-           decks.contains(where: { $0.id == suggestedDeckId }) {
-            return suggestedDeckId
-        }
-
-        return decks.first?.id
-    }
-
-    private func adopt() async {
+    private func adopt() {
         guard let selectedDeckId else {
             return
         }
 
-        isSaving = true
-        errorMessage = nil
-
-        do {
-            let card = try await session.makeAiCandidateService().adopt(
-                candidateId: candidate.id,
-                deckId: selectedDeckId,
-                question: question.trimmingCharacters(in: .whitespacesAndNewlines),
-                answer: answer.trimmingCharacters(in: .whitespacesAndNewlines),
-                explanation: normalizedExplanation
-            )
-            onAdopted(card)
-            dismiss()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isSaving = false
+        let card = LocalCard(
+            deckId: selectedDeckId,
+            sourceNoteSeedId: candidate.noteSeedId,
+            sourceAiCandidateId: candidate.id,
+            question: question.trimmingCharacters(in: .whitespacesAndNewlines),
+            answer: answer.trimmingCharacters(in: .whitespacesAndNewlines),
+            explanation: normalizedExplanation
+        )
+        modelContext.insert(card)
+        candidate.status = "adopted"
+        candidate.updatedAt = .now
+        onAdopted(card)
+        dismiss()
     }
 
     private var normalizedExplanation: String? {

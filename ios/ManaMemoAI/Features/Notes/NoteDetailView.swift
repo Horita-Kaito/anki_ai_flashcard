@@ -1,16 +1,20 @@
 import SwiftUI
+import SwiftData
 
 struct NoteDetailView: View {
-    @EnvironmentObject private var session: AuthSessionStore
-    let note: NoteSeed
+    @Environment(\.modelContext) private var modelContext
+    @Query private var allCandidates: [LocalAiCardCandidate]
+    let note: LocalNoteSeed
 
-    @State private var candidates: [AiCardCandidate] = []
-    @State private var generationStatus: AiGenerationStatus?
-    @State private var isLoadingCandidates = false
     @State private var isGenerating = false
-    @State private var errorMessage: String?
-    @State private var selectedCandidate: AiCardCandidate?
+    @State private var selectedCandidate: LocalAiCardCandidate?
     @State private var adoptedCardMessage: String?
+
+    private var candidates: [LocalAiCardCandidate] {
+        allCandidates
+            .filter { $0.noteSeedId == note.id }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
 
     var body: some View {
         List {
@@ -26,9 +30,7 @@ struct NoteDetailView: View {
 
             Section {
                 Button {
-                    Task {
-                        await generate()
-                    }
+                    generate()
                 } label: {
                     HStack {
                         if isGenerating {
@@ -36,21 +38,12 @@ struct NoteDetailView: View {
                         } else {
                             Image(systemName: "sparkles")
                         }
-                        Text(isGenerating ? "生成中" : "AI候補を生成")
+                        Text(isGenerating ? "生成中" : "ローカルAI候補を生成")
                     }
                 }
                 .disabled(isGenerating)
 
-                if let generationStatus {
-                    GenerationStatusRow(status: generationStatus)
-                }
-            }
-
-            if let errorMessage {
-                Section {
-                    Text(errorMessage)
-                        .foregroundStyle(.red)
-                }
+                LabeledContent("実行場所", value: "このiPhone")
             }
 
             if let adoptedCardMessage {
@@ -61,13 +54,11 @@ struct NoteDetailView: View {
             }
 
             Section("候補") {
-                if isLoadingCandidates {
-                    ProgressView()
-                } else if candidates.isEmpty {
+                if candidates.isEmpty {
                     ContentUnavailableView(
                         "候補がありません",
                         systemImage: "sparkles",
-                        description: Text("AI候補を生成するとここに表示されます。")
+                        description: Text("ローカルAI候補を生成するとここに表示されます。")
                     )
                 } else {
                     ForEach(candidates) { candidate in
@@ -79,130 +70,35 @@ struct NoteDetailView: View {
             }
         }
         .navigationTitle("メモ詳細")
-        .toolbar {
-            Button {
-                Task {
-                    await loadCandidates()
-                    await loadStatus()
-                }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .disabled(isLoadingCandidates || isGenerating)
-        }
-        .refreshable {
-            await loadCandidates()
-            await loadStatus()
-        }
-        .task {
-            await loadCandidates()
-            await loadStatus()
-        }
         .sheet(item: $selectedCandidate) { candidate in
             CandidateAdoptionView(candidate: candidate) { card in
-                adoptedCardMessage = "カード #\(card.id) を採用しました"
-                Task {
-                    await loadCandidates()
-                    await loadStatus()
-                }
-            }
-            .environmentObject(session)
-        }
-    }
-
-    private func loadCandidates() async {
-        isLoadingCandidates = true
-        errorMessage = nil
-
-        do {
-            candidates = try await session.makeAiCandidateService().list(noteSeedId: note.id)
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-
-        isLoadingCandidates = false
-    }
-
-    private func loadStatus() async {
-        do {
-            generationStatus = try await session.makeAiCandidateService().status(noteSeedId: note.id)
-        } catch {
-            if errorMessage == nil {
-                errorMessage = error.localizedDescription
+                adoptedCardMessage = "カードを採用しました"
+                _ = card
             }
         }
     }
 
-    private func generate() async {
+    private func generate() {
         isGenerating = true
-        errorMessage = nil
 
-        do {
-            generationStatus = try await session.makeAiCandidateService().generate(noteSeedId: note.id)
-            await loadCandidates()
-        } catch {
-            errorMessage = error.localizedDescription
+        for draft in LocalCandidateGenerator.generate(from: note) {
+            let candidate = LocalAiCardCandidate(
+                noteSeedId: note.id,
+                question: draft.question,
+                answer: draft.answer,
+                focusType: draft.focusType,
+                rationale: draft.rationale
+            )
+            modelContext.insert(candidate)
         }
 
+        note.updatedAt = .now
         isGenerating = false
     }
 }
 
-private struct GenerationStatusRow: View {
-    let status: AiGenerationStatus
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(statusLabel, systemImage: statusIcon)
-                .font(.subheadline)
-
-            if let count = status.candidatesCount {
-                Text("候補数: \(count)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            if let errorReason = status.errorReason, !errorReason.isEmpty {
-                Text(errorReason)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-        }
-    }
-
-    private var statusLabel: String {
-        switch status.status {
-        case "queued":
-            return "生成待ち"
-        case "processing":
-            return "生成中"
-        case "success":
-            return "生成完了"
-        case "failed":
-            return "生成失敗"
-        case "idle":
-            return "未生成"
-        default:
-            return status.status
-        }
-    }
-
-    private var statusIcon: String {
-        switch status.status {
-        case "queued", "processing":
-            return "hourglass"
-        case "success":
-            return "checkmark.circle"
-        case "failed":
-            return "exclamationmark.triangle"
-        default:
-            return "circle"
-        }
-    }
-}
-
 private struct CandidateRow: View {
-    let candidate: AiCardCandidate
+    let candidate: LocalAiCardCandidate
     let onAdopt: () -> Void
 
     var body: some View {
@@ -217,17 +113,8 @@ private struct CandidateRow: View {
                 .lineLimit(4)
 
             HStack(spacing: 8) {
-                if let cardType = candidate.cardType {
-                    Label(cardType, systemImage: "rectangle.on.rectangle")
-                }
-
-                if let status = candidate.status {
-                    Label(status, systemImage: "circle.fill")
-                }
-
-                if !candidate.qualityWarnings.isEmpty {
-                    Label("\(candidate.qualityWarnings.count)", systemImage: "exclamationmark.triangle")
-                }
+                Label(candidate.cardType, systemImage: "rectangle.on.rectangle")
+                Label(candidate.status, systemImage: "circle.fill")
             }
             .font(.caption)
             .foregroundStyle(.secondary)

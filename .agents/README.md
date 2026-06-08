@@ -20,6 +20,6 @@ Reusable project skills live in `.agents/skills/*/SKILL.md`. These are the singl
 ## Maintenance
 
 - `AGENTS.md` owns the trigger table.
-- `docs/05_frontend_design.md`, `docs/06_backend_design.md`, `docs/12_ios_design.md`, and `docs/07_testing_strategy.md` remain canonical for implementation rules.
+- `docs/05_frontend_design.md`, `docs/06_backend_design.md`, `docs/12_ios_design.md`, `docs/13_ios_local_first_architecture.md`, and `docs/07_testing_strategy.md` remain canonical for implementation rules.
 - Keep skills focused on repeatable workflow steps. Put broad project context in `AGENTS.md`, not in every skill.
 - Do not store secrets, local paths, or personal preferences here.

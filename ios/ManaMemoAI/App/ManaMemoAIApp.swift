@@ -1,13 +1,17 @@
 import SwiftUI
+import SwiftData
 
 @main
 struct ManaMemoAIApp: App {
-    @StateObject private var session = AuthSessionStore.bootstrap()
-
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environmentObject(session)
         }
+        .modelContainer(for: [
+            LocalDeck.self,
+            LocalNoteSeed.self,
+            LocalAiCardCandidate.self,
+            LocalCard.self
+        ])
     }
 }

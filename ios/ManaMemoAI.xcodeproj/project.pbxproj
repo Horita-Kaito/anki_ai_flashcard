@@ -34,6 +34,8 @@
 		000000000000000000000119 /* AiCandidateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001A /* AiCandidateService.swift */; };
 		00000000000000000000011A /* NoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001B /* NoteDetailView.swift */; };
 		00000000000000000000011B /* CandidateAdoptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001C /* CandidateAdoptionView.swift */; };
+		00000000000000000000011C /* LocalStudyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001D /* LocalStudyModels.swift */; };
+		00000000000000000000011D /* LocalCandidateGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001E /* LocalCandidateGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -65,6 +67,8 @@
 		00000000000000000000001A /* AiCandidateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiCandidateService.swift; sourceTree = "<group>"; };
 		00000000000000000000001B /* NoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailView.swift; sourceTree = "<group>"; };
 		00000000000000000000001C /* CandidateAdoptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateAdoptionView.swift; sourceTree = "<group>"; };
+		00000000000000000000001D /* LocalStudyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStudyModels.swift; sourceTree = "<group>"; };
+		00000000000000000000001E /* LocalCandidateGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCandidateGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +118,8 @@
 				000000000000000000000306 /* Auth */,
 				000000000000000000000307 /* Config */,
 				000000000000000000000312 /* Keychain */,
+				000000000000000000000313 /* Persistence */,
+				000000000000000000000314 /* LocalLLM */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -233,6 +239,22 @@
 			path = Keychain;
 			sourceTree = "<group>";
 		};
+		000000000000000000000313 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000001D /* LocalStudyModels.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		000000000000000000000314 /* LocalLLM */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000001E /* LocalCandidateGenerator.swift */,
+			);
+			path = LocalLLM;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -328,6 +350,8 @@
 				000000000000000000000119 /* AiCandidateService.swift in Sources */,
 				00000000000000000000011A /* NoteDetailView.swift in Sources */,
 				00000000000000000000011B /* CandidateAdoptionView.swift in Sources */,
+				00000000000000000000011C /* LocalStudyModels.swift in Sources */,
+				00000000000000000000011D /* LocalCandidateGenerator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

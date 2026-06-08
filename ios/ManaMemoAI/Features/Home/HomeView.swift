@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct HomeView: View {
-    let user: User
-
     var body: some View {
         TabView {
             NoteListView()
@@ -22,7 +20,7 @@ struct HomeView: View {
                 Label("復習", systemImage: "checkmark.circle")
             }
 
-            SettingsView(user: user)
+            SettingsView()
                 .tabItem {
                     Label("設定", systemImage: "gearshape")
                 }
