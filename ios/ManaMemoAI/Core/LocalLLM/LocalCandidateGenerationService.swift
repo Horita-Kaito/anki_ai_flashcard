@@ -44,15 +44,18 @@ struct LocalCandidateGenerationService {
 
         do {
             let prompt = LocalLLMPromptBuilder.buildPrompt(noteBody: noteBody, learningGoal: note.learningGoal)
-            let output = try await runtime.generateText(
-                for: LocalLLMGenerationRequest(
-                    prompt: prompt,
-                    model: model,
-                    modelURL: modelURL,
-                    options: settings.generationOptions
-                )
+            let request = LocalLLMGenerationRequest(
+                prompt: prompt,
+                model: model,
+                modelURL: modelURL,
+                options: settings.generationOptions
             )
-            let drafts = try LocalLLMOutputParser.parseCandidates(from: output)
+            let output = try await runtime.generateText(for: request)
+            let drafts = try await LocalLLMGenerationRepairer.parseOrRepairCandidates(
+                from: output,
+                request: request,
+                runtime: runtime
+            )
             guard !drafts.isEmpty else {
                 throw LocalLLMGenerationError.invalidResponse
             }

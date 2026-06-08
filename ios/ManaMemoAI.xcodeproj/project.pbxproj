@@ -53,7 +53,20 @@
 		00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002D /* LocalLLMGenerationOptions.swift */; };
 		00000000000000000000012D /* LlamaFramework in Frameworks */ = {isa = PBXBuildFile; productRef = 000000000000000000000902 /* LlamaFramework */; };
 		00000000000000000000012E /* LlamaFrameworkRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002E /* LlamaFrameworkRuntime.swift */; };
+		00000000000000000000012F /* LocalLLMGenerationRepairer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002F /* LocalLLMGenerationRepairer.swift */; };
+		000000000000000000000130 /* LocalLLMOutputParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000030 /* LocalLLMOutputParserTests.swift */; };
+		000000000000000000000131 /* LocalLLMGenerationRepairerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000A01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000601 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000000000401;
+			remoteInfo = ManaMemoAI;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000001 /* ManaMemoAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManaMemoAIApp.swift; sourceTree = "<group>"; };
@@ -102,6 +115,10 @@
 		00000000000000000000002C /* LocalCandidateGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCandidateGenerationService.swift; sourceTree = "<group>"; };
 		00000000000000000000002D /* LocalLLMGenerationOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationOptions.swift; sourceTree = "<group>"; };
 		00000000000000000000002E /* LlamaFrameworkRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LlamaFrameworkRuntime.swift; sourceTree = "<group>"; };
+		00000000000000000000002F /* LocalLLMGenerationRepairer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationRepairer.swift; sourceTree = "<group>"; };
+		000000000000000000000030 /* LocalLLMOutputParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMOutputParserTests.swift; sourceTree = "<group>"; };
+		000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationRepairerTests.swift; sourceTree = "<group>"; };
+		000000000000000000000032 /* ManaMemoAITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ManaMemoAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +131,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		000000000000000000000202 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -121,6 +145,7 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000302 /* ManaMemoAI */,
+				000000000000000000000316 /* ManaMemoAITests */,
 				000000000000000000000310 /* Frameworks */,
 				000000000000000000000311 /* Products */,
 			);
@@ -289,6 +314,7 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000010 /* ManaMemoAI.app */,
+				000000000000000000000032 /* ManaMemoAITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -325,8 +351,18 @@
 				000000000000000000000028 /* LocalLLMPromptBuilder.swift */,
 				000000000000000000000029 /* LocalLLMOutputParser.swift */,
 				00000000000000000000002C /* LocalCandidateGenerationService.swift */,
+				00000000000000000000002F /* LocalLLMGenerationRepairer.swift */,
 			);
 			path = LocalLLM;
+			sourceTree = "<group>";
+		};
+		000000000000000000000316 /* ManaMemoAITests */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000030 /* LocalLLMOutputParserTests.swift */,
+				000000000000000000000031 /* LocalLLMGenerationRepairerTests.swift */,
+			);
+			path = ManaMemoAITests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -352,6 +388,24 @@
 			productReference = 000000000000000000000010 /* ManaMemoAI.app */;
 			productType = "com.apple.product-type.application";
 		};
+		000000000000000000000402 /* ManaMemoAITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 000000000000000000000703 /* Build configuration list for PBXNativeTarget "ManaMemoAITests" */;
+			buildPhases = (
+				000000000000000000000503 /* Sources */,
+				000000000000000000000202 /* Frameworks */,
+				000000000000000000000504 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000A02 /* PBXTargetDependency */,
+			);
+			name = ManaMemoAITests;
+			productName = ManaMemoAITests;
+			productReference = 000000000000000000000032 /* ManaMemoAITests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -364,6 +418,10 @@
 				TargetAttributes = {
 					000000000000000000000401 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					000000000000000000000402 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 000000000000000000000401;
 					};
 				};
 			};
@@ -385,12 +443,20 @@
 			projectRoot = "";
 			targets = (
 				000000000000000000000401 /* ManaMemoAI */,
+				000000000000000000000402 /* ManaMemoAITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		000000000000000000000502 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000504 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -448,10 +514,28 @@
 				00000000000000000000012B /* LocalCandidateGenerationService.swift in Sources */,
 				00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */,
 				00000000000000000000012E /* LlamaFrameworkRuntime.swift in Sources */,
+				00000000000000000000012F /* LocalLLMGenerationRepairer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000503 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000130 /* LocalLLMOutputParserTests.swift in Sources */,
+				000000000000000000000131 /* LocalLLMGenerationRepairerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		000000000000000000000A02 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000000000401 /* ManaMemoAI */;
+			targetProxy = 000000000000000000000A01 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		000000000000000000000801 /* Debug */ = {
@@ -640,6 +724,54 @@
 			};
 			name = Release;
 		};
+		000000000000000000000805 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.manamemoai.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ManaMemoAI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ManaMemoAI";
+				TEST_TARGET_NAME = ManaMemoAI;
+			};
+			name = Debug;
+		};
+		000000000000000000000806 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.manamemoai.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ManaMemoAI.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ManaMemoAI";
+				TEST_TARGET_NAME = ManaMemoAI;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -657,6 +789,15 @@
 			buildConfigurations = (
 				000000000000000000000803 /* Debug */,
 				000000000000000000000804 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		000000000000000000000703 /* Build configuration list for PBXNativeTarget "ManaMemoAITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				000000000000000000000805 /* Debug */,
+				000000000000000000000806 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
