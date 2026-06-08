@@ -6,9 +6,11 @@ struct NoteDetailView: View {
     @Query private var allCandidates: [LocalAiCardCandidate]
     let note: LocalNoteSeed
 
+    @StateObject private var llmSettings = LocalLLMSettingsStore()
     @State private var isGenerating = false
     @State private var selectedCandidate: LocalAiCardCandidate?
     @State private var adoptedCardMessage: String?
+    @State private var generationErrorMessage: String?
 
     private var candidates: [LocalAiCardCandidate] {
         allCandidates
@@ -44,6 +46,15 @@ struct NoteDetailView: View {
                 .disabled(isGenerating)
 
                 LabeledContent("実行場所", value: "このiPhone")
+                LabeledContent("モデル", value: llmSettings.selectedModel.displayName)
+                LabeledContent("フォールバック", value: llmSettings.usesRuleBasedFallback ? "有効" : "無効")
+            }
+
+            if let generationErrorMessage {
+                Section {
+                    Label(generationErrorMessage, systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                }
             }
 
             if let adoptedCardMessage {
@@ -80,20 +91,30 @@ struct NoteDetailView: View {
 
     private func generate() {
         isGenerating = true
+        generationErrorMessage = nil
 
-        for draft in LocalCandidateGenerator.generate(from: note) {
-            let candidate = LocalAiCardCandidate(
-                noteSeedId: note.id,
-                question: draft.question,
-                answer: draft.answer,
-                focusType: draft.focusType,
-                rationale: draft.rationale
-            )
-            modelContext.insert(candidate)
+        Task {
+            do {
+                let drafts = try await LocalCandidateGenerator.generate(from: note, settings: llmSettings)
+
+                for draft in drafts {
+                    let candidate = LocalAiCardCandidate(
+                        noteSeedId: note.id,
+                        question: draft.question,
+                        answer: draft.answer,
+                        focusType: draft.focusType,
+                        rationale: draft.rationale
+                    )
+                    modelContext.insert(candidate)
+                }
+
+                note.updatedAt = .now
+            } catch {
+                generationErrorMessage = error.localizedDescription
+            }
+
+            isGenerating = false
         }
-
-        note.updatedAt = .now
-        isGenerating = false
     }
 }
 

@@ -18,15 +18,17 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 - `Qwen2.5-3B-Instruct Q4_K_M` は高性能端末向け候補とする。
 - 古い端末向けに 0.5B/1.5B class のモデルを選べる設計にする。
 - LLM出力はカード候補JSONへ変換し、ユーザーが採用したものだけカード化する。
+- iOSアプリ内には `LocalLLMRuntime` 境界を置き、実際の `llama.cpp` ブリッジはこの境界の具象実装として差し込む。
 
 ## 実装ステップ
 
 1. SwiftData のローカルモデルへiOS主要導線を移す。
 2. ローカル候補生成インターフェースを作る。
 3. モデル管理画面を追加する。
-4. `llama.cpp` のiOS組み込みを検証する。
-5. JSON grammar / retry / parse repair を実装する。
-6. 復習スケジュールも端末内で完結させる。
+4. `LocalLLMRuntime` 境界、プロンプト生成、JSON出力パーサを追加する。
+5. `llama.cpp` のiOS組み込みを検証する。
+6. JSON grammar / retry / parse repair を実装する。
+7. 復習スケジュールも端末内で完結させる。
 
 ## 復習
 

@@ -44,6 +44,10 @@
 		000000000000000000000123 /* CardListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000024 /* CardListView.swift */; };
 		000000000000000000000124 /* CardEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000025 /* CardEditView.swift */; };
 		000000000000000000000125 /* LocalLLMModelStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000026 /* LocalLLMModelStore.swift */; };
+		000000000000000000000126 /* LocalLLMRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000027 /* LocalLLMRuntime.swift */; };
+		000000000000000000000127 /* LocalLLMPromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000028 /* LocalLLMPromptBuilder.swift */; };
+		000000000000000000000128 /* LocalLLMOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000029 /* LocalLLMOutputParser.swift */; };
+		000000000000000000000129 /* LocalLLMModelFileLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002A /* LocalLLMModelFileLocator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -85,6 +89,10 @@
 		000000000000000000000024 /* CardListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardListView.swift; sourceTree = "<group>"; };
 		000000000000000000000025 /* CardEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardEditView.swift; sourceTree = "<group>"; };
 		000000000000000000000026 /* LocalLLMModelStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMModelStore.swift; sourceTree = "<group>"; };
+		000000000000000000000027 /* LocalLLMRuntime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMRuntime.swift; sourceTree = "<group>"; };
+		000000000000000000000028 /* LocalLLMPromptBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMPromptBuilder.swift; sourceTree = "<group>"; };
+		000000000000000000000029 /* LocalLLMOutputParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMOutputParser.swift; sourceTree = "<group>"; };
+		00000000000000000000002A /* LocalLLMModelFileLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMModelFileLocator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -299,6 +307,10 @@
 				00000000000000000000001F /* LocalLLMModelCatalog.swift */,
 				000000000000000000000020 /* LocalLLMSettingsStore.swift */,
 				000000000000000000000026 /* LocalLLMModelStore.swift */,
+				00000000000000000000002A /* LocalLLMModelFileLocator.swift */,
+				000000000000000000000027 /* LocalLLMRuntime.swift */,
+				000000000000000000000028 /* LocalLLMPromptBuilder.swift */,
+				000000000000000000000029 /* LocalLLMOutputParser.swift */,
 			);
 			path = LocalLLM;
 			sourceTree = "<group>";
@@ -408,6 +420,10 @@
 				000000000000000000000123 /* CardListView.swift in Sources */,
 				000000000000000000000124 /* CardEditView.swift in Sources */,
 				000000000000000000000125 /* LocalLLMModelStore.swift in Sources */,
+				000000000000000000000126 /* LocalLLMRuntime.swift in Sources */,
+				000000000000000000000127 /* LocalLLMPromptBuilder.swift in Sources */,
+				000000000000000000000128 /* LocalLLMOutputParser.swift in Sources */,
+				000000000000000000000129 /* LocalLLMModelFileLocator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

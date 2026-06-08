@@ -13,10 +13,12 @@ final class LocalLLMModelStore: ObservableObject {
     @Published private(set) var state: State = .missing
 
     private let fileManager: FileManager
+    private let fileLocator: LocalLLMModelFileLocator
     private var downloadTask: Task<Void, Never>?
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
+        fileLocator = LocalLLMModelFileLocator(fileManager: fileManager)
     }
 
     func refresh(for model: LocalLLMModelSpec) {
@@ -47,7 +49,7 @@ final class LocalLLMModelStore: ObservableObject {
     }
 
     func localURL(for model: LocalLLMModelSpec) -> URL {
-        modelsDirectory.appending(path: model.fileName)
+        fileLocator.localURL(for: model)
     }
 
     private func startDownload(_ model: LocalLLMModelSpec) {
@@ -65,7 +67,7 @@ final class LocalLLMModelStore: ObservableObject {
 
                 let (temporaryURL, _) = try await URLSession.shared.download(from: downloadURL)
                 try self.fileManager.createDirectory(
-                    at: self.modelsDirectory,
+                    at: self.fileLocator.modelsDirectory,
                     withIntermediateDirectories: true
                 )
 
@@ -81,10 +83,5 @@ final class LocalLLMModelStore: ObservableObject {
                 self?.state = .failed(error.localizedDescription)
             }
         }
-    }
-
-    private var modelsDirectory: URL {
-        let baseURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        return baseURL.appending(path: "Models", directoryHint: .isDirectory)
     }
 }
