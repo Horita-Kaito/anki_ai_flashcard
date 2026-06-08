@@ -28,6 +28,27 @@ struct LocalAISettingsView: View {
                 LabeledContent("コンテキスト", value: "\(settings.selectedModel.contextTokens)")
             }
 
+            Section("生成") {
+                Stepper("最大トークン \(settings.maxTokens)", value: $settings.maxTokens, in: 256...2048, step: 128)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    LabeledContent("温度", value: String(format: "%.1f", settings.temperature))
+                    Slider(value: $settings.temperature, in: 0.0...1.0, step: 0.1)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    LabeledContent("Top P", value: String(format: "%.1f", settings.topP))
+                    Slider(value: $settings.topP, in: 0.1...1.0, step: 0.1)
+                }
+
+                Stepper(
+                    "コンテキスト \(settings.contextTokens)",
+                    value: $settings.contextTokens,
+                    in: 1024...settings.selectedModel.contextTokens,
+                    step: 512
+                )
+            }
+
             Section("状態") {
                 runtimeStateRow
                 Text(runtimeDiagnostics.detail)

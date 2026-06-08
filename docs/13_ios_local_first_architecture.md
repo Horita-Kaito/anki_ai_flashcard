@@ -20,6 +20,7 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 - LLM出力はカード候補JSONへ変換し、ユーザーが採用したものだけカード化する。
 - iOSアプリ内には `LocalLLMRuntime` 境界を置き、実際の `llama.cpp` ブリッジはこの境界の具象実装として差し込む。
 - 候補生成は `LocalCandidateGenerationService` が担当し、LLM生成とルールベースフォールバックのどちらで生成されたかをUIへ返す。
+- 生成パラメータは `LocalLLMGenerationOptions` として保持し、最大トークン、温度、Top P、コンテキスト長をランタイムへ渡す。
 
 ## 実装ステップ
 

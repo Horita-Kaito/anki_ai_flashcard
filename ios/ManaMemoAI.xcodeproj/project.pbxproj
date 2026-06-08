@@ -50,6 +50,7 @@
 		000000000000000000000129 /* LocalLLMModelFileLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002A /* LocalLLMModelFileLocator.swift */; };
 		00000000000000000000012A /* LocalLLMRuntimeDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */; };
 		00000000000000000000012B /* LocalCandidateGenerationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002C /* LocalCandidateGenerationService.swift */; };
+		00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000002D /* LocalLLMGenerationOptions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +98,7 @@
 		00000000000000000000002A /* LocalLLMModelFileLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMModelFileLocator.swift; sourceTree = "<group>"; };
 		00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMRuntimeDiagnostics.swift; sourceTree = "<group>"; };
 		00000000000000000000002C /* LocalCandidateGenerationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCandidateGenerationService.swift; sourceTree = "<group>"; };
+		00000000000000000000002D /* LocalLLMGenerationOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMGenerationOptions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -312,6 +314,7 @@
 				000000000000000000000020 /* LocalLLMSettingsStore.swift */,
 				000000000000000000000026 /* LocalLLMModelStore.swift */,
 				00000000000000000000002A /* LocalLLMModelFileLocator.swift */,
+				00000000000000000000002D /* LocalLLMGenerationOptions.swift */,
 				000000000000000000000027 /* LocalLLMRuntime.swift */,
 				00000000000000000000002B /* LocalLLMRuntimeDiagnostics.swift */,
 				000000000000000000000028 /* LocalLLMPromptBuilder.swift */,
@@ -432,6 +435,7 @@
 				000000000000000000000129 /* LocalLLMModelFileLocator.swift in Sources */,
 				00000000000000000000012A /* LocalLLMRuntimeDiagnostics.swift in Sources */,
 				00000000000000000000012B /* LocalCandidateGenerationService.swift in Sources */,
+				00000000000000000000012C /* LocalLLMGenerationOptions.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

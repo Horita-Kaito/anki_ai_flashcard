@@ -49,6 +49,7 @@ struct NoteDetailView: View {
                 LabeledContent("実行場所", value: "このiPhone")
                 LabeledContent("モデル", value: llmSettings.selectedModel.displayName)
                 LabeledContent("フォールバック", value: llmSettings.usesRuleBasedFallback ? "有効" : "無効")
+                LabeledContent("最大トークン", value: "\(llmSettings.generationOptions.maxTokens)")
             }
 
             if let generationErrorMessage {

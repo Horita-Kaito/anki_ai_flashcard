@@ -1,7 +1,7 @@
 import Foundation
 
-struct LocalLLMRuntimeDiagnostics: Equatable {
-    enum State: Equatable {
+struct LocalLLMRuntimeDiagnostics: Equatable, Sendable {
+    enum State: Equatable, Sendable {
         case ready
         case unavailable
     }

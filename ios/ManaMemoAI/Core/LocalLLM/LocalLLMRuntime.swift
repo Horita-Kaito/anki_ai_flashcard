@@ -1,9 +1,10 @@
 import Foundation
 
-struct LocalLLMGenerationRequest: Equatable {
+struct LocalLLMGenerationRequest: Equatable, Sendable {
     let prompt: String
     let model: LocalLLMModelSpec
     let modelURL: URL
+    let options: LocalLLMGenerationOptions
 }
 
 enum LocalLLMGenerationError: LocalizedError, Equatable {

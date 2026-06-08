@@ -48,7 +48,8 @@ struct LocalCandidateGenerationService {
                 for: LocalLLMGenerationRequest(
                     prompt: prompt,
                     model: model,
-                    modelURL: modelURL
+                    modelURL: modelURL,
+                    options: settings.generationOptions
                 )
             )
             let drafts = try LocalLLMOutputParser.parseCandidates(from: output)

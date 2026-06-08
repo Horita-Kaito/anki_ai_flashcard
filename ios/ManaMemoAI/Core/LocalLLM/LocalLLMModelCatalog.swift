@@ -1,6 +1,6 @@
 import Foundation
 
-struct LocalLLMModelSpec: Identifiable, Equatable {
+struct LocalLLMModelSpec: Identifiable, Equatable, Sendable {
     let id: String
     let displayName: String
     let family: String
