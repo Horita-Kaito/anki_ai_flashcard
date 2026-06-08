@@ -11,9 +11,11 @@ enum LocalLLMPromptBuilder {
 
         制約:
         - 出力はJSONのみ。
+        - 最初の文字は {、最後の文字は } にする。
         - Markdownや説明文をJSONの外に出さない。
         - cards配列を持つオブジェクトにする。
         - question、answer、focus_type、rationaleを必ず含める。
+        - questionとanswerは空文字にしない。
         - answerは短く、復習時に思い出せる粒度にする。
         - AI候補はユーザーが確認してから採用する前提で作る。
 
