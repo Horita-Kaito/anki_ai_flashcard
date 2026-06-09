@@ -101,30 +101,6 @@ private struct DeckNode: Identifiable {
     var id: UUID { deck.id }
 }
 
-/// 親デッキ選択ピッカー用の、インデント付き候補。
-private struct DeckOption: Identifiable {
-    let deck: LocalDeck
-    let depth: Int
-    var id: UUID { deck.id }
-    var indentedName: String {
-        String(repeating: "　", count: depth) + deck.name
-    }
-}
-
-/// decks をツリー順に並べたインデント付き候補を返す。
-/// excluding に渡した id は、その配下（子孫）ごと候補から除外する（循環防止）。
-private func deckOptions(from decks: [LocalDeck], excluding excludedId: UUID? = nil) -> [DeckOption] {
-    func build(parent: UUID?, depth: Int) -> [DeckOption] {
-        decks
-            .filter { $0.parentDeckId == parent && $0.id != excludedId }
-            .sorted { $0.displayOrder < $1.displayOrder }
-            .flatMap { deck in
-                [DeckOption(deck: deck, depth: depth)] + build(parent: deck.id, depth: depth + 1)
-            }
-    }
-    return build(parent: nil, depth: 0)
-}
-
 private struct DeckRow: View {
     let deck: LocalDeck
     let cardCount: Int
@@ -177,7 +153,7 @@ private struct DeckCreateView: View {
             }
 
             Section("親デッキ（任意）") {
-                ParentDeckPicker(options: deckOptions(from: decks), selection: $parentDeckId)
+                ParentDeckPicker(options: indentedDecks(decks), selection: $parentDeckId)
             }
         }
         .navigationTitle("デッキ作成")
@@ -255,7 +231,7 @@ private struct DeckEditView: View {
             Section("親デッキ（任意）") {
                 // 自分自身と子孫は循環するため候補から除外する。
                 ParentDeckPicker(
-                    options: deckOptions(from: allDecks, excluding: deck.id),
+                    options: indentedDecks(allDecks, excluding: deck.id),
                     selection: $parentDeckId
                 )
             }
@@ -327,7 +303,7 @@ private struct DeckEditView: View {
 
 /// 親デッキを選ぶピッカー。「なし（トップ）」＋インデント付きのデッキ候補。
 private struct ParentDeckPicker: View {
-    let options: [DeckOption]
+    let options: [IndentedDeck]
     @Binding var selection: UUID?
 
     var body: some View {

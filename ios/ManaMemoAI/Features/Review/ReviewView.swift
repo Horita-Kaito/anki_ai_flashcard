@@ -27,16 +27,7 @@ struct ReviewView: View {
     // 絞り込みデッキとその全子孫の id 集合（nil は絞り込みなし）。
     private var scopedDeckIds: Set<UUID>? {
         guard let deckFilter else { return nil }
-        var ids: Set<UUID> = [deckFilter]
-        var frontier = [deckFilter]
-        while let current = frontier.popLast() {
-            for deck in decks where deck.parentDeckId == current {
-                if ids.insert(deck.id).inserted {
-                    frontier.append(deck.id)
-                }
-            }
-        }
-        return ids
+        return deckDescendantIDs(of: deckFilter, in: decks)
     }
 
     private var scopedCards: [LocalCard] {
@@ -86,33 +77,14 @@ struct ReviewView: View {
         Menu {
             Picker("デッキで絞り込む", selection: $deckFilter) {
                 Text("すべてのデッキ").tag(UUID?.none)
-                ForEach(filterOptions) { option in
-                    Text(option.name).tag(UUID?.some(option.id))
+                ForEach(indentedDecks(decks)) { option in
+                    Text(option.indentedName).tag(UUID?.some(option.id))
                 }
             }
         } label: {
             Label(filterLabel, systemImage: "line.3.horizontal.decrease.circle")
         }
         .accessibilityLabel("デッキで絞り込む")
-    }
-
-    private struct FilterOption: Identifiable {
-        let id: UUID
-        let name: String
-    }
-
-    // デッキをツリー順に並べた絞り込み候補（インデント付き）。
-    private var filterOptions: [FilterOption] {
-        func build(parent: UUID?, depth: Int) -> [FilterOption] {
-            decks
-                .filter { $0.parentDeckId == parent }
-                .sorted { $0.displayOrder < $1.displayOrder }
-                .flatMap { deck in
-                    [FilterOption(id: deck.id, name: String(repeating: "　", count: depth) + deck.name)]
-                        + build(parent: deck.id, depth: depth + 1)
-                }
-        }
-        return build(parent: nil, depth: 0)
     }
 
     private var filterLabel: String {

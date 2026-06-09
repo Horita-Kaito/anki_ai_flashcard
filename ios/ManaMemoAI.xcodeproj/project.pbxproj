@@ -10,6 +10,7 @@
 		000000000000000000000156 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000056 /* Localizable.xcstrings */; };
 		000000000000000000000157 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000057 /* OnboardingView.swift */; };
 		000000000000000000000158 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000058 /* DashboardView.swift */; };
+		000000000000000000000159 /* DeckHierarchy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000059 /* DeckHierarchy.swift */; };
 		000000000000000000000150 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000050 /* DesignTokens.swift */; };
 		000000000000000000000151 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000051 /* Typography.swift */; };
 		000000000000000000000152 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000052 /* Haptics.swift */; };
@@ -78,6 +79,7 @@
 		000000000000000000000056 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		000000000000000000000057 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		000000000000000000000058 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		000000000000000000000059 /* DeckHierarchy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckHierarchy.swift; sourceTree = "<group>"; };
 		000000000000000000000050 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		000000000000000000000051 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		000000000000000000000052 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
@@ -334,6 +336,7 @@
 			children = (
 				000000000000000000000321 /* DesignSystem */,
 				000000000000000000000322 /* Components */,
+				000000000000000000000059 /* DeckHierarchy.swift */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -547,6 +550,7 @@
 			files = (
 				000000000000000000000157 /* OnboardingView.swift in Sources */,
 				000000000000000000000158 /* DashboardView.swift in Sources */,
+				000000000000000000000159 /* DeckHierarchy.swift in Sources */,
 				000000000000000000000150 /* DesignTokens.swift in Sources */,
 				000000000000000000000151 /* Typography.swift in Sources */,
 				000000000000000000000152 /* Haptics.swift in Sources */,
