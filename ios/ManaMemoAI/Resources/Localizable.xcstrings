@@ -540,6 +540,15 @@
     },
     "1回の復習で出題する枚数の上限です。0 は無制限です。" : {
       "extractionState" : "manual"
+    },
+    "カードを作成" : {
+      "extractionState" : "manual"
+    },
+    "カードを追加" : {
+      "extractionState" : "manual"
+    },
+    "「標準デッキ」を自動作成して保存します。" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

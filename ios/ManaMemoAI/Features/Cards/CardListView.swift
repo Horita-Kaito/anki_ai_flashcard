@@ -32,6 +32,7 @@ struct CardListView: View {
     @State private var searchText = ""
     @State private var sortOrder: CardSort = .updated
     @State private var scope: CardScope = .all
+    @State private var isCreatePresented = false
 
     private var visibleCards: [LocalCard] {
         var result = cards
@@ -113,7 +114,19 @@ struct CardListView: View {
             }
             .navigationTitle("カード")
             .searchable(text: $searchText, prompt: "カードを検索")
+            .sheet(isPresented: $isCreatePresented) {
+                CardCreateView()
+            }
             .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        isCreatePresented = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    .accessibilityLabel("カードを追加")
+                }
+
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Picker("並び替え", selection: $sortOrder) {

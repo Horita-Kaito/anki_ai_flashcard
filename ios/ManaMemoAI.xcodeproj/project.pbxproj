@@ -14,6 +14,7 @@
 		00000000000000000000015A /* ExportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000005A /* ExportView.swift */; };
 		00000000000000000000015B /* ExportModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000005B /* ExportModels.swift */; };
 		00000000000000000000015C /* ImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000005C /* ImportView.swift */; };
+		00000000000000000000015D /* CardCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000005D /* CardCreateView.swift */; };
 		000000000000000000000150 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000050 /* DesignTokens.swift */; };
 		000000000000000000000151 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000051 /* Typography.swift */; };
 		000000000000000000000152 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000052 /* Haptics.swift */; };
@@ -86,6 +87,7 @@
 		00000000000000000000005A /* ExportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportView.swift; sourceTree = "<group>"; };
 		00000000000000000000005B /* ExportModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportModels.swift; sourceTree = "<group>"; };
 		00000000000000000000005C /* ImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportView.swift; sourceTree = "<group>"; };
+		00000000000000000000005D /* CardCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardCreateView.swift; sourceTree = "<group>"; };
 		000000000000000000000050 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
 		000000000000000000000051 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		000000000000000000000052 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
@@ -318,6 +320,7 @@
 			children = (
 				000000000000000000000024 /* CardListView.swift */,
 				000000000000000000000025 /* CardEditView.swift */,
+				00000000000000000000005D /* CardCreateView.swift */,
 			);
 			path = Cards;
 			sourceTree = "<group>";
@@ -571,6 +574,7 @@
 				00000000000000000000015A /* ExportView.swift in Sources */,
 				00000000000000000000015B /* ExportModels.swift in Sources */,
 				00000000000000000000015C /* ImportView.swift in Sources */,
+				00000000000000000000015D /* CardCreateView.swift in Sources */,
 				000000000000000000000150 /* DesignTokens.swift in Sources */,
 				000000000000000000000151 /* Typography.swift in Sources */,
 				000000000000000000000152 /* Haptics.swift in Sources */,
