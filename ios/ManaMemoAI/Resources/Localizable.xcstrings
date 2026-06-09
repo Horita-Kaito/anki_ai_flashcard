@@ -528,6 +528,18 @@
     },
     "デッキ %lld / カード %lld / メモ %lld を取り込みました" : {
       "extractionState" : "manual"
+    },
+    "学習" : {
+      "extractionState" : "manual"
+    },
+    "1日の復習上限" : {
+      "extractionState" : "manual"
+    },
+    "無制限" : {
+      "extractionState" : "manual"
+    },
+    "1回の復習で出題する枚数の上限です。0 は無制限です。" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

@@ -15,6 +15,8 @@ struct ReviewView: View {
     @State private var deckFilter: UUID?
     // このセッションでの評価別の枚数。完了サマリに使う。
     @State private var ratingCounts: [ReviewRating: Int] = [:]
+    // 1日の復習上限（0 は無制限）。設定と共有。
+    @AppStorage("dailyReviewLimit") private var dailyReviewLimit = 0
 
     private var currentCard: LocalCard? {
         guard currentIndex < queue.count else {
@@ -70,6 +72,7 @@ struct ReviewView: View {
             }
             .onAppear(perform: loadQueueIfNeeded)
             .onChange(of: deckFilter) { reloadQueue() }
+            .onChange(of: dailyReviewLimit) { reloadQueue() }
         }
     }
 
@@ -146,7 +149,12 @@ struct ReviewView: View {
     }
 
     private func reloadQueue() {
-        queue = scopedCards.filter { $0.dueAt <= .now && !$0.isSuspended }
+        // dueAt 昇順（@Query）を維持したまま、上限があれば期限の近い順に絞る。
+        var due = scopedCards.filter { $0.dueAt <= .now && !$0.isSuspended }
+        if dailyReviewLimit > 0 {
+            due = Array(due.prefix(dailyReviewLimit))
+        }
+        queue = due
         currentIndex = 0
         completedCount = 0
         ratingCounts = [:]

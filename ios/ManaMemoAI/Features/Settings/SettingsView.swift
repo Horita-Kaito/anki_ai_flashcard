@@ -9,6 +9,7 @@ struct SettingsView: View {
     @Query private var cards: [LocalCard]
     @StateObject private var llmSettings = LocalLLMSettingsStore()
     @Environment(\.modelContext) private var modelContext
+    @AppStorage("dailyReviewLimit") private var dailyReviewLimit = 0
     @State private var isLoginPresented = false
     @State private var isSyncing = false
     @State private var syncMessage: String?
@@ -20,6 +21,18 @@ struct SettingsView: View {
                 Section("保存先") {
                     LabeledContent("モード", value: "ローカルファースト")
                     LabeledContent("同期", value: session.isAuthenticated ? "有効（ログイン中）" : "オプトイン（未ログイン）")
+                }
+
+                Section {
+                    Stepper(value: $dailyReviewLimit, in: 0...200, step: 10) {
+                        LabeledContent("1日の復習上限") {
+                            Text(dailyReviewLimit == 0 ? String(localized: "無制限") : "\(dailyReviewLimit)")
+                        }
+                    }
+                } header: {
+                    Text("学習")
+                } footer: {
+                    Text("1回の復習で出題する枚数の上限です。0 は無制限です。")
                 }
 
                 accountSection
