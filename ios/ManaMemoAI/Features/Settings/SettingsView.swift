@@ -35,6 +35,12 @@ struct SettingsView: View {
                     } label: {
                         Label("データをエクスポート", systemImage: "square.and.arrow.up")
                     }
+
+                    NavigationLink {
+                        ImportView()
+                    } label: {
+                        Label("データをインポート", systemImage: "tray.and.arrow.down")
+                    }
                 }
 
                 Section("AI") {

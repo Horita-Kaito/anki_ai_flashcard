@@ -513,6 +513,21 @@
     },
     "デッキ・カード・メモを JSON ファイルに書き出します。バックアップや別端末への移行に利用できます。" : {
       "extractionState" : "manual"
+    },
+    "データをインポート" : {
+      "extractionState" : "manual"
+    },
+    "インポート" : {
+      "extractionState" : "manual"
+    },
+    "ファイルを選択" : {
+      "extractionState" : "manual"
+    },
+    "エクスポートした JSON ファイルを読み込みます。既存のIDと重複する項目はスキップされます。" : {
+      "extractionState" : "manual"
+    },
+    "デッキ %lld / カード %lld / メモ %lld を取り込みました" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"
