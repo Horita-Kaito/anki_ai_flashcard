@@ -495,6 +495,24 @@
     },
     "表示条件を変更してください。" : {
       "extractionState" : "manual"
+    },
+    "データをエクスポート" : {
+      "extractionState" : "manual"
+    },
+    "エクスポート" : {
+      "extractionState" : "manual"
+    },
+    "内容" : {
+      "extractionState" : "manual"
+    },
+    "エクスポートを共有" : {
+      "extractionState" : "manual"
+    },
+    "エクスポートを準備中…" : {
+      "extractionState" : "manual"
+    },
+    "デッキ・カード・メモを JSON ファイルに書き出します。バックアップや別端末への移行に利用できます。" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

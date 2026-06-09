@@ -29,6 +29,12 @@ struct SettingsView: View {
                     LabeledContent("メモ", value: "\(notes.count)")
                     LabeledContent("AI候補", value: "\(candidates.count)")
                     LabeledContent("カード", value: "\(cards.count)")
+
+                    NavigationLink {
+                        ExportView()
+                    } label: {
+                        Label("データをエクスポート", systemImage: "square.and.arrow.up")
+                    }
                 }
 
                 Section("AI") {
