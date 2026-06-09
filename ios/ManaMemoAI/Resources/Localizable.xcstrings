@@ -447,6 +447,9 @@
     },
     "このデッキには復習カードがありません。" : {
       "extractionState" : "manual"
+    },
+    "%lld 枚を復習しました" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

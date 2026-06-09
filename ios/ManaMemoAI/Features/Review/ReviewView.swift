@@ -13,6 +13,8 @@ struct ReviewView: View {
     @State private var hasLoaded = false
     // 復習対象を絞り込むデッキ。nil は全デッキ。選択時は子孫デッキも含める。
     @State private var deckFilter: UUID?
+    // このセッションでの評価別の枚数。完了サマリに使う。
+    @State private var ratingCounts: [ReviewRating: Int] = [:]
 
     private var currentCard: LocalCard? {
         guard currentIndex < queue.count else {
@@ -121,15 +123,45 @@ struct ReviewView: View {
     }
 
     private var completionView: some View {
-        ContentUnavailableView {
-            Label("今日の復習は完了です", systemImage: "checkmark.circle")
-        } description: {
-            Text("完了: \(completedCount) 枚")
-        } actions: {
+        VStack(spacing: AppSpacing.xl) {
+            VStack(spacing: AppSpacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 52))
+                    .foregroundStyle(AppColor.success)
+                    .accessibilityHidden(true)
+                Text("今日の復習は完了です")
+                    .font(.title2.bold())
+                Text("\(completedCount) 枚を復習しました")
+                    .appBody()
+                    .foregroundStyle(AppColor.secondaryText)
+            }
+
+            if completedCount > 0 {
+                VStack(spacing: AppSpacing.sm) {
+                    ForEach(ReviewRating.allCases) { rating in
+                        ratingSummaryRow(rating)
+                    }
+                }
+                .cardSurface()
+            }
+
             Button("もう一度復習する", action: reloadQueue)
                 .buttonStyle(.secondaryAction)
-                .padding(.horizontal, AppSpacing.xl)
+
+            Spacer()
         }
+        .padding()
+    }
+
+    private func ratingSummaryRow(_ rating: ReviewRating) -> some View {
+        HStack {
+            Label(rating.title, systemImage: rating.systemImage)
+                .foregroundStyle(rating.tint)
+            Spacer()
+            Text("\(ratingCounts[rating, default: 0])")
+                .font(.headline.monospacedDigit())
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func loadQueueIfNeeded() {
@@ -145,6 +177,7 @@ struct ReviewView: View {
         queue = scopedCards.filter { $0.dueAt <= .now }
         currentIndex = 0
         completedCount = 0
+        ratingCounts = [:]
         isAnswerVisible = false
     }
 
@@ -229,6 +262,7 @@ struct ReviewView: View {
         Haptics.selection()
         ReviewScheduler.apply(rating, to: card)
         completedCount += 1
+        ratingCounts[rating, default: 0] += 1
         isAnswerVisible = false
         currentIndex += 1
 
