@@ -3,6 +3,7 @@ import SwiftData
 
 struct ReviewView: View {
     @Query(sort: \LocalCard.dueAt) private var cards: [LocalCard]
+    @Query(sort: \LocalDeck.displayOrder) private var decks: [LocalDeck]
     // セッション開始時点の復習対象を固定スナップショットとして保持する。
     // 採点で dueAt が未来に移動しても分母が変動せず、進捗表示が安定する。
     @State private var queue: [LocalCard] = []
@@ -10,6 +11,8 @@ struct ReviewView: View {
     @State private var isAnswerVisible = false
     @State private var completedCount = 0
     @State private var hasLoaded = false
+    // 復習対象を絞り込むデッキ。nil は全デッキ。選択時は子孫デッキも含める。
+    @State private var deckFilter: UUID?
 
     private var currentCard: LocalCard? {
         guard currentIndex < queue.count else {
@@ -19,14 +22,36 @@ struct ReviewView: View {
         return queue[currentIndex]
     }
 
+    // 絞り込みデッキとその全子孫の id 集合（nil は絞り込みなし）。
+    private var scopedDeckIds: Set<UUID>? {
+        guard let deckFilter else { return nil }
+        var ids: Set<UUID> = [deckFilter]
+        var frontier = [deckFilter]
+        while let current = frontier.popLast() {
+            for deck in decks where deck.parentDeckId == current {
+                if ids.insert(deck.id).inserted {
+                    frontier.append(deck.id)
+                }
+            }
+        }
+        return ids
+    }
+
+    private var scopedCards: [LocalCard] {
+        guard let scopedDeckIds else { return cards }
+        return cards.filter { scopedDeckIds.contains($0.deckId) }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
-                if cards.isEmpty {
+                if scopedCards.isEmpty {
                     ContentUnavailableView(
                         "カードがありません",
                         systemImage: "rectangle.on.rectangle",
-                        description: Text("AI候補を採用すると復習カードになります。")
+                        description: Text(deckFilter == nil
+                            ? "AI候補を採用すると復習カードになります。"
+                            : "このデッキには復習カードがありません。")
                     )
                 } else if let currentCard {
                     reviewContent(for: currentCard)
@@ -36,6 +61,12 @@ struct ReviewView: View {
             }
             .navigationTitle("復習")
             .toolbar {
+                if !decks.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        deckFilterMenu
+                    }
+                }
+
                 if !queue.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Text("\(min(currentIndex + 1, queue.count))/\(queue.count)")
@@ -45,7 +76,48 @@ struct ReviewView: View {
                 }
             }
             .onAppear(perform: loadQueueIfNeeded)
+            .onChange(of: deckFilter) { reloadQueue() }
         }
+    }
+
+    private var deckFilterMenu: some View {
+        Menu {
+            Picker("デッキで絞り込む", selection: $deckFilter) {
+                Text("すべてのデッキ").tag(UUID?.none)
+                ForEach(filterOptions) { option in
+                    Text(option.name).tag(UUID?.some(option.id))
+                }
+            }
+        } label: {
+            Label(filterLabel, systemImage: "line.3.horizontal.decrease.circle")
+        }
+        .accessibilityLabel("デッキで絞り込む")
+    }
+
+    private struct FilterOption: Identifiable {
+        let id: UUID
+        let name: String
+    }
+
+    // デッキをツリー順に並べた絞り込み候補（インデント付き）。
+    private var filterOptions: [FilterOption] {
+        func build(parent: UUID?, depth: Int) -> [FilterOption] {
+            decks
+                .filter { $0.parentDeckId == parent }
+                .sorted { $0.displayOrder < $1.displayOrder }
+                .flatMap { deck in
+                    [FilterOption(id: deck.id, name: String(repeating: "　", count: depth) + deck.name)]
+                        + build(parent: deck.id, depth: depth + 1)
+                }
+        }
+        return build(parent: nil, depth: 0)
+    }
+
+    private var filterLabel: String {
+        guard let deckFilter, let deck = decks.first(where: { $0.id == deckFilter }) else {
+            return String(localized: "すべて")
+        }
+        return deck.name
     }
 
     private var completionView: some View {
@@ -70,7 +142,7 @@ struct ReviewView: View {
     }
 
     private func reloadQueue() {
-        queue = cards.filter { $0.dueAt <= .now }
+        queue = scopedCards.filter { $0.dueAt <= .now }
         currentIndex = 0
         completedCount = 0
         isAnswerVisible = false

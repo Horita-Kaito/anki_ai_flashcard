@@ -435,6 +435,18 @@
     },
     "%lld 個のサブデッキ" : {
       "extractionState" : "manual"
+    },
+    "すべて" : {
+      "extractionState" : "manual"
+    },
+    "すべてのデッキ" : {
+      "extractionState" : "manual"
+    },
+    "デッキで絞り込む" : {
+      "extractionState" : "manual"
+    },
+    "このデッキには復習カードがありません。" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"
