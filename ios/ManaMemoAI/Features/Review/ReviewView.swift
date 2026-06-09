@@ -174,7 +174,7 @@ struct ReviewView: View {
     }
 
     private func reloadQueue() {
-        queue = scopedCards.filter { $0.dueAt <= .now }
+        queue = scopedCards.filter { $0.dueAt <= .now && !$0.isSuspended }
         currentIndex = 0
         completedCount = 0
         ratingCounts = [:]

@@ -8,6 +8,7 @@ struct CardEditView: View {
     @State private var question: String
     @State private var answer: String
     @State private var explanation: String
+    @State private var isSuspended: Bool
     @State private var isDiscardConfirmPresented = false
 
     // 入力欄の最小高さは Dynamic Type に追従させる。
@@ -21,6 +22,7 @@ struct CardEditView: View {
         _question = State(initialValue: card.question)
         _answer = State(initialValue: card.answer)
         _explanation = State(initialValue: card.explanation ?? "")
+        _isSuspended = State(initialValue: card.isSuspended)
     }
 
     var body: some View {
@@ -49,6 +51,12 @@ struct CardEditView: View {
                 LabeledContent("反復", value: "\(card.repetitions)")
                 LabeledContent("間隔", value: "\(card.intervalDays) 日")
                 LabeledContent("失敗", value: "\(card.lapseCount)")
+            }
+
+            Section {
+                Toggle("復習を一時停止", isOn: $isSuspended)
+            } footer: {
+                Text("一時停止すると、このカードは復習に出題されません。")
             }
         }
         .navigationTitle("カード編集")
@@ -94,6 +102,7 @@ struct CardEditView: View {
         question != card.question
             || answer != card.answer
             || explanation != (card.explanation ?? "")
+            || isSuspended != card.isSuspended
     }
 
     private func attemptDismiss() {
@@ -108,6 +117,7 @@ struct CardEditView: View {
         card.question = question.trimmingCharacters(in: .whitespacesAndNewlines)
         card.answer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
         card.explanation = normalizedExplanation
+        card.isSuspended = isSuspended
         card.markDirty()
         Haptics.success()
         dismiss()

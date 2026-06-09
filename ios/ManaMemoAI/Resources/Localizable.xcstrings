@@ -450,6 +450,21 @@
     },
     "%lld 枚を復習しました" : {
       "extractionState" : "manual"
+    },
+    "復習を一時停止" : {
+      "extractionState" : "manual"
+    },
+    "一時停止すると、このカードは復習に出題されません。" : {
+      "extractionState" : "manual"
+    },
+    "停止中" : {
+      "extractionState" : "manual"
+    },
+    "一時停止" : {
+      "extractionState" : "manual"
+    },
+    "再開" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

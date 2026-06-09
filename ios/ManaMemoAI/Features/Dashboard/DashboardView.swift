@@ -14,7 +14,7 @@ struct DashboardView: View {
     let onOpenCandidates: () -> Void
 
     private var dueCount: Int {
-        cards.filter { $0.dueAt <= .now }.count
+        cards.filter { $0.dueAt <= .now && !$0.isSuspended }.count
     }
 
     private var pendingCount: Int {

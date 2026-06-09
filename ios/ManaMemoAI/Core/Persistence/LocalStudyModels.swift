@@ -139,6 +139,9 @@ final class LocalCard: SyncTrackable {
     var repetitions: Int
     var intervalDays: Int
     var lapseCount: Int
+    // 一時停止中のカードは復習キューから除外する。
+    // 追加プロパティ（既定 false）なので SwiftData の軽量マイグレーションで自動追従する。
+    var isSuspended: Bool
     var createdAt: Date
     var updatedAt: Date
     var dirty: Bool
@@ -157,6 +160,7 @@ final class LocalCard: SyncTrackable {
         repetitions: Int = 0,
         intervalDays: Int = 0,
         lapseCount: Int = 0,
+        isSuspended: Bool = false,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         dirty: Bool = true,
@@ -174,6 +178,7 @@ final class LocalCard: SyncTrackable {
         self.repetitions = repetitions
         self.intervalDays = intervalDays
         self.lapseCount = lapseCount
+        self.isSuspended = isSuspended
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.dirty = dirty

@@ -12,7 +12,7 @@ struct HomeView: View {
 
     // 本日の復習対象（期限到来済み）枚数。タブのバッジに出す。
     private var dueCount: Int {
-        cards.filter { $0.dueAt <= .now }.count
+        cards.filter { $0.dueAt <= .now && !$0.isSuspended }.count
     }
 
     // 未確認のAI候補件数。メモタブのバッジに出す。

@@ -39,6 +39,17 @@ struct CardListView: View {
                             } label: {
                                 CardRow(card: card, deckName: deckName(for: card.deckId))
                             }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    toggleSuspend(card)
+                                } label: {
+                                    Label(
+                                        card.isSuspended ? "再開" : "一時停止",
+                                        systemImage: card.isSuspended ? "play" : "pause"
+                                    )
+                                }
+                                .tint(card.isSuspended ? AppColor.success : AppColor.warning)
+                            }
                         }
                         .onDelete(perform: delete)
                     } header: {
@@ -60,6 +71,12 @@ struct CardListView: View {
             let card = filteredCards[offset]
             modelContext.deleteTracked(entity: SyncEntity.cards, clientId: card.id, model: card)
         }
+    }
+
+    private func toggleSuspend(_ card: LocalCard) {
+        card.isSuspended.toggle()
+        card.markDirty()
+        Haptics.selection()
     }
 }
 
@@ -84,6 +101,12 @@ private struct CardRow: View {
                 Label("\(card.repetitions)", systemImage: "repeat")
             }
             .metadataStyle()
+
+            if card.isSuspended {
+                Label("停止中", systemImage: "pause.circle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(AppColor.warning)
+            }
         }
         .padding(.vertical, AppSpacing.xs)
         .accessibilityElement(children: .combine)

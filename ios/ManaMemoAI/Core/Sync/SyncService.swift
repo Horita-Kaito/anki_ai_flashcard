@@ -137,6 +137,7 @@ final class SyncService {
         record.answer = card.answer
         record.explanation = card.explanation
         record.scheduler = card.scheduler
+        record.isSuspended = card.isSuspended
         return record
     }
 
@@ -316,6 +317,7 @@ final class SyncService {
             existing.answer = record.answer ?? existing.answer
             existing.explanation = record.explanation
             existing.scheduler = record.scheduler ?? existing.scheduler
+            existing.isSuspended = record.isSuspended ?? existing.isSuspended
             existing.updatedAt = incoming
             existing.dirty = false
             existing.syncedAt = Date()
@@ -329,6 +331,7 @@ final class SyncService {
                 answer: record.answer ?? "",
                 explanation: record.explanation,
                 scheduler: record.scheduler ?? "fsrs",
+                isSuspended: record.isSuspended ?? false,
                 updatedAt: incoming,
                 dirty: false,
                 syncedAt: Date()
