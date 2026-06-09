@@ -2,22 +2,68 @@ import SwiftUI
 import SwiftData
 
 struct CardListView: View {
+    enum CardSort: String, CaseIterable, Identifiable {
+        case updated, due, repetitions
+        var id: String { rawValue }
+        var title: LocalizedStringKey {
+            switch self {
+            case .updated: "更新順"
+            case .due: "期限順"
+            case .repetitions: "反復順"
+            }
+        }
+    }
+
+    enum CardScope: String, CaseIterable, Identifiable {
+        case all, due, suspended
+        var id: String { rawValue }
+        var title: LocalizedStringKey {
+            switch self {
+            case .all: "すべて"
+            case .due: "復習対象のみ"
+            case .suspended: "停止中のみ"
+            }
+        }
+    }
+
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \LocalCard.updatedAt, order: .reverse) private var cards: [LocalCard]
     @Query private var decks: [LocalDeck]
     @State private var searchText = ""
+    @State private var sortOrder: CardSort = .updated
+    @State private var scope: CardScope = .all
 
-    private var filteredCards: [LocalCard] {
+    private var visibleCards: [LocalCard] {
+        var result = cards
+
+        switch scope {
+        case .all:
+            break
+        case .due:
+            result = result.filter { $0.dueAt <= .now && !$0.isSuspended }
+        case .suspended:
+            result = result.filter { $0.isSuspended }
+        }
+
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else {
-            return cards
+        if !query.isEmpty {
+            result = result.filter {
+                $0.question.localizedCaseInsensitiveContains(query)
+                    || $0.answer.localizedCaseInsensitiveContains(query)
+                    || ($0.explanation?.localizedCaseInsensitiveContains(query) ?? false)
+            }
         }
 
-        return cards.filter {
-            $0.question.localizedCaseInsensitiveContains(query)
-                || $0.answer.localizedCaseInsensitiveContains(query)
-                || ($0.explanation?.localizedCaseInsensitiveContains(query) ?? false)
+        switch sortOrder {
+        case .updated:
+            result.sort { $0.updatedAt > $1.updatedAt }
+        case .due:
+            result.sort { $0.dueAt < $1.dueAt }
+        case .repetitions:
+            result.sort { $0.repetitions > $1.repetitions }
         }
+
+        return result
     }
 
     var body: some View {
@@ -29,11 +75,19 @@ struct CardListView: View {
                         systemImage: "rectangle.on.rectangle",
                         description: Text("AI候補を採用するとここに表示されます。")
                     )
-                } else if filteredCards.isEmpty {
-                    ContentUnavailableView.search(text: searchText)
+                } else if visibleCards.isEmpty {
+                    if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        ContentUnavailableView(
+                            "該当するカードがありません",
+                            systemImage: "line.3.horizontal.decrease.circle",
+                            description: Text("表示条件を変更してください。")
+                        )
+                    } else {
+                        ContentUnavailableView.search(text: searchText)
+                    }
                 } else {
                     Section {
-                        ForEach(filteredCards) { card in
+                        ForEach(visibleCards) { card in
                             NavigationLink {
                                 CardEditView(card: card, deckName: deckName(for: card.deckId))
                             } label: {
@@ -53,12 +107,30 @@ struct CardListView: View {
                         }
                         .onDelete(perform: delete)
                     } header: {
-                        Text("\(filteredCards.count) 件")
+                        Text("\(visibleCards.count) 件")
                     }
                 }
             }
             .navigationTitle("カード")
             .searchable(text: $searchText, prompt: "カードを検索")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("並び替え", selection: $sortOrder) {
+                            ForEach(CardSort.allCases) { option in
+                                Text(option.title).tag(option)
+                            }
+                        }
+                        Picker("表示", selection: $scope) {
+                            ForEach(CardScope.allCases) { option in
+                                Text(option.title).tag(option)
+                            }
+                        }
+                    } label: {
+                        Label("並び替え・表示", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                }
+            }
         }
     }
 
@@ -68,7 +140,7 @@ struct CardListView: View {
 
     private func delete(offsets: IndexSet) {
         for offset in offsets {
-            let card = filteredCards[offset]
+            let card = visibleCards[offset]
             modelContext.deleteTracked(entity: SyncEntity.cards, clientId: card.id, model: card)
         }
     }

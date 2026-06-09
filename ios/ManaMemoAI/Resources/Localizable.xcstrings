@@ -465,6 +465,36 @@
     },
     "再開" : {
       "extractionState" : "manual"
+    },
+    "並び替え" : {
+      "extractionState" : "manual"
+    },
+    "表示" : {
+      "extractionState" : "manual"
+    },
+    "並び替え・表示" : {
+      "extractionState" : "manual"
+    },
+    "更新順" : {
+      "extractionState" : "manual"
+    },
+    "期限順" : {
+      "extractionState" : "manual"
+    },
+    "反復順" : {
+      "extractionState" : "manual"
+    },
+    "復習対象のみ" : {
+      "extractionState" : "manual"
+    },
+    "停止中のみ" : {
+      "extractionState" : "manual"
+    },
+    "該当するカードがありません" : {
+      "extractionState" : "manual"
+    },
+    "表示条件を変更してください。" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"
