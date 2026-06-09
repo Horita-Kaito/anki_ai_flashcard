@@ -423,6 +423,18 @@
     },
     "今週追加" : {
       "extractionState" : "manual"
+    },
+    "親デッキ（任意）" : {
+      "extractionState" : "manual"
+    },
+    "親デッキ" : {
+      "extractionState" : "manual"
+    },
+    "なし（トップ）" : {
+      "extractionState" : "manual"
+    },
+    "%lld 個のサブデッキ" : {
+      "extractionState" : "manual"
     }
   },
   "version" : "1.0"

@@ -21,6 +21,9 @@ final class LocalDeck: SyncTrackable {
     var name: String
     var deckDescription: String?
     var displayOrder: Int
+    // 親デッキの id。nil はトップレベル。デッキの階層構造を表す。
+    // 追加の optional プロパティなので SwiftData の軽量マイグレーションで自動追従する。
+    var parentDeckId: UUID?
     var createdAt: Date
     var updatedAt: Date
     var dirty: Bool
@@ -31,6 +34,7 @@ final class LocalDeck: SyncTrackable {
         name: String,
         deckDescription: String? = nil,
         displayOrder: Int = 0,
+        parentDeckId: UUID? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         dirty: Bool = true,
@@ -40,6 +44,7 @@ final class LocalDeck: SyncTrackable {
         self.name = name
         self.deckDescription = deckDescription
         self.displayOrder = displayOrder
+        self.parentDeckId = parentDeckId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.dirty = dirty
