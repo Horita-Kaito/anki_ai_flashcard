@@ -131,6 +131,32 @@ private struct DeckRow: View {
     }
 }
 
+/// デッキ詳細内に表示する、そのデッキのカード行（読み取り専用）。
+private struct DeckCardRow: View {
+    let card: LocalCard
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppSpacing.xs) {
+            Text(card.question)
+                .lineLimit(1)
+
+            if card.isSuspended {
+                Label("停止中", systemImage: "pause.circle")
+                    .font(.caption)
+                    .foregroundStyle(AppColor.warning)
+            } else if card.dueAt <= .now {
+                Label("復習対象", systemImage: "calendar")
+                    .font(.caption)
+                    .foregroundStyle(AppColor.accent)
+            } else {
+                Text(card.dueAt.formatted(date: .numeric, time: .omitted))
+                    .metadataStyle()
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
 private struct DeckCreateView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -199,6 +225,7 @@ private struct DeckCreateView: View {
 private struct DeckEditView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query private var allCards: [LocalCard]
     let deck: LocalDeck
     let cardCount: Int
     let allDecks: [LocalDeck]
@@ -207,6 +234,12 @@ private struct DeckEditView: View {
     @State private var deckDescription: String
     @State private var parentDeckId: UUID?
     @State private var isDeleteConfirmPresented = false
+
+    private var deckCards: [LocalCard] {
+        allCards
+            .filter { $0.deckId == deck.id }
+            .sorted { $0.dueAt < $1.dueAt }
+    }
 
     init(deck: LocalDeck, cardCount: Int, allDecks: [LocalDeck]) {
         self.deck = deck
@@ -236,8 +269,19 @@ private struct DeckEditView: View {
                 )
             }
 
-            Section("カード") {
-                LabeledContent("枚数", value: "\(cardCount)")
+            Section {
+                if deckCards.isEmpty {
+                    Text("カードがありません")
+                        .foregroundStyle(AppColor.secondaryText)
+                } else {
+                    ForEach(deckCards) { card in
+                        DeckCardRow(card: card)
+                    }
+                }
+            } header: {
+                Text("カード")
+            } footer: {
+                Text("\(deckCards.count) 枚")
             }
 
             Section {
