@@ -3,6 +3,7 @@ import SwiftData
 
 struct NoteDetailView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query private var allCandidates: [LocalAiCardCandidate]
     let note: LocalNoteSeed
 
@@ -13,6 +14,11 @@ struct NoteDetailView: View {
     @State private var generationErrorMessage: String?
     @State private var generationSourceMessage: String?
     @State private var generationTask: Task<Void, Never>?
+    @State private var isEditPresented = false
+    @State private var isDeleteConfirmPresented = false
+    @State private var isModelDownloaded = false
+
+    private let fileLocator = LocalLLMModelFileLocator()
 
     private var candidates: [LocalAiCardCandidate] {
         allCandidates
@@ -52,24 +58,41 @@ struct NoteDetailView: View {
                 LabeledContent("最大トークン", value: "\(llmSettings.generationOptions.maxTokens)")
             }
 
+            if !isModelDownloaded {
+                Section {
+                    InlineStatusView(.warning, "ローカルLLMモデルが未ダウンロードです")
+
+                    Text(
+                        llmSettings.usesRuleBasedFallback
+                            ? "このまま生成すると、AIではなくルールベースの簡易候補が作られます。高品質な候補にはモデルのダウンロードが必要です。"
+                            : "モデルがないと生成できません。フォールバックが無効のため、まずモデルをダウンロードしてください。"
+                    )
+                    .appFootnote()
+                    .foregroundStyle(AppColor.secondaryText)
+
+                    NavigationLink {
+                        LocalAISettingsView(settings: llmSettings)
+                    } label: {
+                        Label("モデルをダウンロード", systemImage: "icloud.and.arrow.down")
+                    }
+                }
+            }
+
             if let generationErrorMessage {
                 Section {
-                    Label(generationErrorMessage, systemImage: "exclamationmark.triangle")
-                        .foregroundStyle(.red)
+                    InlineStatusView(.error, verbatim: generationErrorMessage)
                 }
             }
 
             if let generationSourceMessage {
                 Section {
-                    Label(generationSourceMessage, systemImage: "info.circle")
-                        .foregroundStyle(.secondary)
+                    InlineStatusView(.info, verbatim: generationSourceMessage)
                 }
             }
 
             if let adoptedCardMessage {
                 Section {
-                    Label(adoptedCardMessage, systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    InlineStatusView(.success, verbatim: adoptedCardMessage)
                 }
             }
 
@@ -85,24 +108,90 @@ struct NoteDetailView: View {
                         CandidateRow(candidate: candidate) {
                             selectedCandidate = candidate
                         }
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                modelContext.deleteTracked(entity: SyncEntity.candidates, clientId: candidate.id, model: candidate)
+                            } label: {
+                                Label("却下", systemImage: "trash")
+                            }
+                        }
                     }
                 }
             }
         }
         .navigationTitle("メモ詳細")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        isEditPresented = true
+                    } label: {
+                        Label("編集", systemImage: "pencil")
+                    }
+
+                    Button(role: .destructive) {
+                        isDeleteConfirmPresented = true
+                    } label: {
+                        Label("メモを削除", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .accessibilityLabel("メモの操作")
+            }
+        }
         .sheet(item: $selectedCandidate) { candidate in
             CandidateAdoptionView(candidate: candidate) { card in
-                adoptedCardMessage = "カードを採用しました"
+                adoptedCardMessage = String(localized: "カードを採用しました")
+                Haptics.success()
                 _ = card
             }
+        }
+        .sheet(isPresented: $isEditPresented) {
+            NavigationStack {
+                NoteEditView(note: note)
+            }
+        }
+        .confirmationDialog(
+            "このメモを削除しますか？",
+            isPresented: $isDeleteConfirmPresented,
+            titleVisibility: .visible
+        ) {
+            Button("削除", role: .destructive) {
+                deleteNote()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("メモと未採用のAI候補が削除されます。採用済みカードは残ります。")
+        }
+        .onAppear {
+            refreshModelAvailability()
+        }
+        .onChange(of: llmSettings.selectedModelId) {
+            refreshModelAvailability()
         }
         .onDisappear {
             cancelGeneration()
         }
     }
 
+    private func refreshModelAvailability() {
+        isModelDownloaded = fileLocator.downloadedURL(for: llmSettings.selectedModel) != nil
+    }
+
+    // メモ削除時は紐づくAI候補も削除する。採用済みカードは独立データなので残す。
+    private func deleteNote() {
+        cancelGeneration()
+        for candidate in allCandidates where candidate.noteSeedId == note.id {
+            modelContext.deleteTracked(entity: SyncEntity.candidates, clientId: candidate.id, model: candidate)
+        }
+        modelContext.deleteTracked(entity: SyncEntity.noteSeeds, clientId: note.id, model: note)
+        dismiss()
+    }
+
     private func generate() {
         generationTask?.cancel()
+        Haptics.tap()
         isGenerating = true
         generationErrorMessage = nil
         generationSourceMessage = nil
@@ -123,12 +212,14 @@ struct NoteDetailView: View {
                     modelContext.insert(candidate)
                 }
 
-                note.updatedAt = .now
+                note.markDirty()
                 generationSourceMessage = result.source.message
+                Haptics.success()
             } catch is CancellationError {
-                generationSourceMessage = "生成を停止しました"
+                generationSourceMessage = String(localized: "生成を停止しました")
             } catch {
                 generationErrorMessage = error.localizedDescription
+                Haptics.error()
             }
 
             isGenerating = false
@@ -142,7 +233,7 @@ struct NoteDetailView: View {
         }
 
         generationTask?.cancel()
-        generationSourceMessage = "生成を停止しています"
+        generationSourceMessage = String(localized: "生成を停止しています")
     }
 }
 
@@ -150,9 +241,9 @@ private extension LocalCandidateGenerationResult.Source {
     var message: String {
         switch self {
         case .localLLM(let modelName):
-            return "\(modelName) で生成しました"
+            return String(localized: "\(modelName) で生成しました")
         case .ruleBasedFallback:
-            return "ルールベースのフォールバックで生成しました"
+            return String(localized: "ルールベースのフォールバックで生成しました")
         }
     }
 }
@@ -161,23 +252,29 @@ private struct CandidateRow: View {
     let candidate: LocalAiCardCandidate
     let onAdopt: () -> Void
 
+    private var isAdopted: Bool {
+        candidate.status == "adopted"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(candidate.question)
                 .font(.headline)
                 .lineLimit(3)
 
             Text(candidate.answer)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColor.secondaryText)
                 .lineLimit(4)
 
-            HStack(spacing: 8) {
+            HStack(spacing: AppSpacing.sm) {
                 Label(candidate.cardType, systemImage: "rectangle.on.rectangle")
-                Label(candidate.status, systemImage: "circle.fill")
+                    .metadataStyle()
+                Label(isAdopted ? String(localized: "採用済み") : String(localized: "未採用"), systemImage: "circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(isAdopted ? AppColor.success : AppColor.secondaryText)
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .accessibilityElement(children: .combine)
 
             Button {
                 onAdopt()
@@ -186,12 +283,74 @@ private struct CandidateRow: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(candidate.status == "adopted")
+            .disabled(isAdopted)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, AppSpacing.xs)
     }
 
     private var adoptButtonTitle: String {
-        candidate.status == "adopted" ? "採用済み" : "カードに採用"
+        isAdopted ? String(localized: "採用済み") : String(localized: "カードに採用")
+    }
+}
+
+private struct NoteEditView: View {
+    @Environment(\.dismiss) private var dismiss
+    let note: LocalNoteSeed
+
+    @State private var bodyText: String
+    @State private var learningGoal: String
+    @ScaledMetric(relativeTo: .body) private var editorHeight: CGFloat = 180
+
+    init(note: LocalNoteSeed) {
+        self.note = note
+        _bodyText = State(initialValue: note.body)
+        _learningGoal = State(initialValue: note.learningGoal ?? "")
+    }
+
+    var body: some View {
+        Form {
+            Section("メモ") {
+                TextEditor(text: $bodyText)
+                    .frame(minHeight: editorHeight)
+            }
+
+            Section("学習目的（任意）") {
+                TextField("学習目的", text: $learningGoal, axis: .vertical)
+                    .lineLimit(1...3)
+            }
+        }
+        .navigationTitle("メモ編集")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("閉じる") {
+                    dismiss()
+                }
+            }
+
+            ToolbarItem(placement: .confirmationAction) {
+                Button("保存") {
+                    save()
+                }
+                .disabled(trimmedBody.isEmpty)
+            }
+        }
+    }
+
+    private var trimmedBody: String {
+        bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func save() {
+        note.body = trimmedBody
+        note.learningGoal = normalizedLearningGoal
+        note.markDirty()
+        Haptics.success()
+        dismiss()
+    }
+
+    private var normalizedLearningGoal: String? {
+        let value = learningGoal.trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? nil : value
     }
 }

@@ -12,6 +12,7 @@ enum LocalLLMGenerationError: LocalizedError, Equatable {
     case runtimeUnavailable
     case emptyPrompt
     case invalidResponse
+    case contextExceeded
     case modelLoadFailed
     case contextCreationFailed
     case tokenizationFailed
@@ -27,6 +28,8 @@ enum LocalLLMGenerationError: LocalizedError, Equatable {
             return "生成するメモが空です。"
         case .invalidResponse:
             return "ローカルLLMの出力をカード候補として読み取れませんでした。"
+        case .contextExceeded:
+            return "メモが長すぎてコンテキスト長を超えました。メモを短くするか、設定でコンテキストを増やしてください。"
         case .modelLoadFailed:
             return "ローカルLLMモデルを読み込めませんでした。"
         case .contextCreationFailed:

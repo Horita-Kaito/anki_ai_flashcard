@@ -32,14 +32,18 @@ struct CardListView: View {
                 } else if filteredCards.isEmpty {
                     ContentUnavailableView.search(text: searchText)
                 } else {
-                    ForEach(filteredCards) { card in
-                        NavigationLink {
-                            CardEditView(card: card, deckName: deckName(for: card.deckId))
-                        } label: {
-                            CardRow(card: card, deckName: deckName(for: card.deckId))
+                    Section {
+                        ForEach(filteredCards) { card in
+                            NavigationLink {
+                                CardEditView(card: card, deckName: deckName(for: card.deckId))
+                            } label: {
+                                CardRow(card: card, deckName: deckName(for: card.deckId))
+                            }
                         }
+                        .onDelete(perform: delete)
+                    } header: {
+                        Text("\(filteredCards.count) 件")
                     }
-                    .onDelete(perform: delete)
                 }
             }
             .navigationTitle("カード")
@@ -53,7 +57,8 @@ struct CardListView: View {
 
     private func delete(offsets: IndexSet) {
         for offset in offsets {
-            modelContext.delete(filteredCards[offset])
+            let card = filteredCards[offset]
+            modelContext.deleteTracked(entity: SyncEntity.cards, clientId: card.id, model: card)
         }
     }
 }
@@ -63,30 +68,30 @@ private struct CardRow: View {
     let deckName: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.sm) {
             Text(card.question)
                 .font(.headline)
                 .lineLimit(2)
 
             Text(card.answer)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColor.secondaryText)
                 .lineLimit(2)
 
-            HStack(spacing: 10) {
+            HStack(spacing: AppSpacing.md) {
                 Label(deckName, systemImage: "rectangle.stack")
                 Label(dueLabel, systemImage: "calendar")
                 Label("\(card.repetitions)", systemImage: "repeat")
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .metadataStyle()
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, AppSpacing.xs)
+        .accessibilityElement(children: .combine)
     }
 
     private var dueLabel: String {
         if card.dueAt <= .now {
-            return "復習対象"
+            return String(localized: "復習対象")
         }
 
         return card.dueAt.formatted(date: .numeric, time: .omitted)

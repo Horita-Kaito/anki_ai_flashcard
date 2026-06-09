@@ -14,6 +14,11 @@ struct CandidateAdoptionView: View {
     @State private var answer: String
     @State private var explanation: String
 
+    // 入力欄の最小高さは Dynamic Type に追従させる。
+    @ScaledMetric(relativeTo: .body) private var questionHeight: CGFloat = 96
+    @ScaledMetric(relativeTo: .body) private var answerHeight: CGFloat = 132
+    @ScaledMetric(relativeTo: .body) private var explanationHeight: CGFloat = 88
+
     init(candidate: LocalAiCardCandidate, onAdopted: @escaping (LocalCard) -> Void) {
         self.candidate = candidate
         self.onAdopted = onAdopted
@@ -30,7 +35,7 @@ struct CandidateAdoptionView: View {
                         ContentUnavailableView(
                             "デッキがありません",
                             systemImage: "rectangle.stack",
-                            description: Text("標準デッキを作成します。")
+                            description: Text("「標準デッキ」を自動作成して採用します。")
                         )
                     } else {
                         Picker("デッキ", selection: $selectedDeckId) {
@@ -44,17 +49,17 @@ struct CandidateAdoptionView: View {
 
                 Section("カード表面") {
                     TextEditor(text: $question)
-                        .frame(minHeight: 96)
+                        .frame(minHeight: questionHeight)
                 }
 
                 Section("カード裏面") {
                     TextEditor(text: $answer)
-                        .frame(minHeight: 132)
+                        .frame(minHeight: answerHeight)
                 }
 
                 Section("補足") {
                     TextEditor(text: $explanation)
-                        .frame(minHeight: 88)
+                        .frame(minHeight: explanationHeight)
                 }
             }
             .navigationTitle("カードに採用")
@@ -91,7 +96,7 @@ struct CandidateAdoptionView: View {
             return
         }
 
-        let deck = LocalDeck(name: "標準デッキ")
+        let deck = LocalDeck(name: String(localized: "標準デッキ"))
         modelContext.insert(deck)
         selectedDeckId = deck.id
     }
@@ -111,7 +116,7 @@ struct CandidateAdoptionView: View {
         )
         modelContext.insert(card)
         candidate.status = "adopted"
-        candidate.updatedAt = .now
+        candidate.markDirty()
         onAdopted(card)
         dismiss()
     }

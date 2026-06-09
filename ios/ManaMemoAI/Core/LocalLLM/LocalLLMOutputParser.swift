@@ -43,7 +43,11 @@ enum LocalLLMOutputParser {
         var candidates = [trimmed]
         candidates.append(contentsOf: balancedJSONFragments(in: trimmed))
 
-        return Array(Set(candidates)).filter { !$0.isEmpty }
+        // 出力全体 → 外側の大きい断片 の順を保ったまま重複を除去する。
+        // Set 化すると順序が非決定的になり、内側のネストした部分オブジェクトを
+        // 誤って先に採用してしまう可能性があるため、挿入順を維持する。
+        var seen = Set<String>()
+        return candidates.filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
     private static func balancedJSONFragments(in text: String) -> [String] {

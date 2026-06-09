@@ -2,7 +2,8 @@ import SwiftUI
 
 struct LocalAISettingsView: View {
     @ObservedObject var settings: LocalLLMSettingsStore
-    @StateObject private var modelStore = LocalLLMModelStore()
+    @StateObject private var modelStore = LocalLLMModelStore.shared
+    @State private var isDeleteConfirmPresented = false
 
     private let runtimeDiagnostics = LlamaFrameworkRuntime.shared.diagnostics
 
@@ -31,12 +32,12 @@ struct LocalAISettingsView: View {
             Section("生成") {
                 Stepper("最大トークン \(settings.maxTokens)", value: $settings.maxTokens, in: 256...2048, step: 128)
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     LabeledContent("温度", value: String(format: "%.1f", settings.temperature))
                     Slider(value: $settings.temperature, in: 0.0...1.0, step: 0.1)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: AppSpacing.sm) {
                     LabeledContent("Top P", value: String(format: "%.1f", settings.topP))
                     Slider(value: $settings.topP, in: 0.1...1.0, step: 0.1)
                 }
@@ -52,8 +53,8 @@ struct LocalAISettingsView: View {
             Section("状態") {
                 runtimeStateRow
                 Text(runtimeDiagnostics.detail)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .appFootnote()
+                    .foregroundStyle(AppColor.secondaryText)
                 modelStateRow
             }
 
@@ -64,29 +65,29 @@ struct LocalAISettingsView: View {
                 case .downloaded(_, let byteCount):
                     LabeledContent("保存済み容量", value: byteFormatter.string(fromByteCount: byteCount))
                     Button("モデルを削除", role: .destructive) {
-                        modelStore.delete(settings.selectedModel)
+                        isDeleteConfirmPresented = true
                     }
                 case .invalid(_, let reason, let byteCount):
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(reason, systemImage: "exclamationmark.triangle")
-                            .foregroundStyle(.red)
+                    VStack(alignment: .leading, spacing: AppSpacing.sm) {
+                        InlineStatusView(.error, verbatim: reason)
                         Text("保存済み容量: \(byteFormatter.string(fromByteCount: byteCount))")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .appFootnote()
+                            .foregroundStyle(AppColor.secondaryText)
                         Button("削除して再ダウンロード", role: .destructive) {
                             modelStore.delete(settings.selectedModel)
                             modelStore.download(settings.selectedModel)
+                            Haptics.tap()
                         }
                         .disabled(settings.selectedModel.downloadURL == nil)
                     }
                 case .downloading(let progress):
-                    VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: AppSpacing.md) {
                         ProgressView(value: progress.fractionCompleted) {
                             Text("ダウンロード中 \(progress.percentage)%")
                         }
                         Text(downloadProgressText(progress))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .appFootnote()
+                            .foregroundStyle(AppColor.secondaryText)
                         Button("ダウンロードを停止", role: .cancel) {
                             modelStore.cancelDownload(for: settings.selectedModel)
                         }
@@ -94,6 +95,7 @@ struct LocalAISettingsView: View {
                 case .missing, .failed:
                     Button {
                         modelStore.download(settings.selectedModel)
+                        Haptics.tap()
                     } label: {
                         Label("モデルをダウンロード", systemImage: "icloud.and.arrow.down")
                     }
@@ -102,6 +104,19 @@ struct LocalAISettingsView: View {
             }
         }
         .navigationTitle("ローカルAI")
+        .confirmationDialog(
+            "モデルを削除しますか？",
+            isPresented: $isDeleteConfirmPresented,
+            titleVisibility: .visible
+        ) {
+            Button("削除", role: .destructive) {
+                modelStore.delete(settings.selectedModel)
+                Haptics.warning()
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("再度AI候補を生成するには、改めてダウンロードが必要です。")
+        }
         .onAppear {
             modelStore.refresh(for: settings.selectedModel)
         }
@@ -112,7 +127,7 @@ struct LocalAISettingsView: View {
 
     private var runtimeStateRow: some View {
         Label(runtimeDiagnostics.title, systemImage: "cpu")
-            .foregroundStyle(runtimeDiagnostics.state == .ready ? .green : .secondary)
+            .foregroundStyle(runtimeDiagnostics.state == .ready ? AppColor.success : AppColor.secondaryText)
     }
 
     @ViewBuilder
@@ -120,19 +135,19 @@ struct LocalAISettingsView: View {
         switch modelStore.state {
         case .missing:
             Label("モデル未ダウンロード", systemImage: "icloud.and.arrow.down")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColor.secondaryText)
         case .downloaded:
             Label("モデル保存済み", systemImage: "checkmark.circle")
-                .foregroundStyle(.green)
+                .foregroundStyle(AppColor.success)
         case .invalid(_, let reason, _):
             Label(reason, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
+                .foregroundStyle(AppColor.danger)
         case .downloading(let progress):
             Label("ダウンロード中 \(progress.percentage)%", systemImage: "arrow.down.circle")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AppColor.secondaryText)
         case .failed(let message):
             Label(message, systemImage: "exclamationmark.triangle")
-                .foregroundStyle(.red)
+                .foregroundStyle(AppColor.danger)
         }
     }
 

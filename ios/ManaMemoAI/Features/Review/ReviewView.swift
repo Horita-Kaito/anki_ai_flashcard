@@ -3,20 +3,20 @@ import SwiftData
 
 struct ReviewView: View {
     @Query(sort: \LocalCard.dueAt) private var cards: [LocalCard]
+    // セッション開始時点の復習対象を固定スナップショットとして保持する。
+    // 採点で dueAt が未来に移動しても分母が変動せず、進捗表示が安定する。
+    @State private var queue: [LocalCard] = []
     @State private var currentIndex = 0
     @State private var isAnswerVisible = false
     @State private var completedCount = 0
-
-    private var dueCards: [LocalCard] {
-        cards.filter { $0.dueAt <= .now }
-    }
+    @State private var hasLoaded = false
 
     private var currentCard: LocalCard? {
-        guard currentIndex < dueCards.count else {
+        guard currentIndex < queue.count else {
             return nil
         }
 
-        return dueCards[currentIndex]
+        return queue[currentIndex]
     }
 
     var body: some View {
@@ -31,87 +31,101 @@ struct ReviewView: View {
                 } else if let currentCard {
                     reviewContent(for: currentCard)
                 } else {
-                    ContentUnavailableView(
-                        "今日の復習は完了です",
-                        systemImage: "checkmark.circle",
-                        description: Text("完了: \(completedCount) 枚")
-                    )
+                    completionView
                 }
             }
             .navigationTitle("復習")
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Text("\(min(currentIndex + 1, dueCards.count))/\(dueCards.count)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                if !queue.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Text("\(min(currentIndex + 1, queue.count))/\(queue.count)")
+                            .metadataStyle()
+                            .accessibilityLabel(Text("\(queue.count) 枚中 \(min(currentIndex + 1, queue.count)) 枚目"))
+                    }
                 }
             }
+            .onAppear(perform: loadQueueIfNeeded)
         }
     }
 
+    private var completionView: some View {
+        ContentUnavailableView {
+            Label("今日の復習は完了です", systemImage: "checkmark.circle")
+        } description: {
+            Text("完了: \(completedCount) 枚")
+        } actions: {
+            Button("もう一度復習する", action: reloadQueue)
+                .buttonStyle(.secondaryAction)
+                .padding(.horizontal, AppSpacing.xl)
+        }
+    }
+
+    private func loadQueueIfNeeded() {
+        guard !hasLoaded else {
+            return
+        }
+
+        reloadQueue()
+        hasLoaded = true
+    }
+
+    private func reloadQueue() {
+        queue = cards.filter { $0.dueAt <= .now }
+        currentIndex = 0
+        completedCount = 0
+        isAnswerVisible = false
+    }
+
     private func reviewContent(for card: LocalCard) -> some View {
-        VStack(spacing: 18) {
-            VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: AppSpacing.xl) {
+            VStack(alignment: .leading, spacing: AppSpacing.md) {
                 Text("表")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .eyebrowStyle()
 
                 Text(card.question)
-                    .font(.title3.weight(.semibold))
+                    .appTitle()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .cardSurface()
 
             if isAnswerVisible {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppSpacing.md) {
                     Text("裏")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .eyebrowStyle()
 
                     Text(card.answer)
-                        .font(.body)
+                        .appBody()
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .textSelection(.enabled)
 
                     if let explanation = card.explanation, !explanation.isEmpty {
                         Divider()
                         Text(explanation)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                            .appFootnote()
+                            .foregroundStyle(AppColor.secondaryText)
                     }
                 }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.background)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.quaternary)
-                )
+                .cardSurface(material: .regularMaterial, bordered: true)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
 
                 ratingGrid(for: card)
+                    .transition(.opacity)
             } else {
-                Button {
-                    isAnswerVisible = true
-                } label: {
+                Button(action: revealAnswer) {
                     Label("答えを見る", systemImage: "eye")
-                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .buttonStyle(.primaryAction)
             }
 
             Spacer()
         }
         .padding()
+        .animation(.snappy(duration: 0.28), value: isAnswerVisible)
     }
 
     private func ratingGrid(for card: LocalCard) -> some View {
-        Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+        Grid(horizontalSpacing: AppSpacing.md, verticalSpacing: AppSpacing.md) {
             GridRow {
                 ratingButton(.again, card: card)
                 ratingButton(.hard, card: card)
@@ -129,19 +143,38 @@ struct ReviewView: View {
             rate(card, as: rating)
         } label: {
             Label(rating.title, systemImage: rating.systemImage)
-                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.bordered)
-        .controlSize(.large)
+        .buttonStyle(.secondaryAction(tint: rating.tint))
+        .accessibilityLabel(Text("評価: \(rating.title)"))
+    }
+
+    private func revealAnswer() {
+        Haptics.tap()
+        isAnswerVisible = true
     }
 
     private func rate(_ card: LocalCard, as rating: ReviewRating) {
+        Haptics.selection()
         ReviewScheduler.apply(rating, to: card)
         completedCount += 1
         isAnswerVisible = false
+        currentIndex += 1
 
-        if currentIndex < dueCards.count {
-            currentIndex = min(currentIndex, dueCards.count)
+        // セッションの最後の1枚を採点したら完了。完了の触覚で締めくくる。
+        if currentIndex >= queue.count {
+            Haptics.success()
+        }
+    }
+}
+
+private extension ReviewRating {
+    /// 評価ボタンの意味色。Again=注意、Hard=警告、Good=情報、Easy=成功。
+    var tint: Color {
+        switch self {
+        case .again: AppColor.danger
+        case .hard: AppColor.warning
+        case .good: AppColor.info
+        case .easy: AppColor.success
         }
     }
 }

@@ -7,6 +7,7 @@ struct NoteCreateView: View {
     @State private var bodyText = ""
     @State private var learningGoal = ""
     @State private var savedNote: LocalNoteSeed?
+    @ScaledMetric(relativeTo: .body) private var editorHeight: CGFloat = 180
     let onSaved: ((LocalNoteSeed) -> Void)?
 
     init(onSaved: ((LocalNoteSeed) -> Void)? = nil) {
@@ -17,10 +18,10 @@ struct NoteCreateView: View {
         Form {
             Section("メモ") {
                 TextEditor(text: $bodyText)
-                    .frame(minHeight: 180)
+                    .frame(minHeight: editorHeight)
             }
 
-            Section("任意") {
+            Section("学習目的（任意）") {
                 TextField("学習目的", text: $learningGoal, axis: .vertical)
                     .lineLimit(1...3)
             }
@@ -36,10 +37,11 @@ struct NoteCreateView: View {
             }
 
             Section {
-                Button("保存") {
-                    save()
-                }
-                .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("保存", action: save)
+                    .buttonStyle(.primaryAction)
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+                    .disabled(trimmedBody.isEmpty)
             }
         }
         .navigationTitle("メモ作成")
@@ -61,9 +63,14 @@ struct NoteCreateView: View {
         )
         modelContext.insert(note)
         savedNote = note
+        Haptics.success()
         bodyText = ""
         learningGoal = ""
         onSaved?(note)
+    }
+
+    private var trimmedBody: String {
+        bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var normalizedLearningGoal: String? {

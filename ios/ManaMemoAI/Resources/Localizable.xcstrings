@@ -1,0 +1,429 @@
+{
+  "sourceLanguage" : "ja",
+  "strings" : {
+    "AI" : {
+      "extractionState" : "manual"
+    },
+    "AI候補 %lld" : {
+      "extractionState" : "manual"
+    },
+    "Top P" : {
+      "extractionState" : "manual"
+    },
+    "アカウント" : {
+      "extractionState" : "manual"
+    },
+    "アカウント / 同期" : {
+      "extractionState" : "manual"
+    },
+    "カード" : {
+      "extractionState" : "manual"
+    },
+    "カードがありません" : {
+      "extractionState" : "manual"
+    },
+    "カードに採用" : {
+      "extractionState" : "manual"
+    },
+    "カード編集" : {
+      "extractionState" : "manual"
+    },
+    "キャンセル" : {
+      "extractionState" : "manual"
+    },
+    "コンテキスト" : {
+      "extractionState" : "manual"
+    },
+    "コンテキスト %lld" : {
+      "extractionState" : "manual"
+    },
+    "ダウンロード中 %lld%%" : {
+      "extractionState" : "manual"
+    },
+    "ダウンロードを停止" : {
+      "extractionState" : "manual"
+    },
+    "デッキ" : {
+      "extractionState" : "manual"
+    },
+    "デッキがありません" : {
+      "extractionState" : "manual"
+    },
+    "デッキ作成" : {
+      "extractionState" : "manual"
+    },
+    "デッキ名" : {
+      "extractionState" : "manual"
+    },
+    "デッキを削除" : {
+      "extractionState" : "manual"
+    },
+    "デッキを追加" : {
+      "extractionState" : "manual"
+    },
+    "デッキ編集" : {
+      "extractionState" : "manual"
+    },
+    "フォールバック" : {
+      "extractionState" : "manual"
+    },
+    "フォールバック生成" : {
+      "extractionState" : "manual"
+    },
+    "メモ" : {
+      "extractionState" : "manual"
+    },
+    "メモがありません" : {
+      "extractionState" : "manual"
+    },
+    "メモと未採用のAI候補が削除されます。採用済みカードは残ります。" : {
+      "extractionState" : "manual"
+    },
+    "メモを削除" : {
+      "extractionState" : "manual"
+    },
+    "メモを追加" : {
+      "extractionState" : "manual"
+    },
+    "メモ作成" : {
+      "extractionState" : "manual"
+    },
+    "メモ編集" : {
+      "extractionState" : "manual"
+    },
+    "メモ詳細" : {
+      "extractionState" : "manual"
+    },
+    "メールアドレス" : {
+      "extractionState" : "manual"
+    },
+    "モデル" : {
+      "extractionState" : "manual"
+    },
+    "モデルがないと生成できません。フォールバックが無効のため、まずモデルをダウンロードしてください。" : {
+      "extractionState" : "manual"
+    },
+    "モデルファイル" : {
+      "extractionState" : "manual"
+    },
+    "モデルを削除" : {
+      "extractionState" : "manual"
+    },
+    "モデルを削除しますか？" : {
+      "extractionState" : "manual"
+    },
+    "モデルをダウンロード" : {
+      "extractionState" : "manual"
+    },
+    "ルールベースのフォールバックで生成しました" : {
+      "extractionState" : "manual"
+    },
+    "ローカルAI" : {
+      "extractionState" : "manual"
+    },
+    "ローカルAI候補を生成" : {
+      "extractionState" : "manual"
+    },
+    "ローカルLLM" : {
+      "extractionState" : "manual"
+    },
+    "ローカルLLMモデルが未ダウンロードです" : {
+      "extractionState" : "manual"
+    },
+    "ローカルデータ" : {
+      "extractionState" : "manual"
+    },
+    "ログアウト" : {
+      "extractionState" : "manual"
+    },
+    "ログイン" : {
+      "extractionState" : "manual"
+    },
+    "ログイン中…" : {
+      "extractionState" : "manual"
+    },
+    "ログインして同期を有効化" : {
+      "extractionState" : "manual"
+    },
+    "パスワード" : {
+      "extractionState" : "manual"
+    },
+    "パスワードを表示" : {
+      "extractionState" : "manual"
+    },
+    "パスワードを隠す" : {
+      "extractionState" : "manual"
+    },
+    "却下" : {
+      "extractionState" : "manual"
+    },
+    "保存" : {
+      "extractionState" : "manual"
+    },
+    "保存しました" : {
+      "extractionState" : "manual"
+    },
+    "保存先" : {
+      "extractionState" : "manual"
+    },
+    "再度AI候補を生成するには、改めてダウンロードが必要です。" : {
+      "extractionState" : "manual"
+    },
+    "削除" : {
+      "extractionState" : "manual"
+    },
+    "削除して再ダウンロード" : {
+      "extractionState" : "manual"
+    },
+    "今すぐ同期" : {
+      "extractionState" : "manual"
+    },
+    "今日の復習は完了です" : {
+      "extractionState" : "manual"
+    },
+    "保存していない変更は失われます。" : {
+      "extractionState" : "manual"
+    },
+    "候補" : {
+      "extractionState" : "manual"
+    },
+    "候補がありません" : {
+      "extractionState" : "manual"
+    },
+    "再読み込み" : {
+      "extractionState" : "manual"
+    },
+    "もう一度復習する" : {
+      "extractionState" : "manual"
+    },
+    "削除して再ダウンロードします" : {
+      "extractionState" : "manual"
+    },
+    "状態" : {
+      "extractionState" : "manual"
+    },
+    "生成" : {
+      "extractionState" : "manual"
+    },
+    "生成を停止" : {
+      "extractionState" : "manual"
+    },
+    "生成を停止しています" : {
+      "extractionState" : "manual"
+    },
+    "生成を停止しました" : {
+      "extractionState" : "manual"
+    },
+    "生成中…" : {
+      "extractionState" : "manual"
+    },
+    "採用済み" : {
+      "extractionState" : "manual"
+    },
+    "未採用" : {
+      "extractionState" : "manual"
+    },
+    "復習" : {
+      "extractionState" : "manual"
+    },
+    "復習対象" : {
+      "extractionState" : "manual"
+    },
+    "復習状態" : {
+      "extractionState" : "manual"
+    },
+    "学習目的" : {
+      "extractionState" : "manual"
+    },
+    "学習目的（任意）" : {
+      "extractionState" : "manual"
+    },
+    "実行場所" : {
+      "extractionState" : "manual"
+    },
+    "対象を変更しました" : {
+      "extractionState" : "manual"
+    },
+    "設定" : {
+      "extractionState" : "manual"
+    },
+    "説明" : {
+      "extractionState" : "manual"
+    },
+    "説明（任意）" : {
+      "extractionState" : "manual"
+    },
+    "選択中" : {
+      "extractionState" : "manual"
+    },
+    "閉じる" : {
+      "extractionState" : "manual"
+    },
+    "編集" : {
+      "extractionState" : "manual"
+    },
+    "編集を続ける" : {
+      "extractionState" : "manual"
+    },
+    "表" : {
+      "extractionState" : "manual"
+    },
+    "裏" : {
+      "extractionState" : "manual"
+    },
+    "補足" : {
+      "extractionState" : "manual"
+    },
+    "変更を破棄" : {
+      "extractionState" : "manual"
+    },
+    "変更を破棄しますか？" : {
+      "extractionState" : "manual"
+    },
+    "%lld 件" : {
+      "extractionState" : "manual"
+    },
+    "%lld 枚" : {
+      "extractionState" : "manual"
+    },
+    "まなメモAI" : {
+      "extractionState" : "manual"
+    },
+    "答えを見る" : {
+      "extractionState" : "manual"
+    },
+    "戻る" : {
+      "extractionState" : "manual"
+    },
+    "作成" : {
+      "extractionState" : "manual"
+    },
+    "このまま生成すると、AIではなくルールベースの簡易候補が作られます。高品質な候補にはモデルのダウンロードが必要です。" : {
+      "extractionState" : "manual"
+    },
+    "このメモを削除しますか？" : {
+      "extractionState" : "manual"
+    },
+    "このデッキを削除しますか？" : {
+      "extractionState" : "manual"
+    },
+    "カードを採用しました" : {
+      "extractionState" : "manual"
+    },
+    "%@ で生成しました" : {
+      "extractionState" : "manual"
+    },
+    "送信 %lld / 受信 %lld / 削除 %lld" : {
+      "extractionState" : "manual"
+    },
+    "もう一度" : {
+      "extractionState" : "manual"
+    },
+    "難しい" : {
+      "extractionState" : "manual"
+    },
+    "普通" : {
+      "extractionState" : "manual"
+    },
+    "簡単" : {
+      "extractionState" : "manual"
+    },
+    "標準デッキ" : {
+      "extractionState" : "manual"
+    },
+    "「標準デッキ」を自動作成して採用します。" : {
+      "extractionState" : "manual"
+    },
+    "採用先" : {
+      "extractionState" : "manual"
+    },
+    "カード表面" : {
+      "extractionState" : "manual"
+    },
+    "カード裏面" : {
+      "extractionState" : "manual"
+    },
+    "採用" : {
+      "extractionState" : "manual"
+    },
+    "%lld 枚中 %lld 枚目" : {
+      "extractionState" : "manual"
+    },
+    "評価: %@" : {
+      "extractionState" : "manual"
+    },
+    "メモの操作" : {
+      "extractionState" : "manual"
+    },
+    "メモから問題を作り、復習で覚える。" : {
+      "extractionState" : "manual"
+    },
+    "メモを書く" : {
+      "extractionState" : "manual"
+    },
+    "学習中の気づきや間違えた論点を短く残します。" : {
+      "extractionState" : "manual"
+    },
+    "AIが候補を出す" : {
+      "extractionState" : "manual"
+    },
+    "メモからフラッシュカードの候補を自動で作ります。" : {
+      "extractionState" : "manual"
+    },
+    "迷わず採用する" : {
+      "extractionState" : "manual"
+    },
+    "候補を確認し、必要なものだけカードにします。" : {
+      "extractionState" : "manual"
+    },
+    "翌日ちゃんと復習に出る" : {
+      "extractionState" : "manual"
+    },
+    "間隔反復で、忘れそうな頃に出題されます。" : {
+      "extractionState" : "manual"
+    },
+    "始める" : {
+      "extractionState" : "manual"
+    },
+    "ホーム" : {
+      "extractionState" : "manual"
+    },
+    "今日の復習" : {
+      "extractionState" : "manual"
+    },
+    "枚" : {
+      "extractionState" : "manual"
+    },
+    "復習対象のカードがあります。" : {
+      "extractionState" : "manual"
+    },
+    "今日の復習はありません。お疲れさまでした。" : {
+      "extractionState" : "manual"
+    },
+    "復習を始める" : {
+      "extractionState" : "manual"
+    },
+    "前倒しで復習する" : {
+      "extractionState" : "manual"
+    },
+    "未確認のAI候補" : {
+      "extractionState" : "manual"
+    },
+    "%lld 件の候補が確認待ちです。" : {
+      "extractionState" : "manual"
+    },
+    "候補を確認する" : {
+      "extractionState" : "manual"
+    },
+    "総カード" : {
+      "extractionState" : "manual"
+    },
+    "定着" : {
+      "extractionState" : "manual"
+    },
+    "今週追加" : {
+      "extractionState" : "manual"
+    }
+  },
+  "version" : "1.0"
+}

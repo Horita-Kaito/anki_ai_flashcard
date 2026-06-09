@@ -2,7 +2,11 @@ import Foundation
 import Combine
 
 @MainActor
-final class LocalLLMModelStore: ObservableObject {
+final class LocalLLMModelStore: NSObject, ObservableObject {
+    /// バックグラウンドセッションはプロセス内で一意でなければならないため、
+    /// ストアはシングルトンとして共有する。
+    static let shared = LocalLLMModelStore()
+
     enum State: Equatable {
         case missing
         case downloaded(URL, byteCount: Int64)
@@ -11,7 +15,7 @@ final class LocalLLMModelStore: ObservableObject {
         case failed(String)
     }
 
-    struct DownloadProgress: Equatable {
+    struct DownloadProgress: Equatable, Sendable {
         let fractionCompleted: Double
         let completedBytes: Int64
         let totalBytes: Int64
@@ -23,14 +27,27 @@ final class LocalLLMModelStore: ObservableObject {
 
     @Published private(set) var state: State = .missing
 
+    /// アプリがバックグラウンドDL完了で再起動された際に、システムへ完了を返すためのハンドラ。
+    var backgroundCompletionHandler: (() -> Void)?
+
     private let fileManager: FileManager
     private let fileLocator: LocalLLMModelFileLocator
-    private var downloadTask: URLSessionDownloadTask?
-    private var progressTask: Task<Void, Never>?
+    private let backgroundSessionIdentifier = "jp.manamemoai.modeldownload"
+    private var activeTask: URLSessionDownloadTask?
+    private var resumeDataByModelId: [String: Data] = [:]
+
+    private lazy var session: URLSession = {
+        let configuration = URLSessionConfiguration.background(withIdentifier: backgroundSessionIdentifier)
+        configuration.sessionSendsLaunchEvents = true
+        configuration.isDiscretionary = false
+        configuration.allowsCellularAccess = true
+        return URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
+    }()
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
         fileLocator = LocalLLMModelFileLocator(fileManager: fileManager)
+        super.init()
     }
 
     func refresh(for model: LocalLLMModelSpec) {
@@ -49,19 +66,50 @@ final class LocalLLMModelStore: ObservableObject {
             return
         }
 
-        startDownload(model)
+        guard let downloadURL = model.downloadURL else {
+            state = .failed("ダウンロードURLが未設定です")
+            return
+        }
+
+        let task: URLSessionDownloadTask
+        if let resumeData = resumeDataByModelId[model.id] {
+            task = session.downloadTask(withResumeData: resumeData)
+        } else {
+            task = session.downloadTask(with: downloadURL)
+        }
+
+        task.taskDescription = model.id
+        resumeDataByModelId[model.id] = nil
+        activeTask = task
+
+        state = .downloading(DownloadProgress(fractionCompleted: 0, completedBytes: 0, totalBytes: -1))
+        task.resume()
     }
 
     func cancelDownload(for model: LocalLLMModelSpec) {
-        downloadTask?.cancel()
-        downloadTask = nil
-        progressTask?.cancel()
-        progressTask = nil
+        guard let task = activeTask else {
+            refresh(for: model)
+            return
+        }
+
+        // 再開可能なように resumeData を退避してからキャンセルする。
+        task.cancel { [weak self] resumeData in
+            guard let resumeData else {
+                return
+            }
+
+            Task { @MainActor in
+                self?.resumeDataByModelId[model.id] = resumeData
+            }
+        }
+
+        activeTask = nil
         refresh(for: model)
     }
 
     func delete(_ model: LocalLLMModelSpec) {
         cancelDownload(for: model)
+        resumeDataByModelId[model.id] = nil
 
         do {
             let fileURL = localURL(for: model)
@@ -78,91 +126,143 @@ final class LocalLLMModelStore: ObservableObject {
         fileLocator.localURL(for: model)
     }
 
-    private func startDownload(_ model: LocalLLMModelSpec) {
-        guard let downloadURL = model.downloadURL else {
-            state = .failed("ダウンロードURLが未設定です")
+    /// アプリ再起動時にバックグラウンドセッションへ再接続し、完了ハンドラを保持する。
+    func handleBackgroundSessionEvents(completionHandler: @escaping () -> Void) {
+        backgroundCompletionHandler = completionHandler
+        _ = session
+    }
+
+    /// ダウンロード済みの一時ファイルを正規の保存先へ移動する（delegate コールバック内で同期実行）。
+    private nonisolated static func persistDownloadedFile(at temporaryURL: URL, modelId: String) throws {
+        let locator = LocalLLMModelFileLocator()
+        let model = LocalLLMModelCatalog.model(id: modelId)
+        let fileManager = FileManager.default
+
+        try fileManager.createDirectory(at: locator.modelsDirectory, withIntermediateDirectories: true)
+
+        let destinationURL = locator.localURL(for: model)
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            try fileManager.removeItem(at: destinationURL)
+        }
+        try fileManager.moveItem(at: temporaryURL, to: destinationURL)
+    }
+}
+
+extension LocalLLMModelStore: URLSessionDownloadDelegate {
+    nonisolated func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didWriteData bytesWritten: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        let fraction = totalBytesExpectedToWrite > 0
+            ? Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
+            : 0
+        let progress = DownloadProgress(
+            fractionCompleted: fraction,
+            completedBytes: totalBytesWritten,
+            totalBytes: totalBytesExpectedToWrite
+        )
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            // 完了後に届いた遅延進捗で .downloaded/.invalid を上書きしないようガードする。
+            switch self.state {
+            case .downloaded, .invalid:
+                return
+            default:
+                self.state = .downloading(progress)
+            }
+        }
+    }
+
+    nonisolated func urlSession(
+        _ session: URLSession,
+        downloadTask: URLSessionDownloadTask,
+        didFinishDownloadingTo location: URL
+    ) {
+        let modelId = downloadTask.taskDescription
+        var persistError: Error?
+
+        // 一時ファイルはコールバックから戻ると削除されるため、ここで同期的に移動する。
+        if let modelId {
+            do {
+                try Self.persistDownloadedFile(at: location, modelId: modelId)
+            } catch {
+                persistError = error
+            }
+        }
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            self.activeTask = nil
+
+            guard let modelId else {
+                self.state = .failed("ダウンロードしたファイルを保存できませんでした")
+                return
+            }
+
+            if let persistError {
+                self.state = .failed(persistError.localizedDescription)
+                return
+            }
+
+            self.resumeDataByModelId[modelId] = nil
+            self.refresh(for: LocalLLMModelCatalog.model(id: modelId))
+        }
+    }
+
+    nonisolated func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didCompleteWithError error: Error?
+    ) {
+        // 成功時は didFinishDownloadingTo で処理済み。ここではエラー・キャンセルのみ扱う。
+        guard let error else {
             return
         }
 
-        let initialProgress = DownloadProgress(fractionCompleted: 0, completedBytes: 0, totalBytes: -1)
-        state = .downloading(initialProgress)
+        let modelId = task.taskDescription
+        let resumeData = (error as NSError).userInfo[NSURLSessionDownloadTaskResumeData] as? Data
+        let isCancelled = (error as? URLError)?.code == .cancelled
 
-        let task = URLSession.shared.downloadTask(with: downloadURL) { [weak self] temporaryURL, _, error in
-            Task { @MainActor [weak self] in
-                guard let self else {
-                    return
-                }
-
-                self.progressTask?.cancel()
-                self.progressTask = nil
-                self.downloadTask = nil
-
-                if let error = error as? URLError, error.code == .cancelled {
-                    self.refresh(for: model)
-                    return
-                }
-
-                if let error {
-                    self.state = .failed(error.localizedDescription)
-                    return
-                }
-
-                guard let temporaryURL else {
-                    self.state = .failed("ダウンロードしたファイルを保存できませんでした")
-                    return
-                }
-
-                self.finishDownload(from: temporaryURL, model: model)
-            }
-        }
-
-        downloadTask = task
-        progressTask = Task { [weak self, weak task] in
-            do {
-                while !Task.isCancelled {
-                    guard let task else {
-                        break
-                    }
-
-                    let progress = task.progress
-                    let snapshot = DownloadProgress(
-                        fractionCompleted: progress.fractionCompleted.isFinite ? progress.fractionCompleted : 0,
-                        completedBytes: progress.completedUnitCount,
-                        totalBytes: progress.totalUnitCount
-                    )
-
-                    await MainActor.run { [weak self] in
-                        self?.state = .downloading(snapshot)
-                    }
-
-                    try await Task.sleep(for: .milliseconds(300))
-                }
-            } catch is CancellationError {
+        Task { @MainActor [weak self] in
+            guard let self else {
                 return
-            } catch {
-                await MainActor.run { [weak self] in
-                    self?.state = .failed(error.localizedDescription)
+            }
+
+            self.activeTask = nil
+
+            if let modelId, let resumeData {
+                self.resumeDataByModelId[modelId] = resumeData
+            }
+
+            if isCancelled {
+                if let modelId {
+                    self.refresh(for: LocalLLMModelCatalog.model(id: modelId))
                 }
+            } else {
+                self.state = .failed(error.localizedDescription)
             }
         }
-        task.resume()
     }
 
-    private func finishDownload(from temporaryURL: URL, model: LocalLLMModelSpec) {
-        do {
-            try fileManager.createDirectory(
-                at: fileLocator.modelsDirectory,
-                withIntermediateDirectories: true
-            )
-
-            let destinationURL = localURL(for: model)
-            if fileManager.fileExists(atPath: destinationURL.path) {
-                try fileManager.removeItem(at: destinationURL)
+    nonisolated func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
             }
-            try fileManager.moveItem(at: temporaryURL, to: destinationURL)
-            refresh(for: model)
-        } catch {
-            state = .failed(error.localizedDescription)
+
+            let handler = self.backgroundCompletionHandler
+            self.backgroundCompletionHandler = nil
+            handler?()
         }
     }
 }

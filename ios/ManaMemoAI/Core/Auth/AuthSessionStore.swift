@@ -68,30 +68,18 @@ final class AuthSessionStore: ObservableObject {
         state = .signedOut
     }
 
-    func makeDeckService() -> DeckService {
-        DeckService(
-            apiClient: APIClient(
-                baseURL: AppConfig.apiBaseURL,
-                tokenProvider: { self.tokenStore.token }
-            )
-        )
+    var isAuthenticated: Bool {
+        if case .authenticated = state {
+            return true
+        }
+        return false
     }
 
-    func makeNoteSeedService() -> NoteSeedService {
-        NoteSeedService(
-            apiClient: APIClient(
-                baseURL: AppConfig.apiBaseURL,
-                tokenProvider: { self.tokenStore.token }
-            )
-        )
-    }
-
-    func makeAiCandidateService() -> AiCandidateService {
-        AiCandidateService(
-            apiClient: APIClient(
-                baseURL: AppConfig.apiBaseURL,
-                tokenProvider: { self.tokenStore.token }
-            )
+    /// 認証済みトークンを載せた APIClient を生成する（同期サービス等で再利用）。
+    func makeAPIClient() -> APIClient {
+        APIClient(
+            baseURL: AppConfig.apiBaseURL,
+            tokenProvider: { self.tokenStore.token }
         )
     }
 }

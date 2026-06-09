@@ -39,6 +39,15 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         guard !promptTokens.isEmpty else {
             throw LocalLLMGenerationError.emptyPrompt
         }
+
+        // プロンプト自体がコンテキスト長を超える場合は、デコードが必ず失敗するため早期に明示エラーにする。
+        guard promptTokens.count < request.options.contextTokens else {
+            throw LocalLLMGenerationError.contextExceeded
+        }
+
+        // 生成トークン数は「コンテキスト長 - プロンプト長」を超えられない。
+        // maxTokens を独立指定できる UI と整合させ、生成途中での decode 失敗を防ぐ。
+        let maxNewTokens = max(1, min(request.options.maxTokens, request.options.contextTokens - promptTokens.count))
         try Task.checkCancellation()
 
         var batch = llama_batch_init(Int32(max(promptTokens.count, 1)), 0, 1)
@@ -57,15 +66,26 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
             llama_sampler_free(sampler)
         }
 
+        // 出力をカード候補JSONの文法（GBNF）に拘束する。これにより小型モデルでも
+        // 構文的に妥当なJSONだけを生成でき、パース失敗・フォールバック率を下げられる。
+        // grammar は最初に適用し、許可トークンに絞った上で top_k/top_p/temp で選択する。
+        // grammar 初期化に失敗した場合は拘束なしで継続する（生成自体は止めない）。
+        if let grammarSampler = llama_sampler_init_grammar(vocab, LocalLLMGrammar.cardsJSON, "root") {
+            llama_sampler_chain_add(sampler, grammarSampler)
+        }
+
         llama_sampler_chain_add(sampler, llama_sampler_init_top_k(40))
         llama_sampler_chain_add(sampler, llama_sampler_init_top_p(Float(request.options.topP), 1))
         llama_sampler_chain_add(sampler, llama_sampler_init_temp(Float(request.options.temperature)))
         llama_sampler_chain_add(sampler, llama_sampler_init_dist(UInt32(Date().timeIntervalSince1970)))
 
-        var generated = ""
+        // 1トークン = 完結したUTF-8文字列とは限らない（特に日本語ではマルチバイト文字が
+        // 複数トークンに分割される）。トークンごとに String 化すると不完全なバイト列が
+        // U+FFFD に化けるため、生バイトを蓄積してから最後にまとめてデコードする。
+        var generatedBytes: [UInt8] = []
         var nextPosition = Int32(promptTokens.count)
 
-        for _ in 0..<request.options.maxTokens {
+        for _ in 0..<maxNewTokens {
             try Task.checkCancellation()
 
             let token = llama_sampler_sample(sampler, context, -1)
@@ -74,12 +94,13 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
             }
 
             llama_sampler_accept(sampler, token)
-            generated += piece(for: token, vocab: vocab)
+            appendPiece(for: token, vocab: vocab, into: &generatedBytes)
 
             try decode([token], context: context, batch: &batch, startPosition: nextPosition, emitLogitsForLastToken: true)
             nextPosition += 1
         }
 
+        let generated = String(decoding: generatedBytes, as: UTF8.self)
         return generated.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -164,14 +185,32 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         }
     }
 
-    private func piece(for token: llama_token, vocab: OpaquePointer?) -> String {
-        var buffer = [CChar](repeating: 0, count: 256)
-        let count = llama_token_to_piece(vocab, token, &buffer, Int32(buffer.count), 0, true)
+    private func appendPiece(for token: llama_token, vocab: OpaquePointer?, into buffer: inout [UInt8]) {
+        var scratch = [CChar](repeating: 0, count: 256)
+        var count = llama_token_to_piece(vocab, token, &scratch, Int32(scratch.count), 0, true)
 
-        guard count > 0 else {
-            return ""
+        // 256バイトに収まらない場合は必要量（-count）で再確保してから取得する。
+        if count < 0 {
+            scratch = [CChar](repeating: 0, count: Int(-count))
+            count = llama_token_to_piece(vocab, token, &scratch, Int32(scratch.count), 0, true)
         }
 
-        return String(decoding: buffer.prefix(Int(count)).map { UInt8(bitPattern: $0) }, as: UTF8.self)
+        guard count > 0 else {
+            return
+        }
+
+        buffer.append(contentsOf: scratch.prefix(Int(count)).map { UInt8(bitPattern: $0) })
     }
+}
+
+/// カード候補JSONの構造を強制する GBNF 文法。
+/// `cards` 配列を持つオブジェクトで、各要素は question / answer / focus_type / rationale を
+/// この順で必ず含む。raw 文字列リテラルで GBNF をそのまま記述する。
+private enum LocalLLMGrammar {
+    static let cardsJSON = #"""
+    root    ::= ws "{" ws "\"cards\"" ws ":" ws "[" ws card ( ws "," ws card )* ws "]" ws "}" ws
+    card    ::= "{" ws "\"question\"" ws ":" ws string ws "," ws "\"answer\"" ws ":" ws string ws "," ws "\"focus_type\"" ws ":" ws string ws "," ws "\"rationale\"" ws ":" ws string ws "}"
+    string  ::= "\"" ( [^"\\] | "\\" . )* "\""
+    ws      ::= [ \t\n]*
+    """#
 }

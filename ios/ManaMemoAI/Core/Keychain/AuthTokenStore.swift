@@ -2,6 +2,7 @@ import Foundation
 
 protocol AuthTokenStore {
     var token: String? { get }
-    func saveToken(_ token: String)
+    @discardableResult
+    func saveToken(_ token: String) -> Bool
     func deleteToken()
 }

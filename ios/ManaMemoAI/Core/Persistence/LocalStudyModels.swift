@@ -1,14 +1,30 @@
 import Foundation
 import SwiftData
 
+/// 同期メタデータを持つローカルモデルの共通インターフェース。
+/// 編集時は markDirty() を呼び、updatedAt(=LWWの論理時刻) と dirty(=push対象) を同時に立てる。
+protocol SyncTrackable: AnyObject {
+    var dirty: Bool { get set }
+    var updatedAt: Date { get set }
+}
+
+extension SyncTrackable {
+    func markDirty(now: Date = .now) {
+        updatedAt = now
+        dirty = true
+    }
+}
+
 @Model
-final class LocalDeck {
+final class LocalDeck: SyncTrackable {
     @Attribute(.unique) var id: UUID
     var name: String
     var deckDescription: String?
     var displayOrder: Int
     var createdAt: Date
     var updatedAt: Date
+    var dirty: Bool
+    var syncedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -16,7 +32,9 @@ final class LocalDeck {
         deckDescription: String? = nil,
         displayOrder: Int = 0,
         createdAt: Date = .now,
-        updatedAt: Date = .now
+        updatedAt: Date = .now,
+        dirty: Bool = true,
+        syncedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -24,34 +42,42 @@ final class LocalDeck {
         self.displayOrder = displayOrder
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.dirty = dirty
+        self.syncedAt = syncedAt
     }
 }
 
 @Model
-final class LocalNoteSeed {
+final class LocalNoteSeed: SyncTrackable {
     @Attribute(.unique) var id: UUID
     var body: String
     var learningGoal: String?
     var createdAt: Date
     var updatedAt: Date
+    var dirty: Bool
+    var syncedAt: Date?
 
     init(
         id: UUID = UUID(),
         body: String,
         learningGoal: String? = nil,
         createdAt: Date = .now,
-        updatedAt: Date = .now
+        updatedAt: Date = .now,
+        dirty: Bool = true,
+        syncedAt: Date? = nil
     ) {
         self.id = id
         self.body = body
         self.learningGoal = learningGoal
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.dirty = dirty
+        self.syncedAt = syncedAt
     }
 }
 
 @Model
-final class LocalAiCardCandidate {
+final class LocalAiCardCandidate: SyncTrackable {
     @Attribute(.unique) var id: UUID
     var noteSeedId: UUID
     var question: String
@@ -62,6 +88,8 @@ final class LocalAiCardCandidate {
     var status: String
     var createdAt: Date
     var updatedAt: Date
+    var dirty: Bool
+    var syncedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -73,7 +101,9 @@ final class LocalAiCardCandidate {
         rationale: String? = nil,
         status: String = "pending",
         createdAt: Date = .now,
-        updatedAt: Date = .now
+        updatedAt: Date = .now,
+        dirty: Bool = true,
+        syncedAt: Date? = nil
     ) {
         self.id = id
         self.noteSeedId = noteSeedId
@@ -85,11 +115,13 @@ final class LocalAiCardCandidate {
         self.status = status
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.dirty = dirty
+        self.syncedAt = syncedAt
     }
 }
 
 @Model
-final class LocalCard {
+final class LocalCard: SyncTrackable {
     @Attribute(.unique) var id: UUID
     var deckId: UUID
     var sourceNoteSeedId: UUID?
@@ -104,6 +136,8 @@ final class LocalCard {
     var lapseCount: Int
     var createdAt: Date
     var updatedAt: Date
+    var dirty: Bool
+    var syncedAt: Date?
 
     init(
         id: UUID = UUID(),
@@ -119,7 +153,9 @@ final class LocalCard {
         intervalDays: Int = 0,
         lapseCount: Int = 0,
         createdAt: Date = .now,
-        updatedAt: Date = .now
+        updatedAt: Date = .now,
+        dirty: Bool = true,
+        syncedAt: Date? = nil
     ) {
         self.id = id
         self.deckId = deckId
@@ -135,5 +171,48 @@ final class LocalCard {
         self.lapseCount = lapseCount
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.dirty = dirty
+        self.syncedAt = syncedAt
+    }
+}
+
+/// ローカルで削除したレコードの墓標。push 時に deleted=true として送る。
+/// entity は同期キー（"decks" / "note_seeds" / "ai_card_candidates" / "cards"）。
+@Model
+final class LocalSyncTombstone {
+    @Attribute(.unique) var id: UUID
+    var entity: String
+    var clientId: UUID
+    var updatedAt: Date
+    var dirty: Bool
+
+    init(
+        id: UUID = UUID(),
+        entity: String,
+        clientId: UUID,
+        updatedAt: Date = .now,
+        dirty: Bool = true
+    ) {
+        self.id = id
+        self.entity = entity
+        self.clientId = clientId
+        self.updatedAt = updatedAt
+        self.dirty = dirty
+    }
+}
+
+/// 同期エンティティ名の定数。LocalSyncTombstone.entity と SyncService のキーに使う。
+enum SyncEntity {
+    static let decks = "decks"
+    static let noteSeeds = "note_seeds"
+    static let candidates = "ai_card_candidates"
+    static let cards = "cards"
+}
+
+extension ModelContext {
+    /// 墓標を記録してから物理削除する。削除を端末間へ伝播させるため必ずこちらを使う。
+    func deleteTracked(entity: String, clientId: UUID, model: any PersistentModel) {
+        insert(LocalSyncTombstone(entity: entity, clientId: clientId))
+        delete(model)
     }
 }

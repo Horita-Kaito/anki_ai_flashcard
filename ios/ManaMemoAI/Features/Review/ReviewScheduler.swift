@@ -11,13 +11,13 @@ enum ReviewRating: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .again:
-            return "もう一度"
+            return String(localized: "もう一度")
         case .hard:
-            return "難しい"
+            return String(localized: "難しい")
         case .good:
-            return "普通"
+            return String(localized: "普通")
         case .easy:
-            return "簡単"
+            return String(localized: "簡単")
         }
     }
 
@@ -57,7 +57,7 @@ enum ReviewScheduler {
             card.dueAt = Calendar.current.date(byAdding: .day, value: card.intervalDays, to: now) ?? now
         }
 
-        card.updatedAt = now
+        card.markDirty(now: now)
     }
 
     private static func nextInterval(for current: Int, multiplier: Int) -> Int {

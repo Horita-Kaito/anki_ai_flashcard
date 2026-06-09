@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		000000000000000000000156 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000056 /* Localizable.xcstrings */; };
+		000000000000000000000157 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000057 /* OnboardingView.swift */; };
+		000000000000000000000158 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000058 /* DashboardView.swift */; };
+		000000000000000000000150 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000050 /* DesignTokens.swift */; };
+		000000000000000000000151 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000051 /* Typography.swift */; };
+		000000000000000000000152 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000052 /* Haptics.swift */; };
+		000000000000000000000153 /* AppButtonStyles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000053 /* AppButtonStyles.swift */; };
+		000000000000000000000154 /* CardSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000054 /* CardSurface.swift */; };
+		000000000000000000000155 /* LabeledProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000055 /* LabeledProgressView.swift */; };
 		000000000000000000000101 /* ManaMemoAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000001 /* ManaMemoAIApp.swift */; };
 		000000000000000000000102 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000002 /* RootView.swift */; };
 		000000000000000000000103 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000003 /* APIClient.swift */; };
@@ -22,19 +31,15 @@
 		00000000000000000000010D /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000D /* LoginView.swift */; };
 		00000000000000000000010E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000E /* HomeView.swift */; };
 		00000000000000000000010F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00000000000000000000000F /* Security.framework */; };
-		000000000000000000000110 /* DeckModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000011 /* DeckModels.swift */; };
-		000000000000000000000111 /* DeckService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000012 /* DeckService.swift */; };
 		000000000000000000000112 /* DeckListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000013 /* DeckListView.swift */; };
-		000000000000000000000113 /* NoteSeedModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000014 /* NoteSeedModels.swift */; };
-		000000000000000000000114 /* NoteSeedService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000015 /* NoteSeedService.swift */; };
 		000000000000000000000115 /* NoteCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000016 /* NoteCreateView.swift */; };
 		000000000000000000000116 /* NoteListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000017 /* NoteListView.swift */; };
 		000000000000000000000117 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000018 /* SettingsView.swift */; };
-		000000000000000000000118 /* AiCandidateModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000019 /* AiCandidateModels.swift */; };
-		000000000000000000000119 /* AiCandidateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001A /* AiCandidateService.swift */; };
 		00000000000000000000011A /* NoteDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001B /* NoteDetailView.swift */; };
 		00000000000000000000011B /* CandidateAdoptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001C /* CandidateAdoptionView.swift */; };
 		00000000000000000000011C /* LocalStudyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001D /* LocalStudyModels.swift */; };
+		0000000000000000000001F1 /* SyncModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0000000000000000000000F1 /* SyncModels.swift */; };
+		0000000000000000000001F2 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0000000000000000000000F2 /* SyncService.swift */; };
 		00000000000000000000011D /* LocalCandidateGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001E /* LocalCandidateGenerator.swift */; };
 		00000000000000000000011E /* LocalLLMModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000001F /* LocalLLMModelCatalog.swift */; };
 		00000000000000000000011F /* LocalLLMSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000020 /* LocalLLMSettingsStore.swift */; };
@@ -70,6 +75,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		000000000000000000000056 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		000000000000000000000057 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		000000000000000000000058 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		000000000000000000000050 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		000000000000000000000051 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		000000000000000000000052 /* Haptics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Haptics.swift; sourceTree = "<group>"; };
+		000000000000000000000053 /* AppButtonStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppButtonStyles.swift; sourceTree = "<group>"; };
+		000000000000000000000054 /* CardSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardSurface.swift; sourceTree = "<group>"; };
+		000000000000000000000055 /* LabeledProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledProgressView.swift; sourceTree = "<group>"; };
 		000000000000000000000001 /* ManaMemoAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManaMemoAIApp.swift; sourceTree = "<group>"; };
 		000000000000000000000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		000000000000000000000003 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
@@ -86,19 +100,15 @@
 		00000000000000000000000E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		00000000000000000000000F /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 		000000000000000000000010 /* ManaMemoAI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ManaMemoAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		000000000000000000000011 /* DeckModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckModels.swift; sourceTree = "<group>"; };
-		000000000000000000000012 /* DeckService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckService.swift; sourceTree = "<group>"; };
 		000000000000000000000013 /* DeckListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckListView.swift; sourceTree = "<group>"; };
-		000000000000000000000014 /* NoteSeedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSeedModels.swift; sourceTree = "<group>"; };
-		000000000000000000000015 /* NoteSeedService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSeedService.swift; sourceTree = "<group>"; };
 		000000000000000000000016 /* NoteCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteCreateView.swift; sourceTree = "<group>"; };
 		000000000000000000000017 /* NoteListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteListView.swift; sourceTree = "<group>"; };
 		000000000000000000000018 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		000000000000000000000019 /* AiCandidateModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiCandidateModels.swift; sourceTree = "<group>"; };
-		00000000000000000000001A /* AiCandidateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AiCandidateService.swift; sourceTree = "<group>"; };
 		00000000000000000000001B /* NoteDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailView.swift; sourceTree = "<group>"; };
 		00000000000000000000001C /* CandidateAdoptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CandidateAdoptionView.swift; sourceTree = "<group>"; };
 		00000000000000000000001D /* LocalStudyModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStudyModels.swift; sourceTree = "<group>"; };
+		0000000000000000000000F1 /* SyncModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncModels.swift; sourceTree = "<group>"; };
+		0000000000000000000000F2 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
 		00000000000000000000001E /* LocalCandidateGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalCandidateGenerator.swift; sourceTree = "<group>"; };
 		00000000000000000000001F /* LocalLLMModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMModelCatalog.swift; sourceTree = "<group>"; };
 		000000000000000000000020 /* LocalLLMSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalLLMSettingsStore.swift; sourceTree = "<group>"; };
@@ -159,6 +169,8 @@
 				000000000000000000000303 /* App */,
 				000000000000000000000304 /* Core */,
 				000000000000000000000308 /* Features */,
+				000000000000000000000320 /* Shared */,
+				000000000000000000000323 /* Resources */,
 			);
 			path = ManaMemoAI;
 			sourceTree = "<group>";
@@ -181,6 +193,7 @@
 				000000000000000000000312 /* Keychain */,
 				000000000000000000000313 /* Persistence */,
 				000000000000000000000314 /* LocalLLM */,
+				0000000000000000000003F0 /* Sync */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -225,6 +238,8 @@
 				00000000000000000000030E /* LocalAI */,
 				00000000000000000000030F /* Review */,
 				000000000000000000000315 /* Cards */,
+				000000000000000000000324 /* Onboarding */,
+				000000000000000000000325 /* Dashboard */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -248,8 +263,6 @@
 		00000000000000000000030B /* Decks */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000011 /* DeckModels.swift */,
-				000000000000000000000012 /* DeckService.swift */,
 				000000000000000000000013 /* DeckListView.swift */,
 			);
 			path = Decks;
@@ -258,12 +271,8 @@
 		00000000000000000000030C /* Notes */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000014 /* NoteSeedModels.swift */,
-				000000000000000000000015 /* NoteSeedService.swift */,
 				000000000000000000000016 /* NoteCreateView.swift */,
 				000000000000000000000017 /* NoteListView.swift */,
-				000000000000000000000019 /* AiCandidateModels.swift */,
-				00000000000000000000001A /* AiCandidateService.swift */,
 				00000000000000000000001B /* NoteDetailView.swift */,
 				00000000000000000000001C /* CandidateAdoptionView.swift */,
 			);
@@ -304,6 +313,59 @@
 			path = Cards;
 			sourceTree = "<group>";
 		};
+		000000000000000000000324 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000057 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		000000000000000000000325 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000058 /* DashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		000000000000000000000320 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000321 /* DesignSystem */,
+				000000000000000000000322 /* Components */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		000000000000000000000323 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000056 /* Localizable.xcstrings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		000000000000000000000321 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000050 /* DesignTokens.swift */,
+				000000000000000000000051 /* Typography.swift */,
+				000000000000000000000052 /* Haptics.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		000000000000000000000322 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000053 /* AppButtonStyles.swift */,
+				000000000000000000000054 /* CardSurface.swift */,
+				000000000000000000000055 /* LabeledProgressView.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		000000000000000000000310 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -336,6 +398,15 @@
 				00000000000000000000001D /* LocalStudyModels.swift */,
 			);
 			path = Persistence;
+			sourceTree = "<group>";
+		};
+		0000000000000000000003F0 /* Sync */ = {
+			isa = PBXGroup;
+			children = (
+				0000000000000000000000F1 /* SyncModels.swift */,
+				0000000000000000000000F2 /* SyncService.swift */,
+			);
+			path = Sync;
 			sourceTree = "<group>";
 		};
 		000000000000000000000314 /* LocalLLM */ = {
@@ -456,6 +527,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				000000000000000000000156 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -473,6 +545,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				000000000000000000000157 /* OnboardingView.swift in Sources */,
+				000000000000000000000158 /* DashboardView.swift in Sources */,
+				000000000000000000000150 /* DesignTokens.swift in Sources */,
+				000000000000000000000151 /* Typography.swift in Sources */,
+				000000000000000000000152 /* Haptics.swift in Sources */,
+				000000000000000000000153 /* AppButtonStyles.swift in Sources */,
+				000000000000000000000154 /* CardSurface.swift in Sources */,
+				000000000000000000000155 /* LabeledProgressView.swift in Sources */,
 				000000000000000000000101 /* ManaMemoAIApp.swift in Sources */,
 				000000000000000000000102 /* RootView.swift in Sources */,
 				000000000000000000000103 /* APIClient.swift in Sources */,
@@ -487,19 +567,15 @@
 				00000000000000000000010C /* KeychainTokenStore.swift in Sources */,
 				00000000000000000000010D /* LoginView.swift in Sources */,
 				00000000000000000000010E /* HomeView.swift in Sources */,
-				000000000000000000000110 /* DeckModels.swift in Sources */,
-				000000000000000000000111 /* DeckService.swift in Sources */,
 				000000000000000000000112 /* DeckListView.swift in Sources */,
-				000000000000000000000113 /* NoteSeedModels.swift in Sources */,
-				000000000000000000000114 /* NoteSeedService.swift in Sources */,
 				000000000000000000000115 /* NoteCreateView.swift in Sources */,
 				000000000000000000000116 /* NoteListView.swift in Sources */,
 				000000000000000000000117 /* SettingsView.swift in Sources */,
-				000000000000000000000118 /* AiCandidateModels.swift in Sources */,
-				000000000000000000000119 /* AiCandidateService.swift in Sources */,
 				00000000000000000000011A /* NoteDetailView.swift in Sources */,
 				00000000000000000000011B /* CandidateAdoptionView.swift in Sources */,
 				00000000000000000000011C /* LocalStudyModels.swift in Sources */,
+				0000000000000000000001F1 /* SyncModels.swift in Sources */,
+				0000000000000000000001F2 /* SyncService.swift in Sources */,
 				00000000000000000000011D /* LocalCandidateGenerator.swift in Sources */,
 				00000000000000000000011E /* LocalLLMModelCatalog.swift in Sources */,
 				00000000000000000000011F /* LocalLLMSettingsStore.swift in Sources */,

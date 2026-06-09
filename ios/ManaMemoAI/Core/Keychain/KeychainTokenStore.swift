@@ -21,14 +21,21 @@ final class KeychainTokenStore: AuthTokenStore {
         return String(data: data, encoding: .utf8)
     }
 
-    func saveToken(_ token: String) {
+    @discardableResult
+    func saveToken(_ token: String) -> Bool {
         deleteToken()
 
         var query = baseQuery
         query[kSecValueData as String] = Data(token.utf8)
         query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
 
-        SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            // 保存失敗を握りつぶさず可視化する（次回起動でトークン消失の原因切り分け用）。
+            assertionFailure("KeychainTokenStore.saveToken failed: OSStatus \(status)")
+            return false
+        }
+        return true
     }
 
     func deleteToken() {
