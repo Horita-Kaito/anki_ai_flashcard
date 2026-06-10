@@ -57,6 +57,14 @@ jobs:
 
             # マイグレーション & キャッシュ
             docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan migrate --force
+
+            # Passport 鍵チェック (MCP OAuth 用)。backend はコード焼き込みイメージで
+            # storage が非永続のため、鍵は data/.env の PASSPORT_PRIVATE_KEY /
+            # PASSPORT_PUBLIC_KEY で注入する必要がある。無ければ警告 (デプロイは継続)。
+            if ! docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend sh -c '[ -n "$PASSPORT_PRIVATE_KEY" ] || [ -f storage/oauth-private.key ]'; then
+              echo "WARNING: Passport keys が未設定のため MCP OAuth は動作しません。data/.env に PASSPORT_PRIVATE_KEY / PASSPORT_PUBLIC_KEY を設定してください。"
+            fi
+
             docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan config:cache
             docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan route:cache
             docker compose -p "$COMPOSE_PROJECT" -f "$COMPOSE_FILE" exec -T backend php artisan view:cache
