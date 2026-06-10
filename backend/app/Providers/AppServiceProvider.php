@@ -88,5 +88,12 @@ final class AppServiceProvider extends ServiceProvider
         // 過剰なポーリング・大量バッチの連投を抑止する。
         RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(10)
             ->by($request->user()?->id ?: $request->ip()));
+
+        // MCP エンドポイント: 60 req/min/user。単一ルート (POST /mcp) に全ツール呼び出しが
+        // 乗るため api と同等。AI 生成コストの保護はミドルウェアでは行えず (読み取り系
+        // ツールまで絞ってしまう)、GenerateCardCandidatesTool 内で ai-generation と同じ
+        // バケットを手動消費する。
+        RateLimiter::for('mcp', fn (Request $request) => Limit::perMinute(60)
+            ->by($request->user()?->id ?: $request->ip()));
     }
 }

@@ -24,6 +24,7 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 - Frontend architecture: `docs/05_frontend_design.md`
 - iOS architecture: `docs/12_ios_design.md`, `docs/13_ios_local_first_architecture.md`
 - Backend architecture: `docs/06_backend_design.md`
+- MCP server design: `docs/14_mcp_design.md`
 - Testing policy: `docs/07_testing_strategy.md`
 - Runtime AI settings: `backend/config/ai.php`
 - Agent skills: `.agents/skills/*/SKILL.md`
