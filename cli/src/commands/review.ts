@@ -1,5 +1,6 @@
 import { createInterface } from "node:readline/promises";
 import { apiRequest } from "../api.js";
+import { hasCloze, maskCloze, revealCloze } from "../cloze.js";
 
 interface ReviewOptions {
   deck?: string;
@@ -51,8 +52,11 @@ export async function reviewCommand(options: ReviewOptions): Promise<void> {
   try {
     for (const [index, card] of cards.entries()) {
       const shownAt = Date.now();
-      console.log(`[${index + 1}/${cards.length}] Q: ${card.question}`);
+      console.log(`[${index + 1}/${cards.length}] Q: ${maskCloze(card.question)}`);
       await rl.question("(Enter で答えを表示) ");
+      if (hasCloze(card.question)) {
+        console.log(`→ ${revealCloze(card.question)}`);
+      }
       console.log(`A: ${card.answer}`);
       if (card.explanation) {
         console.log(`解説: ${card.explanation}`);
