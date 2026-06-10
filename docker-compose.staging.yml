@@ -118,7 +118,9 @@ services:
       - default
     labels:
       - traefik.enable=true
-      - "traefik.http.routers.anki-api.rule=Host(`anki.takohorita.com`) && (PathPrefix(`/api`) || PathPrefix(`/sanctum`))"
+      # /mcp + /oauth + /.well-known は MCP サーバーと OAuth フロー (docs/14_mcp_design.md)。
+      # /login は SPA 側のページなので backend に振らない (backend の OAuth ログインは /oauth/login)。
+      - "traefik.http.routers.anki-api.rule=Host(`anki.takohorita.com`) && (PathPrefix(`/api`) || PathPrefix(`/sanctum`) || PathPrefix(`/mcp`) || PathPrefix(`/oauth`) || PathPrefix(`/.well-known`))"
       - traefik.http.routers.anki-api.entrypoints=websecure
       - traefik.http.routers.anki-api.tls.certresolver=letsencrypt
       - traefik.http.routers.anki-api.priority=10

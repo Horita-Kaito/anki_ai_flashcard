@@ -158,6 +158,6 @@ final class OAuthAuthorizeFlowTest extends TestCase
             'state' => 'test-state',
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
-        ]))->assertRedirect('/login');
+        ]))->assertRedirect('/oauth/login');
     }
 }

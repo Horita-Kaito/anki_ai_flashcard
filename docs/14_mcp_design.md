@@ -36,7 +36,8 @@ claude mcp add --transport http tessera https://<host>/mcp \
   chat.openai.com / localhost) と `custom_schemes` (claude / cursor / vscode) で制限
 - `GET|POST|DELETE /oauth/authorize`, `POST /oauth/token` — Passport 標準 (PKCE 必須の public client)
 
-認可画面はバックエンド完結の最小 Blade (`/login` = `WebLoginController` + `resources/views/oauth/authorize.blade.php`)。
+認可画面はバックエンド完結の最小 Blade (`/oauth/login` = `WebLoginController` + `resources/views/oauth/authorize.blade.php`。
+SPA の `/login` と衝突しないよう /oauth 配下に置き、リバースプロキシは `/mcp` `/oauth` `/.well-known` を backend に振る)。
 Passport の鍵は `passport:keys` で生成し **コミットしない** (`storage/*.key` は gitignore 済み、
 本番/staging は `PASSPORT_PRIVATE_KEY` / `PASSPORT_PUBLIC_KEY` を env 注入)。
 
