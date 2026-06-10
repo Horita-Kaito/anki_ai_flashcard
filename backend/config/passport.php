@@ -28,9 +28,13 @@ return [
     |
     */
 
-    'private_key' => env('PASSPORT_PRIVATE_KEY'),
+    // PEM をそのまま渡すか、改行を含められない env ファイル (docker compose の
+    // env_file 等) 向けに単一行 base64 (*_B64) で渡すかの2系統をサポートする。
+    'private_key' => env('PASSPORT_PRIVATE_KEY')
+        ?: (($key = env('PASSPORT_PRIVATE_KEY_B64')) ? base64_decode((string) $key, true) : null),
 
-    'public_key' => env('PASSPORT_PUBLIC_KEY'),
+    'public_key' => env('PASSPORT_PUBLIC_KEY')
+        ?: (($key = env('PASSPORT_PUBLIC_KEY_B64')) ? base64_decode((string) $key, true) : null),
 
     /*
     |--------------------------------------------------------------------------
