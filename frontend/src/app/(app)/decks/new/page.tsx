@@ -3,7 +3,7 @@ import { DeckForm } from "@/features/deck";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "デッキ作成 | まとメモAI",
+  title: "デッキ作成 | まなメモAI",
 };
 
 export default function NewDeckPage() {

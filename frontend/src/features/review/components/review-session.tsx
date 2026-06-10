@@ -124,6 +124,10 @@ export function ReviewSession() {
   const [index, setIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [completed, setCompleted] = useState(0);
+  // セッション中の評価別件数 (iOS ReviewView の ratingCounts 相当)
+  const [ratingCounts, setRatingCounts] = useState<Record<ReviewRating, number>>(
+    { again: 0, hard: 0, good: 0, easy: 0 }
+  );
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
 
   const [extraMode, setExtraMode] = useState(false);
@@ -177,6 +181,7 @@ export function ReviewSession() {
         });
         haptic("success");
         setCompleted((c) => c + 1);
+        setRatingCounts((prev) => ({ ...prev, [rating]: prev[rating] + 1 }));
         setIndex((i) => i + 1);
         setShowAnswer(false);
         setStartedAt(Date.now());
@@ -302,6 +307,23 @@ export function ReviewSession() {
             {completed} 枚のカードを復習しました
           </p>
         </div>
+        {completed > 0 && (
+          <dl className="grid w-full max-w-sm grid-cols-4 gap-2">
+            {REVIEW_RATINGS.map((rating) => (
+              <div
+                key={rating}
+                className={`flex flex-col items-center gap-0.5 rounded-md border px-2 py-2 ${RATING_CLASSES[rating]}`}
+              >
+                <dt className="text-[11px] font-medium leading-tight">
+                  {RATING_DISPLAY_LABELS[rating]}
+                </dt>
+                <dd className="text-lg font-bold tabular-nums">
+                  {ratingCounts[rating]}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
         <div className="flex flex-col sm:flex-row gap-2">
           <Link
             href="/dashboard"
@@ -330,6 +352,7 @@ export function ReviewSession() {
             onClick={() => {
               setIndex(0);
               setCompleted(0);
+              setRatingCounts({ again: 0, hard: 0, good: 0, easy: 0 });
               setShowAnswer(false);
               refetch();
             }}

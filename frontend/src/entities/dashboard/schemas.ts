@@ -37,6 +37,8 @@ export const dashboardSummaryResponseSchema = z
     due_count_today: z.number(),
     new_cards_count: z.number(),
     total_cards: z.number(),
+    /** 全メモ横断の未レビュー候補総数 (backend 追加中の任意フィールド) */
+    total_pending_candidates: z.number().optional(),
     recent_notes: z.array(recentNoteSchema),
     recent_cards: z.array(recentCardSchema),
     ai_usage: aiUsageSchema,

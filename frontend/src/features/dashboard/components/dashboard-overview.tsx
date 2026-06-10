@@ -91,14 +91,17 @@ export function DashboardOverview() {
   }
 
   const dueToday = data.due_count_today;
+  // API が全メモ横断の未レビュー候補総数を返す場合はそれを優先。
+  // 無い場合は recent_notes の集計にフォールバックする (旧 API 互換)。
   const pendingReview =
+    data.total_pending_candidates ??
     data.recent_notes.reduce(
       (sum, note) =>
         sum +
         ((note as { candidates_pending_count?: number }).candidates_pending_count ??
           0),
       0
-    ) ?? 0;
+    );
   const monthCostJpyApprox = Math.round(data.ai_usage.month_cost_usd * 150);
 
   return (
@@ -146,7 +149,9 @@ export function DashboardOverview() {
               <p className="text-xs font-medium text-muted-foreground">未レビュー候補</p>
               <p className="font-serif text-2xl font-semibold">{pendingReview} 件</p>
               <p className="text-sm text-muted-foreground">
-                AI が出した候補は、採用するまで復習に入りません。
+                {pendingReview === 0
+                  ? "AI候補はすべてレビュー済みです。"
+                  : "AI が出した候補は、採用するまで復習に入りません。"}
               </p>
             </div>
             <CheckCircle2 className="size-5 text-primary" aria-hidden />

@@ -241,7 +241,7 @@ export function GenerateCandidatesView({
           generationStatus?.status === "partial_success" &&
           (generationStatus?.chunks_failed ?? 0) > 0 && (
             <div
-              role="status"
+              role="alert"
             className="flex items-start gap-2 text-sm bg-[var(--persimmon-faint)] text-foreground rounded-md px-3 py-2"
             >
               <AlertTriangle
@@ -260,6 +260,23 @@ export function GenerateCandidatesView({
               </div>
             </div>
           )}
+
+        {/* 生成失敗バナー: toast は一瞬で消えるため、失敗状態を常時提示して
+            下のボタンからそのまま再試行へ誘導する。 */}
+        {!isInFlight && generationStatus?.status === "failed" && (
+          <div
+            role="alert"
+            className="flex items-start gap-2 text-sm bg-[var(--persimmon-faint)] text-foreground rounded-md px-3 py-2"
+          >
+            <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
+            <div className="space-y-1 leading-snug">
+              <p>{toAsyncFailureMessage(generationStatus?.error_reason)}</p>
+              <p className="text-xs text-muted-foreground">
+                下のボタンからもう一度生成できます。
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* メイン CTA: 大きく、肩書きが揺れない (新規生成 / 追加生成 を 1 つのボタンにまとめる) */}
         <div className="flex flex-col sm:flex-row gap-2">

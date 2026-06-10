@@ -48,8 +48,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://anki-ai-flashcard.
 
 export const metadata: Metadata = {
   title: {
-    default: "まとメモAI",
-    template: "%s | まとメモAI",
+    default: "まなメモAI",
+    template: "%s | まなメモAI",
   },
   description:
     "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
@@ -65,24 +65,24 @@ export const metadata: Metadata = {
     "flashcard",
     "spaced repetition",
   ],
-  applicationName: "まとメモAI",
+  applicationName: "まなメモAI",
   manifest: "/manifest.json",
   metadataBase: new URL(SITE_URL),
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "まとメモAI",
+    title: "まなメモAI",
     description:
       "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
     url: SITE_URL,
-    siteName: "まとメモAI",
+    siteName: "まなメモAI",
     locale: "ja_JP",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "まとメモAI",
+    title: "まなメモAI",
     description:
       "学習メモを、今日覚えるべき問いに変える作業台。AI が候補を出し、人がレビューして採用します。",
   },
@@ -100,7 +100,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "まとメモAI",
+    title: "まなメモAI",
   },
   formatDetection: {
     telephone: false,

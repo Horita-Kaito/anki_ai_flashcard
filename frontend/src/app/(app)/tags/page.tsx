@@ -3,7 +3,7 @@ import { TagManager } from "@/features/tag";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "タグ管理 | まとメモAI",
+  title: "タグ管理 | まなメモAI",
 };
 
 export default function TagsPage() {

@@ -3,7 +3,7 @@ import { NewNotePageClient } from "./new-note-page-client";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "メモを書く | まとメモAI",
+  title: "メモを書く | まなメモAI",
 };
 
 export default function NewNotePage() {

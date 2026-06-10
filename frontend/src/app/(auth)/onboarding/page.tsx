@@ -181,6 +181,12 @@ export default function OnboardingPage() {
           )}
         </Button>
 
+        {selected.size === 0 && !submitMutation.isPending && (
+          <p className="text-sm text-center text-muted-foreground">
+            学習目的を1つ以上選んでください
+          </p>
+        )}
+
         {submitMutation.isError && (
           <p role="alert" className="text-sm text-center text-red-600">
             セットアップに失敗しました。もう一度お試しください。

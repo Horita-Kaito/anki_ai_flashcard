@@ -4,7 +4,7 @@ import { LoginForm } from "@/features/auth";
 
 export const metadata: Metadata = {
   title: "ログイン",
-  description: "まとメモAI にログインして、フラッシュカード学習を続けましょう。",
+  description: "まなメモAI にログインして、フラッシュカード学習を続けましょう。",
 };
 
 export default function LoginPage() {

@@ -47,7 +47,7 @@ describe("GenerateCandidatesView", () => {
     );
     renderWithProviders(<GenerateCandidatesView noteSeedId={1} />);
 
-    expect(await screen.findByRole("status")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "1 / 3 個の塊で失敗しました"
     );
     expect(

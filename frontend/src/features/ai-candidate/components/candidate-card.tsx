@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -52,6 +52,8 @@ export function CandidateCard({
 
   const isFinal = candidate.status !== "pending";
   const canAdopt = !isFinal && deckId !== "";
+
+  const articleRef = useRef<HTMLElement>(null);
 
   async function handleAdopt() {
     if (deckId === "") {
@@ -117,9 +119,74 @@ export function CandidateCard({
     }
   }
 
+  // キーボードショートカット: a=採用 / e=編集 / r=却下。
+  // このカード (または内部要素) にフォーカスがあるときだけ反応する。
+  // 入力欄フォーカス中・修飾キー押下時・確定済み候補・編集中は無効。
+  const shortcutRef = useRef<{
+    adopt: () => void;
+    reject: () => void;
+    edit: () => void;
+    canAdopt: boolean;
+    isFinal: boolean;
+    editing: boolean;
+  }>(null);
+  useEffect(() => {
+    shortcutRef.current = {
+      adopt: handleAdopt,
+      reject: handleReject,
+      edit: () => setEditing(true),
+      canAdopt,
+      isFinal,
+      editing,
+    };
+  });
+
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      const state = shortcutRef.current;
+      if (!state) return;
+      if (state.isFinal || state.editing) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+
+      const el = articleRef.current;
+      const active = document.activeElement as HTMLElement | null;
+      // このカード内にフォーカスが無ければ無視
+      if (!el || !active || !el.contains(active)) return;
+
+      // 入力中 (input/textarea/contentEditable) は無効化
+      const tag = active.tagName;
+      if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        active.isContentEditable
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      if (key === "a") {
+        if (!state.canAdopt) return;
+        e.preventDefault();
+        state.adopt();
+      } else if (key === "e") {
+        e.preventDefault();
+        state.edit();
+      } else if (key === "r") {
+        e.preventDefault();
+        state.reject();
+      }
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <article
-      className={`border rounded-lg p-4 md:p-5 space-y-4 ${
+      ref={articleRef}
+      tabIndex={isFinal ? undefined : 0}
+      data-candidate-card={isFinal ? undefined : ""}
+      className={`border rounded-lg p-4 md:p-5 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
         candidate.status === "adopted"
           ? "bg-[var(--forest-faint)] border-primary/30"
           : candidate.status === "rejected"
@@ -306,6 +373,11 @@ export function CandidateCard({
             <Check className="size-4" aria-hidden />
             採用して復習に回す
           </Button>
+          {deckId === "" && (
+            <p className="text-xs text-muted-foreground">
+              デッキを選択してから採用できます
+            </p>
+          )}
           <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"

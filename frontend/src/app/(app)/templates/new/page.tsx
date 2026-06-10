@@ -3,7 +3,7 @@ import { DomainTemplateForm } from "@/features/domain-template";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "テンプレート作成 | まとメモAI",
+  title: "テンプレート作成 | まなメモAI",
 };
 
 export default function NewTemplatePage() {

@@ -47,7 +47,10 @@ export function NewNotePageClient() {
     try {
       await dispatchGeneration(note);
     } catch {
-      // 失敗時は遷移しない (メモは保存済み)
+      // 生成 dispatch に失敗してもメモ自体は保存済みなので、
+      // 連続モードでなければ詳細画面へ遷移する。
+      // 詳細画面の GenerateCandidatesView から AI 生成を再試行できる。
+      // (連続モードのときはフォームに留まり、トーストで失敗を伝える)
       if (!isContinuousMode) {
         router.push(`/notes/${note.id}`);
       }

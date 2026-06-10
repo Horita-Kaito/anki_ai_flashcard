@@ -26,6 +26,8 @@ export interface DashboardSummary {
   due_count_today: number;
   new_cards_count: number;
   total_cards: number;
+  /** 全メモ横断の未レビュー候補総数 (backend 追加中の任意フィールド) */
+  total_pending_candidates?: number;
   recent_notes: RecentNote[];
   recent_cards: RecentCard[];
   ai_usage: AiUsage;
