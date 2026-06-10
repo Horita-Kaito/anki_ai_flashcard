@@ -79,14 +79,7 @@ struct CardCreateView: View {
     }
 
     private func ensureDefaultDeck() {
-        if let firstDeck = decks.first {
-            selectedDeckId = selectedDeckId ?? firstDeck.id
-            return
-        }
-
-        let deck = LocalDeck(name: String(localized: "標準デッキ"))
-        modelContext.insert(deck)
-        selectedDeckId = deck.id
+        selectedDeckId = ensureDefaultDeck(in: decks, context: modelContext, currentSelection: selectedDeckId)
     }
 
     private func create() {

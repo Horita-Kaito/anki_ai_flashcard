@@ -532,7 +532,16 @@
     "学習" : {
       "extractionState" : "manual"
     },
-    "1日の復習上限" : {
+    "1回の復習の上限" : {
+      "extractionState" : "manual"
+    },
+    "ログイン情報の保存に失敗しました。もう一度お試しください。" : {
+      "extractionState" : "manual"
+    },
+    "すべて重複のためスキップされました" : {
+      "extractionState" : "manual"
+    },
+    "このファイルは新しいバージョン（%lld）で作成されています。アプリを更新してから取り込んでください。" : {
       "extractionState" : "manual"
     },
     "無制限" : {

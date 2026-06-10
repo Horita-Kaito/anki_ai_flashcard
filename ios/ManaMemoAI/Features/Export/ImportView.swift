@@ -8,8 +8,12 @@ struct ImportView: View {
     @State private var isPickerPresented = false
     @State private var status: Status?
 
+    /// このアプリが取り込めるエクスポート形式の最大バージョン。
+    private static let supportedVersion = 1
+
     private enum Status {
         case success(decks: Int, cards: Int, notes: Int)
+        case skipped
         case failure(String)
     }
 
@@ -30,6 +34,8 @@ struct ImportView: View {
                     switch status {
                     case let .success(decks, cards, notes):
                         InlineStatusView(.success, verbatim: String(localized: "デッキ \(decks) / カード \(cards) / メモ \(notes) を取り込みました"))
+                    case .skipped:
+                        InlineStatusView(.success, verbatim: String(localized: "すべて重複のためスキップされました"))
                     case let .failure(message):
                         InlineStatusView(.error, verbatim: message)
                     }
@@ -59,8 +65,21 @@ struct ImportView: View {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             let payload = try decoder.decode(ExportPayload.self, from: data)
+
+            // 対応バージョンより新しいファイルは互換性が保証できないため取り込まない。
+            guard payload.version <= Self.supportedVersion else {
+                status = .failure(String(localized: "このファイルは新しいバージョン（\(payload.version)）で作成されています。アプリを更新してから取り込んでください。"))
+                Haptics.error()
+                return
+            }
+
             let outcome = merge(payload)
-            status = .success(decks: outcome.decks, cards: outcome.cards, notes: outcome.notes)
+            if outcome.decks == 0 && outcome.cards == 0 && outcome.notes == 0 {
+                // 取り込み対象がすべて既存IDと重複していた場合の案内。
+                status = .skipped
+            } else {
+                status = .success(decks: outcome.decks, cards: outcome.cards, notes: outcome.notes)
+            }
             Haptics.success()
         } catch {
             status = .failure(error.localizedDescription)

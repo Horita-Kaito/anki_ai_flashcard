@@ -5,17 +5,52 @@ import SwiftData
 ///
 /// 1リクエストで push(dirty + 削除tombstone) と pull(since以降のサーバ差分) を行う。
 /// client_id はローカルの UUID をそのまま使うため、サーバ↔ローカルのID対応表は不要。
-/// 競合は updatedAt(論理時刻) の Last-Write-Wins。
+/// 競合は updatedAt(論理時刻) の Last-Write-Wins（削除も同じ規則で適用する）。
+/// デッキ階層は parent_client_id でやり取りし、pull 後に親参照を二段階で解決する。
+/// カーソル・最終同期時刻はログイン中ユーザー単位で名前空間を分ける（別アカウント混在防止）。
 @MainActor
 final class SyncService {
     private let apiClient: APIClient
     private let userDefaults: UserDefaults
-    private let cursorKey = "sync.cursor"
-    private let lastSyncedKey = "sync.last_synced_at"
+    /// 同期カーソルのキー接頭辞。ユーザーIDで名前空間化する。
+    private static let cursorKeyPrefix = "sync.cursor"
+    /// 最終同期時刻のキー接頭辞。SettingsView と共有するため static で公開する。
+    static let lastSyncedKeyPrefix = "sync.last_synced_at"
+    /// このサービスが対象とするユーザー（nil は未ログイン: カーソルを共有しない）。
+    private let userId: Int?
 
-    init(apiClient: APIClient, userDefaults: UserDefaults = .standard) {
+    init(apiClient: APIClient, userId: Int?, userDefaults: UserDefaults = .standard) {
         self.apiClient = apiClient
+        self.userId = userId
         self.userDefaults = userDefaults
+    }
+
+    /// ユーザー単位で名前空間化したカーソルキー。
+    private var cursorKey: String { Self.cursorKey(for: userId) }
+    /// ユーザー単位で名前空間化した最終同期キー。
+    private var lastSyncedKey: String { Self.lastSyncedKey(for: userId) }
+
+    /// ユーザーIDを名前空間サフィックスへ変換する。未ログインは "anonymous"。
+    private static func namespace(for userId: Int?) -> String {
+        guard let userId else { return "anonymous" }
+        return String(userId)
+    }
+
+    /// 指定ユーザーのカーソルキー。未ログイン時も衝突しないよう "anonymous" を使う。
+    static func cursorKey(for userId: Int?) -> String {
+        "\(cursorKeyPrefix).\(namespace(for: userId))"
+    }
+
+    /// 指定ユーザーの最終同期キー。SettingsView の表示と SyncService の保存で共有する。
+    static func lastSyncedKey(for userId: Int?) -> String {
+        "\(lastSyncedKeyPrefix).\(namespace(for: userId))"
+    }
+
+    /// ログアウト時に、そのユーザーの同期カーソルと最終同期時刻を破棄する。
+    /// 別アカウントで再ログインした際に他人の差分カーソルを引き継がないため必須。
+    static func clearCursor(for userId: Int?, userDefaults: UserDefaults = .standard) {
+        userDefaults.removeObject(forKey: cursorKey(for: userId))
+        userDefaults.removeObject(forKey: lastSyncedKey(for: userId))
     }
 
     var lastSyncedAt: Date? {
@@ -103,6 +138,8 @@ final class SyncService {
         record.name = deck.name
         record.description = deck.deckDescription
         record.displayOrder = deck.displayOrder
+        // 親デッキは clientId(=UUID) で送り、サーバ側で FK へ解決させる。nil はトップレベル。
+        record.parentClientId = deck.parentDeckId?.uuidString
         return record
     }
 
@@ -184,7 +221,10 @@ final class SyncService {
         pulled: inout Int,
         deletedRemotely: inout Int
     ) {
+        // デッキは二段階で適用する: まず全件を本体だけ適用し、その後で親参照を解決する。
+        // 同一バッチ内で親が子より後に届くケースでも階層を正しく組めるようにするため。
         for record in changes.decks { applyDeck(record, context, &pulled, &deletedRemotely) }
+        resolveDeckParents(changes.decks, context)
         for record in changes.noteSeeds { applyNote(record, context, &pulled, &deletedRemotely) }
         for record in changes.aiCardCandidates { applyCandidate(record, context, &pulled, &deletedRemotely) }
         for record in changes.cards { applyCard(record, context, &pulled, &deletedRemotely) }
@@ -196,7 +236,11 @@ final class SyncService {
         let existing = fetchDeck(id, context)
 
         if record.deleted == true {
-            if let existing { context.delete(existing); deletedRemotely += 1 }
+            // 削除も LWW: 既存行より新しい削除のときだけ反映する。
+            if let existing, isNewer(record.updatedAt, than: existing.updatedAt) {
+                context.delete(existing)
+                deletedRemotely += 1
+            }
             return
         }
 
@@ -221,7 +265,27 @@ final class SyncService {
             )
             context.insert(deck)
         }
+        // 親参照は本体適用後に resolveDeckParents() でまとめて解決する。
         pulled += 1
+    }
+
+    /// pull された全デッキの親参照(parent_client_id)を、本体適用後にまとめて解決する。
+    /// 親が同一バッチ内に後から届いても、この段階では既に挿入済みのため確実に解決できる。
+    private func resolveDeckParents(_ records: [SyncRecord], _ context: ModelContext) {
+        for record in records where record.deleted != true {
+            guard let id = UUID(uuidString: record.clientId), let deck = fetchDeck(id, context) else { continue }
+            let resolvedParent = record.parentClientId.flatMap(UUID.init)
+            // 親が未到着で解決できない場合は既存の親参照を温存する（次回同期で解決）。
+            if record.parentClientId != nil, resolvedParent == nil { continue }
+            // 解決できた値（nil=トップレベル含む）を適用。dirty は立てない（pull 由来のため）。
+            deck.parentDeckId = resolvedParent
+        }
+    }
+
+    /// 受信した削除/更新時刻が既存行より新しいか（LWW 判定）。受信側 nil は最新扱い。
+    private func isNewer(_ incoming: Date?, than current: Date) -> Bool {
+        guard let incoming else { return true }
+        return incoming > current
     }
 
     private func applyNote(_ record: SyncRecord, _ context: ModelContext, _ pulled: inout Int, _ deletedRemotely: inout Int) {
@@ -229,7 +293,10 @@ final class SyncService {
         let existing = fetchNote(id, context)
 
         if record.deleted == true {
-            if let existing { context.delete(existing); deletedRemotely += 1 }
+            if let existing, isNewer(record.updatedAt, than: existing.updatedAt) {
+                context.delete(existing)
+                deletedRemotely += 1
+            }
             return
         }
 
@@ -260,7 +327,10 @@ final class SyncService {
         let existing = fetchCandidate(id, context)
 
         if record.deleted == true {
-            if let existing { context.delete(existing); deletedRemotely += 1 }
+            if let existing, isNewer(record.updatedAt, than: existing.updatedAt) {
+                context.delete(existing)
+                deletedRemotely += 1
+            }
             return
         }
 
@@ -302,7 +372,10 @@ final class SyncService {
         let existing = fetchCard(id, context)
 
         if record.deleted == true {
-            if let existing { context.delete(existing); deletedRemotely += 1 }
+            if let existing, isNewer(record.updatedAt, than: existing.updatedAt) {
+                context.delete(existing)
+                deletedRemotely += 1
+            }
             return
         }
 

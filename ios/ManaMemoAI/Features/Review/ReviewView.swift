@@ -15,7 +15,7 @@ struct ReviewView: View {
     @State private var deckFilter: UUID?
     // このセッションでの評価別の枚数。完了サマリに使う。
     @State private var ratingCounts: [ReviewRating: Int] = [:]
-    // 1日の復習上限（0 は無制限）。設定と共有。
+    // 1回の復習の上限（0 は無制限）。設定と共有。@AppStorage キー名は互換のため据え置く。
     @AppStorage("dailyReviewLimit") private var dailyReviewLimit = 0
 
     private var currentCard: LocalCard? {
@@ -72,7 +72,12 @@ struct ReviewView: View {
             }
             .onAppear(perform: loadQueueIfNeeded)
             .onChange(of: deckFilter) { reloadQueue() }
-            .onChange(of: dailyReviewLimit) { reloadQueue() }
+            // 上限変更はセッション開始前のみ即時反映する。採点が始まったあとに
+            // reloadQueue() すると進捗（分母・採点済み枚数）がリセットされるため、
+            // 進行中は反映せず次のセッション開始時に効かせる。
+            .onChange(of: dailyReviewLimit) {
+                if completedCount == 0 { reloadQueue() }
+            }
         }
     }
 
@@ -239,6 +244,17 @@ struct ReviewView: View {
     }
 
     private func rate(_ card: LocalCard, as rating: ReviewRating) {
+        // 他画面（カード一覧やデッキ編集）でこのカードが削除済みの場合、
+        // SwiftData モデルへ書き込むとクラッシュする。削除済みなら採点せず次へ送る。
+        guard !card.isDeleted else {
+            isAnswerVisible = false
+            currentIndex += 1
+            if currentIndex >= queue.count {
+                Haptics.success()
+            }
+            return
+        }
+
         Haptics.selection()
         ReviewScheduler.apply(rating, to: card)
         completedCount += 1

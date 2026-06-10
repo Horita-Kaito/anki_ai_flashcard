@@ -13,6 +13,8 @@ struct SyncRecord: Codable {
     var name: String?
     var description: String?
     var displayOrder: Int?
+    // 親デッキの clientId。nil はトップレベル。デッキ階層を端末間で保つ。
+    var parentClientId: String?
 
     // note_seed
     var body: String?

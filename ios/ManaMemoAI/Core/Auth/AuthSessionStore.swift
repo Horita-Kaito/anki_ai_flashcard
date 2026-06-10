@@ -50,7 +50,12 @@ final class AuthSessionStore: ObservableObject {
 
         do {
             let response = try await authService.issueToken(email: email, password: password)
-            tokenStore.saveToken(response.token)
+            // トークン保存に失敗したら無言で進めず、ユーザーへ伝える。
+            // 保存できないまま authenticated にすると次回起動でセッションが消える。
+            guard tokenStore.saveToken(response.token) else {
+                errorMessage = String(localized: "ログイン情報の保存に失敗しました。もう一度お試しください。")
+                return
+            }
             state = .authenticated(response.data)
         } catch {
             errorMessage = error.localizedDescription
@@ -58,12 +63,17 @@ final class AuthSessionStore: ObservableObject {
     }
 
     func logout() async {
+        // ログアウト対象ユーザーの同期カーソル／最終同期時刻を破棄する。
+        // 別アカウントで再ログインした際に他人の差分カーソルを引き継がないため。
+        let loggingOutUserId = currentUserId
+
         do {
             try await authService.revokeCurrentToken()
         } catch {
             errorMessage = error.localizedDescription
         }
 
+        SyncService.clearCursor(for: loggingOutUserId)
         tokenStore.deleteToken()
         state = .signedOut
     }
@@ -73,6 +83,14 @@ final class AuthSessionStore: ObservableObject {
             return true
         }
         return false
+    }
+
+    /// ログイン中ユーザーのID（未ログインは nil）。同期カーソルの名前空間化に使う。
+    var currentUserId: Int? {
+        if case .authenticated(let user) = state {
+            return user.id
+        }
+        return nil
     }
 
     /// 認証済みトークンを載せた APIClient を生成する（同期サービス等で再利用）。

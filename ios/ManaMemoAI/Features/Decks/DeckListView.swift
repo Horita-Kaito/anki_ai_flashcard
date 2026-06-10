@@ -73,7 +73,7 @@ struct DeckListView: View {
             }
             .sheet(isPresented: $isCreatePresented) {
                 NavigationStack {
-                    DeckCreateView(displayOrder: decks.count, decks: decks)
+                    DeckCreateView(displayOrder: nextDisplayOrder, decks: decks)
                 }
             }
         }
@@ -81,6 +81,11 @@ struct DeckListView: View {
 
     private func cardCount(for deck: LocalDeck) -> Int {
         cards.filter { $0.deckId == deck.id }.count
+    }
+
+    // 新規デッキの並び順。件数ではなく既存最大値+1 を使い、削除後の重複を防ぐ。
+    private var nextDisplayOrder: Int {
+        (decks.map(\.displayOrder).max() ?? -1) + 1
     }
 
     // デッキ削除は非破壊：カードは残し（所属が消えると一覧では「未分類」）、
@@ -275,7 +280,11 @@ private struct DeckEditView: View {
                         .foregroundStyle(AppColor.secondaryText)
                 } else {
                     ForEach(deckCards) { card in
-                        DeckCardRow(card: card)
+                        NavigationLink {
+                            CardEditView(card: card, deckName: deck.name)
+                        } label: {
+                            DeckCardRow(card: card)
+                        }
                     }
                 }
             } header: {

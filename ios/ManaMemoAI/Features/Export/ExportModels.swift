@@ -45,6 +45,12 @@ struct CardExport: Codable {
     let intervalDays: Int
     let lapseCount: Int
     let isSuspended: Bool
+    // 後方互換のため optional。旧バージョンのエクスポートファイル（これらのキーが無い）も
+    // decode できる必要がある。存在すれば import 時に復元する。
+    let sourceNoteSeedId: UUID?
+    let sourceAiCandidateId: UUID?
+    let scheduler: String?
+    let createdAt: Date?
 
     init(_ card: LocalCard) {
         id = card.id
@@ -57,20 +63,30 @@ struct CardExport: Codable {
         intervalDays = card.intervalDays
         lapseCount = card.lapseCount
         isSuspended = card.isSuspended
+        sourceNoteSeedId = card.sourceNoteSeedId
+        sourceAiCandidateId = card.sourceAiCandidateId
+        scheduler = card.scheduler
+        createdAt = card.createdAt
     }
 
     func makeModel() -> LocalCard {
         LocalCard(
             id: id,
             deckId: deckId,
+            sourceNoteSeedId: sourceNoteSeedId,
+            sourceAiCandidateId: sourceAiCandidateId,
             question: question,
             answer: answer,
             explanation: explanation,
+            // 旧ファイルに scheduler が無ければ既定値で復元する。
+            scheduler: scheduler ?? "fsrs",
             dueAt: dueAt,
             repetitions: repetitions,
             intervalDays: intervalDays,
             lapseCount: lapseCount,
-            isSuspended: isSuspended
+            isSuspended: isSuspended,
+            // createdAt が含まれていれば維持し、無ければ現在時刻で生成する。
+            createdAt: createdAt ?? .now
         )
     }
 }

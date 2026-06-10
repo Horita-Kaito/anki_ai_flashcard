@@ -22,8 +22,9 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
 
         var contextParams = llama_context_default_params()
         contextParams.n_ctx = UInt32(request.options.contextTokens)
-        contextParams.n_batch = UInt32(min(request.options.contextTokens, 512))
-        contextParams.n_ubatch = UInt32(min(request.options.contextTokens, 512))
+        let batchSize = min(request.options.contextTokens, 512)
+        contextParams.n_batch = UInt32(batchSize)
+        contextParams.n_ubatch = UInt32(batchSize)
         contextParams.n_threads = Int32(max(2, ProcessInfo.processInfo.activeProcessorCount - 1))
         contextParams.n_threads_batch = contextParams.n_threads
 
@@ -50,12 +51,18 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         let maxNewTokens = max(1, min(request.options.maxTokens, request.options.contextTokens - promptTokens.count))
         try Task.checkCancellation()
 
-        var batch = llama_batch_init(Int32(max(promptTokens.count, 1)), 0, 1)
+        // バッチは n_batch トークン分だけ確保する。プロンプトがこれを超える場合は
+        // チャンク分割して順次 decode するため、バッチ自体は n_batch サイズで足りる。
+        // 生成は1トークンずつ decode するので最低でも1は必要。
+        var batch = llama_batch_init(Int32(max(batchSize, 1)), 0, 1)
         defer {
             llama_batch_free(batch)
         }
 
-        try decode(promptTokens, context: context, batch: &batch, startPosition: 0, emitLogitsForLastToken: true)
+        // プロンプトのトークン数が n_batch を超えると llama_decode が一括では失敗するため、
+        // n_batch 単位のチャンクに分割して順次 decode する。位置(pos)は通し番号で進め、
+        // logits はプロンプト最後尾のトークン（=最終チャンクの末尾）でのみ生成させる。
+        try decodePrompt(promptTokens, context: context, batch: &batch, batchSize: batchSize)
 
         var samplerParams = llama_sampler_chain_default_params()
         samplerParams.no_perf = true
@@ -161,6 +168,33 @@ actor LlamaFrameworkRuntime: LocalLLMRuntime {
         }
 
         return Array(tokens.prefix(Int(count)))
+    }
+
+    /// プロンプト全体を n_batch 単位のチャンクに分割して順次 decode する。
+    /// 最終チャンクの末尾トークンでのみ logits を生成し、その後のサンプリングに使う。
+    private func decodePrompt(
+        _ tokens: [llama_token],
+        context: OpaquePointer?,
+        batch: inout llama_batch,
+        batchSize: Int
+    ) throws {
+        let chunkSize = max(batchSize, 1)
+        var offset = 0
+        while offset < tokens.count {
+            try Task.checkCancellation()
+
+            let end = min(offset + chunkSize, tokens.count)
+            let chunk = Array(tokens[offset..<end])
+            let isLastChunk = end == tokens.count
+            try decode(
+                chunk,
+                context: context,
+                batch: &batch,
+                startPosition: Int32(offset),
+                emitLogitsForLastToken: isLastChunk
+            )
+            offset = end
+        }
     }
 
     private func decode(

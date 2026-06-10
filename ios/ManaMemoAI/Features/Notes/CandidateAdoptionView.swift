@@ -39,9 +39,8 @@ struct CandidateAdoptionView: View {
                         )
                     } else {
                         Picker("デッキ", selection: $selectedDeckId) {
-                            ForEach(decks) { deck in
-                                Text(deck.name)
-                                    .tag(Optional(deck.id))
+                            ForEach(indentedDecks(decks)) { option in
+                                Text(option.indentedName).tag(UUID?.some(option.deck.id))
                             }
                         }
                     }
@@ -91,14 +90,7 @@ struct CandidateAdoptionView: View {
     }
 
     private func ensureDefaultDeck() {
-        if let firstDeck = decks.first {
-            selectedDeckId = selectedDeckId ?? firstDeck.id
-            return
-        }
-
-        let deck = LocalDeck(name: String(localized: "標準デッキ"))
-        modelContext.insert(deck)
-        selectedDeckId = deck.id
+        selectedDeckId = ensureDefaultDeck(in: decks, context: modelContext, currentSelection: selectedDeckId)
     }
 
     private func adopt() {

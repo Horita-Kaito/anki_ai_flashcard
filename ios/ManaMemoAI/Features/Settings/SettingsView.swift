@@ -25,7 +25,7 @@ struct SettingsView: View {
 
                 Section {
                     Stepper(value: $dailyReviewLimit, in: 0...200, step: 10) {
-                        LabeledContent("1日の復習上限") {
+                        LabeledContent("1回の復習の上限") {
                             Text(dailyReviewLimit == 0 ? String(localized: "無制限") : "\(dailyReviewLimit)")
                         }
                     }
@@ -133,8 +133,9 @@ struct SettingsView: View {
     }
 
     private var lastSyncedText: String? {
-        // SyncService と同じ UserDefaults キー。
-        let timestamp = UserDefaults.standard.double(forKey: "sync.last_synced_at")
+        // SyncService とユーザー単位で名前空間化した同じキーを共有する。
+        let key = SyncService.lastSyncedKey(for: session.currentUserId)
+        let timestamp = UserDefaults.standard.double(forKey: key)
         guard timestamp > 0 else { return nil }
         return Date(timeIntervalSince1970: timestamp).formatted(date: .abbreviated, time: .shortened)
     }
@@ -146,7 +147,7 @@ struct SettingsView: View {
         syncMessage = nil
 
         do {
-            let service = SyncService(apiClient: session.makeAPIClient())
+            let service = SyncService(apiClient: session.makeAPIClient(), userId: session.currentUserId)
             let outcome = try await service.sync(context: modelContext)
             syncMessage = String(localized: "送信 \(outcome.pushed) / 受信 \(outcome.pulled) / 削除 \(outcome.deletedRemotely)")
             Haptics.success()
