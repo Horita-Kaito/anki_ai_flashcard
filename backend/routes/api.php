@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\DomainTemplateController;
 use App\Http\Controllers\Api\V1\NoteSeedController;
 use App\Http\Controllers\Api\V1\OnboardingController;
 use App\Http\Controllers\Api\V1\ReviewSessionController;
+use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\TagController;
 use App\Http\Controllers\Api\V1\UserSettingController;
 use App\Http\Controllers\Auth\AuthController;
@@ -95,6 +96,10 @@ Route::prefix('v1')->group(function () {
         Route::post('ai-card-candidates/{id}/restore', [AiCardCandidateController::class, 'restore']);
         Route::post('ai-card-candidates/{id}/adopt', [AiCardCandidateController::class, 'adopt']);
         Route::post('ai-card-candidates/batch-adopt', [AiCardCandidateController::class, 'batchAdopt']);
+
+        // 端末間オプトイン同期（push + pull を1リクエストで）
+        Route::post('sync', [SyncController::class, 'store'])
+            ->middleware('throttle:sync');
 
         // 復習セッション
         Route::get('review-sessions/today', [ReviewSessionController::class, 'today']);

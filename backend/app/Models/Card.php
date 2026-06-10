@@ -20,6 +20,7 @@ class Card extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'user_id',
+        'client_id',
         'deck_id',
         'domain_template_id',
         'source_note_seed_id',
@@ -30,12 +31,14 @@ class Card extends Model
         'card_type',
         'is_suspended',
         'scheduler',
+        'client_updated_at',
     ];
 
     /** @var array<string, string> */
     protected $casts = [
         'card_type' => CardType::class,
         'is_suspended' => 'boolean',
+        'client_updated_at' => 'datetime',
     ];
 
     public const SCHEDULER_SM2 = 'sm2';

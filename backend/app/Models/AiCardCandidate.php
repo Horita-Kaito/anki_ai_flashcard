@@ -17,6 +17,7 @@ class AiCardCandidate extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'user_id',
+        'client_id',
         'note_seed_id',
         'ai_generation_log_id',
         'provider',
@@ -32,6 +33,7 @@ class AiCardCandidate extends Model
         'status',
         'suggested_deck_id',
         'raw_response',
+        'client_updated_at',
     ];
 
     /** @var array<string, string> */
@@ -40,6 +42,7 @@ class AiCardCandidate extends Model
         'status' => CandidateStatus::class,
         'confidence' => 'float',
         'raw_response' => 'array',
+        'client_updated_at' => 'datetime',
     ];
 
     /** @return BelongsTo<User, self> */

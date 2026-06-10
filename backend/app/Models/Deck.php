@@ -18,11 +18,13 @@ class Deck extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'user_id',
+        'client_id',
         'parent_id',
         'name',
         'description',
         'default_domain_template_id',
         'display_order',
+        'client_updated_at',
     ];
 
     /**
@@ -32,6 +34,7 @@ class Deck extends Model
         'parent_id' => 'integer',
         'default_domain_template_id' => 'integer',
         'display_order' => 'integer',
+        'client_updated_at' => 'datetime',
     ];
 
     /** @return BelongsTo<User, self> */

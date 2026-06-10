@@ -15,12 +15,14 @@ use App\Contracts\Repositories\ChatSessionRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Repositories\DomainTemplateRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
+use App\Contracts\Repositories\SyncTombstoneRepositoryInterface;
 use App\Contracts\Repositories\SystemSettingRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
 use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Contracts\Services\ChatServiceInterface;
 use App\Contracts\Services\Review\SchedulerResolverInterface;
+use App\Contracts\Services\SyncServiceInterface;
 use App\Contracts\Services\UserCreationServiceInterface;
 use App\Repositories\EloquentAiCardCandidateRepository;
 use App\Repositories\EloquentAiGenerationLogRepository;
@@ -33,12 +35,14 @@ use App\Repositories\EloquentChatSessionRepository;
 use App\Repositories\EloquentDeckRepository;
 use App\Repositories\EloquentDomainTemplateRepository;
 use App\Repositories\EloquentNoteSeedRepository;
+use App\Repositories\EloquentSyncTombstoneRepository;
 use App\Repositories\EloquentSystemSettingRepository;
 use App\Repositories\EloquentTagRepository;
 use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
 use App\Services\ChatService;
 use App\Services\Review\SchedulerResolver;
+use App\Services\SyncService;
 use App\Services\UserCreationService;
 use Illuminate\Support\ServiceProvider;
 
@@ -74,10 +78,12 @@ final class RepositoryServiceProvider extends ServiceProvider
         ChatCardizationBatchRepositoryInterface::class => EloquentChatCardizationBatchRepository::class,
         ChatSessionRepositoryInterface::class => EloquentChatSessionRepository::class,
         ChatMessageRepositoryInterface::class => EloquentChatMessageRepository::class,
+        SyncTombstoneRepositoryInterface::class => EloquentSyncTombstoneRepository::class,
 
         // Services (差し替え可能性低め、Interface First 規約に従い bind)
         UserCreationServiceInterface::class => UserCreationService::class,
         ChatServiceInterface::class => ChatService::class,
+        SyncServiceInterface::class => SyncService::class,
     ];
 
     /**

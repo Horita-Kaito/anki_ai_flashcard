@@ -18,11 +18,18 @@ class NoteSeed extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'user_id',
+        'client_id',
         'body',
         'domain_template_id',
         'subdomain',
         'learning_goal',
         'note_context',
+        'client_updated_at',
+    ];
+
+    /** @var array<string, string> */
+    protected $casts = [
+        'client_updated_at' => 'datetime',
     ];
 
     /** @return BelongsTo<User, self> */

@@ -19,6 +19,11 @@ interface AiCardCandidateRepositoryInterface
     /** @return Collection<int, AiCardCandidate> */
     public function listForNoteSeed(int $userId, int $noteSeedId, ?string $status = null): Collection;
 
+    /**
+     * 指定ユーザーの全メモ横断の未レビュー(pending)候補総数。
+     */
+    public function countPendingForUser(int $userId): int;
+
     /** @return array<int, string> */
     public function listActiveQuestionsForNoteSeed(int $userId, int $noteSeedId): array;
 

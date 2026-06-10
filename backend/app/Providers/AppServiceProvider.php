@@ -83,5 +83,10 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('ai-generation', fn (Request $request) => Limit::perHour(60)
             ->by($request->user()?->id ?: $request->ip())
             ->after(fn (Response $response) => $response->getStatusCode() < 400));
+
+        // 端末間同期: 10 req/min/user。1リクエストで push+pull を行う前提のため
+        // 過剰なポーリング・大量バッチの連投を抑止する。
+        RateLimiter::for('sync', fn (Request $request) => Limit::perMinute(10)
+            ->by($request->user()?->id ?: $request->ip()));
     }
 }

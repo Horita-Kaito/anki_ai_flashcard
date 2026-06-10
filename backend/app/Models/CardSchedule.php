@@ -16,6 +16,7 @@ class CardSchedule extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'user_id',
+        'client_id',
         'card_id',
         'repetitions',
         'interval_days',
@@ -27,6 +28,7 @@ class CardSchedule extends Model
         'lapse_count',
         'state',
         'archived_at',
+        'client_updated_at',
     ];
 
     /** @var array<string, string> */
@@ -41,6 +43,7 @@ class CardSchedule extends Model
         'lapse_count' => 'integer',
         'state' => ScheduleState::class,
         'archived_at' => 'datetime',
+        'client_updated_at' => 'datetime',
     ];
 
     /** @return BelongsTo<Card, self> */

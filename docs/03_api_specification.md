@@ -1104,3 +1104,128 @@ AI候補生成
 
 **Validation**:
 - `monthly_token_limit`: `nullable | integer | min:1000 | max:1000000000`
+
+---
+
+## 12. ダッシュボード API
+
+### GET /api/v1/dashboard/summary
+ログインユーザーのダッシュボード用サマリを返す。すべて `user_id` でスコープされる。
+
+**Response (200)**:
+```json
+{
+  "data": {
+    "due_count_today": 15,
+    "new_cards_count": 4,
+    "total_cards": 120,
+    "total_pending_candidates": 7,
+    "recent_notes": [{ "id": 1, "body": "...", "created_at": "..." }],
+    "recent_cards": [{ "id": 1, "question": "...", "created_at": "..." }],
+    "ai_usage": { "today_calls": 2, "month_calls": 30, "month_cost_usd": 0.12 },
+    "streak": { "current": 3, "longest": 10, "today_done": true }
+  }
+}
+```
+
+**フィールド補足**:
+- `total_pending_candidates`: そのユーザーの全メモ横断の未レビュー (status=pending) AI 候補総数 (int)。
+
+---
+
+## 13. 端末間同期 API
+
+### POST /api/v1/sync
+iOS (SwiftData) と Backend 間のオプトイン差分同期。1 リクエストで push (クライアント変更の取り込み) と pull (`since` 以降のサーバ変更の返却) を同時に行う。
+
+**認証**: 必須 (`auth:sanctum`)。すべて `user_id` スコープ。
+**Rate limit**: `throttle:sync` = **10 req/min/user**。
+**上限**: 1 リクエスト・1 エンティティあたり push **最大 500 件** (超過は 422)。pull も 1 エンティティ最大 500 件で、超過分は次回同期のカーソルで取得。
+
+**同期キー**: `(user_id, client_id)`。`client_id` は iOS が発番する UUID。
+
+**対象エンティティ (push/pull とも依存順 親→子)**:
+`decks` → `note_seeds` → `ai_card_candidates` → `cards` → `card_schedules`
+
+**Request Body**:
+```json
+{
+  "since": "1717200000000",
+  "changes": {
+    "decks": [
+      {
+        "client_id": "1f3b...uuid",
+        "name": "デッキA",
+        "description": null,
+        "display_order": 0,
+        "parent_client_id": "0a2c...uuid",
+        "updated_at": "2026-06-10T12:34:56Z",
+        "deleted": false
+      }
+    ],
+    "cards": [
+      {
+        "client_id": "...",
+        "deck_client_id": "1f3b...uuid",
+        "source_note_seed_client_id": null,
+        "source_ai_candidate_client_id": null,
+        "question": "...",
+        "answer": "...",
+        "updated_at": "2026-06-10T12:34:56.123Z"
+      }
+    ]
+  }
+}
+```
+
+**フィールド規約**:
+- `since`: 前回レスポンスの `cursor` 文字列 (epoch ミリ秒の十進文字列)。初回は `null`。
+- `changes.{entity}`: 各最大 500 件。
+- `client_id`: 必須・最大 36 文字。
+- `updated_at`: ISO 8601 **UTC のみ** (`Z` または `+00:00`)。秒精度 (`2026-06-10T12:34:56Z`) と fractional seconds 付き (`...56.123Z`) の両方を許可。ローカルオフセット (例 `+09:00`) や非 ISO 形式は 422。
+- `deleted`: 省略時 false。`true` で削除を表す。
+- 参照は `{relation}_client_id` (例 `deck_client_id`, `note_seed_client_id`) で送る。サーバ側で同一ユーザーの `client_id` から FK へ解決する。
+
+**競合解決 (Last-Write-Wins)**:
+- 更新・削除いずれも `updated_at` (クライアント論理時刻) を比較し、既存行/削除墓標の論理時刻より**新しい場合のみ**適用する。古い更新・古い削除は無視。
+- 削除後により新しい更新 (再作成) を受けると行は復活し、削除墓標は取り消される。
+- クライアント時計がサーバ現在時刻 +5 分を超える未来の `updated_at` は、LWW 乗っ取り防止のためサーバ現在時刻にクランプする。
+
+**削除の扱い**:
+- 削除は SoftDelete ではなく物理削除 + `sync_tombstones` への墓標記録で表現 (既存 Web の物理削除/FK カスケードを温存)。
+- pull では墓標を該当エンティティ配列に `{ "client_id", "deleted": true, "updated_at" }` として配信する。
+
+**デッキ階層 (`parent_client_id`)**:
+- push: `parent_client_id` を同一ユーザーの decks から `client_id` で検索し `parent_id` に解決。見つからない場合は null。同一バッチ内で親が後から来ても解決できるよう、全件 upsert 後に親解決の second pass を行う。自己参照・直接循環は拒否し null にフォールバック。
+- pull: 各 deck の `parent_id` を親の `client_id` に変換して `parent_client_id` として返す (親なしは null)。
+
+**Response (200)**:
+```json
+{
+  "data": {
+    "cursor": "1717286400123",
+    "changes": {
+      "decks": [
+        {
+          "client_id": "1f3b...uuid",
+          "name": "デッキA",
+          "description": null,
+          "display_order": 0,
+          "parent_client_id": null,
+          "updated_at": "2026-06-10T12:34:56+00:00",
+          "deleted": false
+        }
+      ],
+      "note_seeds": [],
+      "ai_card_candidates": [],
+      "cards": [],
+      "card_schedules": []
+    }
+  }
+}
+```
+
+- `cursor`: 次回 `since` に渡す。サーバ `updated_at` の最大値 (epoch ミリ秒文字列)。
+- pull のカーソルはサーバ壁時計ベースで、LWW の `updated_at` とは別軸 (クロックスキュー回避)。
+
+**既知の制限 (v1)**: Web 側で行を削除しても墓標は作られないため、その削除は iOS へ伝播しない (iOS 発の削除は明示送信されるため iOS↔iOS は完全伝播)。

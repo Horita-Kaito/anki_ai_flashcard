@@ -24,6 +24,7 @@ final class DashboardController extends Controller
                 'due_count_today' => $summary['due_count_today'],
                 'new_cards_count' => $summary['new_cards_count'],
                 'total_cards' => $summary['total_cards'],
+                'total_pending_candidates' => $summary['total_pending_candidates'],
                 'recent_notes' => array_map(fn ($n) => [
                     'id' => $n->id,
                     'body' => mb_substr($n->body, 0, 80),

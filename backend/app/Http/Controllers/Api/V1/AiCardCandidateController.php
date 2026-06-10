@@ -22,6 +22,7 @@ use App\Services\CardGenerationService;
 use App\Services\NoteSeedService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class AiCardCandidateController extends Controller
 {
@@ -132,9 +133,15 @@ final class AiCardCandidateController extends Controller
                 // limit に達したら以降全部弾かれるので早期終了
                 break;
             } catch (\Throwable $e) {
+                // 内部例外の詳細はクライアントへ漏らさず、ログにのみ記録する。
+                Log::error('bulk generate candidate dispatch failed', [
+                    'note_seed_id' => $noteSeedId,
+                    'user_id' => $userId,
+                    'exception' => $e,
+                ]);
                 $failed[] = [
                     'note_seed_id' => $noteSeedId,
-                    'reason' => $e->getMessage(),
+                    'reason' => 'internal_error',
                 ];
             }
         }

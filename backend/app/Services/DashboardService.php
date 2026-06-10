@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\AiGenerationLogRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
@@ -18,6 +19,7 @@ final class DashboardService
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
         private readonly NoteSeedRepositoryInterface $noteSeedRepository,
         private readonly AiGenerationLogRepositoryInterface $aiLogRepository,
+        private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly StreakService $streakService,
     ) {}
 
@@ -26,6 +28,7 @@ final class DashboardService
      *   due_count_today: int,
      *   new_cards_count: int,
      *   total_cards: int,
+     *   total_pending_candidates: int,
      *   recent_notes: array<int, NoteSeed>,
      *   recent_cards: array<int, Card>,
      *   ai_usage: array{
@@ -47,6 +50,7 @@ final class DashboardService
             'due_count_today' => $this->scheduleRepository->dueCountForUser($userId, now()),
             'new_cards_count' => $this->scheduleRepository->newCountForUser($userId),
             'total_cards' => $this->cardRepository->countForUser($userId),
+            'total_pending_candidates' => $this->candidateRepository->countPendingForUser($userId),
             'recent_notes' => $this->noteSeedRepository->recentForUser($userId, 5),
             'recent_cards' => $this->cardRepository->recentForUser($userId, 5),
             'ai_usage' => [

@@ -42,6 +42,13 @@ final class EloquentAiCardCandidateRepository extends AbstractUserScopedEloquent
             ->get();
     }
 
+    public function countPendingForUser(int $userId): int
+    {
+        return $this->userScopedQuery($userId)
+            ->where('status', CandidateStatus::Pending->value)
+            ->count();
+    }
+
     public function listActiveQuestionsForNoteSeed(int $userId, int $noteSeedId): array
     {
         return $this->userScopedQuery($userId)
