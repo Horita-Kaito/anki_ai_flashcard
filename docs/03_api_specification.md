@@ -174,9 +174,17 @@ Authorization: Bearer 1|abcdefg...
 {
   "email": "test@example.com",
   "password": "password123",
-  "device_name": "my-iphone"
+  "device_name": "my-iphone",
+  "scope": "full"
 }
 ```
+
+`scope` (任意、デフォルト `full`):
+
+| scope | abilities | 用途 |
+|-------|-----------|------|
+| `full` | `["*"]` | REST API + MCP のフルアクセス (iOS / CLI) |
+| `mcp` | `["mcp:use"]` | MCP 接続専用。REST API は 403 (`abilities:api-access` で遮断) |
 
 **Response 201**:
 ```json
@@ -197,6 +205,27 @@ Authorization: Bearer 1|abcdefg...
 
 ---
 
+### POST /api/v1/tokens/issue
+認証済みユーザーがパスワード再入力なしで Token を発行する (設定画面用、`throttle:10,1`)。
+
+**Request Body**:
+```json
+{
+  "device_name": "claude-mcp",
+  "scope": "mcp"
+}
+```
+
+**Response 201**:
+```json
+{
+  "data": { "id": 5, "name": "claude-mcp", "abilities": ["mcp:use"] },
+  "token": "5|abcdef0123456789..."
+}
+```
+
+---
+
 ### GET /api/v1/tokens
 発行済み Token の一覧を取得 (自分のもののみ)。
 
@@ -207,6 +236,7 @@ Authorization: Bearer 1|abcdefg...
     {
       "id": 1,
       "name": "my-iphone",
+      "abilities": ["*"],
       "last_used_at": "2026-04-28T10:00:00Z",
       "created_at": "2026-04-28T09:00:00Z"
     }
@@ -222,6 +252,16 @@ Authorization: Bearer 1|abcdefg...
 **Response 204**: (No Content)
 
 > ヒント: `POST /api/v1/logout` も Bearer Token 経由なら自分の Token を revoke する。ネイティブアプリは `/tokens/current` または `/logout` のどちらでもログアウト可能。
+
+---
+
+### DELETE /api/v1/tokens/{id}
+ID 指定で自分の Token を revoke する (設定画面用)。他ユーザーの Token は 404。
+
+**Response 204**: (No Content)
+**Error 404**: 自分が所有していない / 存在しない Token
+
+> 注: 認証必須グループ全体に `abilities:api-access` が適用されており、`mcp` スコープの Token (`["mcp:use"]`) は REST API 全般に 403 を返す。MCP エンドポイント (`POST /mcp`) のみ利用できる。
 
 ---
 

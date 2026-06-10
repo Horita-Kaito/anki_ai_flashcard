@@ -36,13 +36,19 @@ Route::prefix('v1')->group(function () {
         ->middleware('throttle:5,1');
 
     // === 認証必須 ===
-    Route::middleware('auth:sanctum')->group(function () {
+    // abilities:api-access: MCP 専用 PAT (abilities=['mcp:use']) を REST API から遮断する。
+    // SPA Cookie (TransientToken) と full PAT (['*']) はワイルドカードで通過する。
+    Route::middleware(['auth:sanctum', 'abilities:api-access'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
 
-        // 自分が発行した Bearer Token の一覧 / 現在のTokenをrevoke
+        // 自分が発行した Bearer Token の一覧 / 発行 / 失効
         Route::get('/tokens', [TokenController::class, 'index']);
+        Route::post('/tokens/issue', [TokenController::class, 'issue'])
+            ->middleware('throttle:10,1');
         Route::delete('/tokens/current', [TokenController::class, 'destroy']);
+        Route::delete('/tokens/{tokenId}', [TokenController::class, 'destroyById'])
+            ->whereNumber('tokenId');
 
         Route::post('/onboarding', [OnboardingController::class, 'store']);
         Route::get('/onboarding/status', [OnboardingController::class, 'status']);

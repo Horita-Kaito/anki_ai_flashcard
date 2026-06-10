@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 use Symfony\Component\HttpFoundation\Response;
 
 final class AppServiceProvider extends ServiceProvider
@@ -57,6 +58,19 @@ final class AppServiceProvider extends ServiceProvider
     {
         $this->configureRateLimiters();
         $this->configureGates();
+        $this->configurePassport();
+    }
+
+    private function configurePassport(): void
+    {
+        // laravel/mcp の oauthRoutes も mcp:use を自動登録するが、明示して文書化する。
+        // Sanctum PAT の ability 名と揃えることで EnsureMcpAbility の tokenCan 判定を
+        // トークン種別によらず統一している。
+        Passport::tokensCan([
+            'mcp:use' => 'Tessera の MCP ツールを利用する',
+        ]);
+
+        Passport::authorizationView('oauth.authorize');
     }
 
     private function configureGates(): void

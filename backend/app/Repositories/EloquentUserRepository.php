@@ -30,7 +30,7 @@ final class EloquentUserRepository implements UserRepositoryInterface
         /** @var Collection<int, PersonalAccessToken> $tokens */
         $tokens = $user->tokens()
             ->orderByDesc('created_at')
-            ->get(['id', 'name', 'last_used_at', 'created_at']);
+            ->get(['id', 'name', 'abilities', 'last_used_at', 'created_at']);
 
         return $tokens;
     }

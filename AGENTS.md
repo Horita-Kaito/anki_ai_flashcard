@@ -10,7 +10,8 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 
 - Frontend: Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui
 - iOS: SwiftUI, Swift 6, iOS 17+, Xcode project under `ios/`
-- Backend: Laravel API, PHP 8.3+, Sanctum SPA cookie auth
+- Backend: Laravel API, PHP 8.3+, Sanctum SPA cookie auth (+ Passport OAuth for MCP connectors)
+- CLI: Node 20+ / TypeScript under `cli/` (`tessera` command: capture, review, stdio MCP bridge)
 - Data: MySQL 8.0, Redis
 - AI runtime: provider abstraction for OpenAI / Google / Anthropic-compatible expansion
 - Infra: Docker Compose for development, VPS target for production
@@ -75,6 +76,7 @@ docker compose exec backend php artisan test
 docker compose exec backend ./vendor/bin/pint --test
 docker compose exec frontend npm run lint
 docker compose exec frontend npm run test:run
+cd cli && npm run build && npm run typecheck && npm test
 ```
 
 Known environment caveat: frontend tooling may fail on older Node 20 releases because newer dependencies expect newer Node APIs. Treat a startup failure from Node itself as an environment issue, not an app regression.

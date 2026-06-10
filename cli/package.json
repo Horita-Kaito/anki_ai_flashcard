@@ -1,0 +1,32 @@
+{
+  "name": "tessera-cli",
+  "version": "0.1.0",
+  "description": "Tessera (AI flashcards) command line client: capture notes, review cards, and bridge MCP over stdio",
+  "type": "module",
+  "bin": {
+    "tessera": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^8.0.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

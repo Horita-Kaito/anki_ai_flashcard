@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\Domain\DomainException;
+use App\Http\Middleware\EnsureApiAbilities;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -27,6 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->throttleApi();
+
+        // トークン ability チェック (REST グループの abilities:api-access で使用)。
+        // Sanctum 標準の CheckAbilities ではなく自前の EnsureApiAbilities を使う理由は
+        // クラスコメント参照 (トークンなし = ファーストパーティ認証として通す)。
+        $middleware->alias([
+            'abilities' => EnsureApiAbilities::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // ドメイン例外を API JSON レスポンスに変換

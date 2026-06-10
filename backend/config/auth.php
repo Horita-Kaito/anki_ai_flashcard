@@ -42,6 +42,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Passport OAuth (MCP コネクタ用)。/mcp は auth:sanctum,api の
+        // マルチガードで PAT / OAuth の両トークンを受け付ける。
+        'api' => [
+            'driver' => 'passport',
+            'provider' => 'users',
+        ],
     ],
 
     /*

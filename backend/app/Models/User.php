@@ -15,7 +15,16 @@ use Laravel\Sanctum\HasApiTokens;
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
+    /**
+     * Sanctum の HasApiTokens のみを使う。Passport OAuth (MCP コネクタ用) の
+     * TokenGuard がモデルに要求するのは withAccessToken() だけで、Sanctum 側の
+     * 実装 (無型引数への代入) がそのまま互換する。tokenCan() も $accessToken->can()
+     * 委譲のため、Passport の AccessToken (can() 実装済み) と Sanctum PAT の両方で
+     * 同一に動く。Passport の HasApiTokens は $accessToken プロパティの型が
+     * Sanctum と非互換なため併用できない。
+     *
+     * @use HasFactory<UserFactory>
+     */
     use HasApiTokens, HasFactory, Notifiable;
 
     /**

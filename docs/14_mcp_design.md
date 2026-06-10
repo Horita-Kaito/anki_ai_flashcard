@@ -9,19 +9,47 @@ Tessera を MCP (Model Context Protocol) サーバーとして公開し、ユー
 - サーバー定義: `app/Mcp/Servers/TesseraServer.php`
 - ツール: `app/Mcp/Tools/*`(全ツールが既存 Service 経由で user_id スコープを通る)
 
-## 認証
+## 認証 (デュアル方式)
 
-Phase 1 は Sanctum Personal Access Token (Bearer)。
+`POST /mcp` は `auth:sanctum,api` のマルチガードで 2 種類の Bearer を受け付け、
+さらに `EnsureMcpAbility` ミドルウェアが `tokenCan('mcp:use')` を要求する。
 
-1. `POST /api/v1/tokens`(email / password / device_name)でトークン発行
-2. MCP クライアントに `Authorization: Bearer <token>` ヘッダーを設定
+| 経路 | トークン | 取得方法 | 主なクライアント |
+|------|---------|---------|----------------|
+| Sanctum PAT | `['*']` or `['mcp:use']` | `POST /api/v1/tokens` (scope=full/mcp)、設定画面、`tessera login` | Claude Code、CLI、自作スクリプト |
+| Passport OAuth | scope `mcp:use` | DCR + PKCE Authorization Code フロー (自動) | claude.ai / ChatGPT コネクタ |
+
+### PAT (手動取得)
 
 ```bash
 claude mcp add --transport http tessera https://<host>/mcp \
   --header "Authorization: Bearer <TOKEN>"
 ```
 
-Phase 2 (未実装): claude.ai / ChatGPT コネクタ対応のための OAuth (`Mcp::oauthRoutes()` + Laravel Passport)、トークン abilities によるスコープ制限。
+### OAuth (コネクタ向け、RFC 8414 + DCR + PKCE)
+
+`Mcp::oauthRoutes()` (routes/ai.php) が以下を提供する:
+
+- `GET /.well-known/oauth-protected-resource` / `oauth-authorization-server` — メタデータ
+- `POST /oauth/register` — 動的クライアント登録。リダイレクト先は `config/mcp.php` の
+  `redirect_domains` (env `MCP_REDIRECT_DOMAINS`、既定: claude.ai / claude.com / chatgpt.com /
+  chat.openai.com / localhost) と `custom_schemes` (claude / cursor / vscode) で制限
+- `GET|POST|DELETE /oauth/authorize`, `POST /oauth/token` — Passport 標準 (PKCE 必須の public client)
+
+認可画面はバックエンド完結の最小 Blade (`/login` = `WebLoginController` + `resources/views/oauth/authorize.blade.php`)。
+Passport の鍵は `passport:keys` で生成し **コミットしない** (`storage/*.key` は gitignore 済み、
+本番/staging は `PASSPORT_PRIVATE_KEY` / `PASSPORT_PUBLIC_KEY` を env 注入)。
+
+> User モデルは Sanctum の `HasApiTokens` のみを使用する。Passport の同名トレイトとは
+> `$accessToken` プロパティの型が非互換で併用できないが、Passport の TokenGuard が
+> モデルに要求するのは `withAccessToken()` だけで Sanctum 実装がそのまま互換する
+> (詳細は `app/Models/User.php` のコメント)。
+
+### トークンスコープ
+
+- PAT `scope=mcp` (`['mcp:use']`) は REST API 全般で 403 (`abilities:api-access`)、MCP のみ利用可
+- OAuth トークンは `mcp:use` スコープのみ発行され、REST API は呼べない (`api` ガードは /mcp にしか付いていない)
+- claude.ai 実機接続には公開 HTTPS (staging) が必要。ローカル検証は curl + MCP Inspector まで
 
 ## ツール一覧
 
@@ -46,10 +74,16 @@ Phase 2 (未実装): claude.ai / ChatGPT コネクタ対応のための OAuth (`
 - `/mcp` ルート全体: `throttle:mcp` (60 req/min/user、`AppServiceProvider` で定義)
 - AI 生成: 単一ルートのためミドルウェアでは絞れず、`GenerateCardCandidatesTool` 内で HTTP 側 `throttle:ai-generation` と**同一バケット** (`md5('ai-generation'.userId)`、60 req/hour) を手動消費する。失敗時は計上しない (HTTP 側の `after` コールバックと同方針)。月次トークン上限は `CardGenerationService::assertMonthlyTokenLimit` がそのまま効く
 
+## CLI (`cli/`)
+
+`tessera` コマンド (Node 20+, TypeScript)。`tessera login` (PAT 取得・`~/.config/tessera/config.json` に 0600 保存) /
+`tessera capture` (メモ投入) / `tessera review` (ターミナル復習) / `tessera mcp`
+(stdio↔Streamable HTTP ブリッジ。stdio しか話せない MCP クライアント向け)。詳細は `cli/README.md`。
+
 ## 運用上の注意
 
 - `generate_card_candidates` はキューワーカーが動いていないと完了しない (結果は `list_card_candidates` でポーリング)
-- PAT は現状 abilities なしの全権限。公開リリース前にスコープ化を検討 (Phase 2)
+- 設定画面 (設定 > API トークン) で PAT の発行 (full / mcp スコープ)・一覧・失効が可能
 
 ## テスト
 
