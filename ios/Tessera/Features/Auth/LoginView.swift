@@ -66,7 +66,7 @@ struct LoginView: View {
                     .disabled(!canSubmit)
                 }
             }
-            .navigationTitle("まなメモAI")
+            .navigationTitle("Tessera")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("閉じる") { dismiss() }

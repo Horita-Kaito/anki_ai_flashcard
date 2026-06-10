@@ -64,7 +64,7 @@ export function DesktopSidebar() {
         <div className="bookplate-mark inline-flex size-9 items-center justify-center rounded-sm font-serif text-lg font-semibold">
           ま
         </div>
-        <p className="mt-2 text-sm font-semibold">まなメモAI</p>
+        <p className="mt-2 text-sm font-semibold">Tessera</p>
         <p className="text-xs text-muted-foreground">学習メモを問いに変える作業台</p>
       </div>
       <nav className="space-y-5">

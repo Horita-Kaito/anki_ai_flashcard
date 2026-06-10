@@ -1,5 +1,5 @@
 import XCTest
-@testable import ManaMemoAI
+@testable import Tessera
 
 final class LocalLLMGenerationRepairerTests: XCTestCase {
     func testRepairsInvalidInitialOutputWithSecondGeneration() async throws {

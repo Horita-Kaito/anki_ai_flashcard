@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "000000000000000000000401"
-               BuildableName = "ManaMemoAI.app"
-               BlueprintName = "ManaMemoAI"
-               ReferencedContainer = "container:ManaMemoAI.xcodeproj">
+               BuildableName = "Tessera.app"
+               BlueprintName = "Tessera"
+               ReferencedContainer = "container:Tessera.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -34,9 +34,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "000000000000000000000402"
-               BuildableName = "ManaMemoAITests.xctest"
-               BlueprintName = "ManaMemoAITests"
-               ReferencedContainer = "container:ManaMemoAI.xcodeproj">
+               BuildableName = "TesseraTests.xctest"
+               BlueprintName = "TesseraTests"
+               ReferencedContainer = "container:Tessera.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -56,9 +56,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000000000401"
-            BuildableName = "ManaMemoAI.app"
-            BlueprintName = "ManaMemoAI"
-            ReferencedContainer = "container:ManaMemoAI.xcodeproj">
+            BuildableName = "Tessera.app"
+            BlueprintName = "Tessera"
+            ReferencedContainer = "container:Tessera.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -73,9 +73,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "000000000000000000000401"
-            BuildableName = "ManaMemoAI.app"
-            BlueprintName = "ManaMemoAI"
-            ReferencedContainer = "container:ManaMemoAI.xcodeproj">
+            BuildableName = "Tessera.app"
+            BlueprintName = "Tessera"
+            ReferencedContainer = "container:Tessera.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

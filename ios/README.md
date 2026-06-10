@@ -1,4 +1,4 @@
-# ManaMemoAI iOS
+# Tessera iOS
 
 SwiftUI client for the existing Laravel API.
 
@@ -10,7 +10,7 @@ SwiftUI client for the existing Laravel API.
 
 ## Open
 
-Open `ios/ManaMemoAI.xcodeproj` in Xcode and select the `ManaMemoAI` scheme.
+Open `ios/Tessera.xcodeproj` in Xcode and select the `Tessera` scheme.
 
 ## API URL
 
@@ -29,7 +29,7 @@ http://192.168.x.x:8000/api/v1
 Change this in Xcode:
 
 ```text
-ManaMemoAI target -> Build Settings -> User-Defined -> API_BASE_URL
+Tessera target -> Build Settings -> User-Defined -> API_BASE_URL
 ```
 
 Debug builds allow HTTP and local network access for development. Release builds should use HTTPS.
@@ -48,7 +48,7 @@ The app uses the existing native-client Sanctum flow:
 Code-only build without signing:
 
 ```bash
-xcodebuild -project ios/ManaMemoAI.xcodeproj -scheme ManaMemoAI -destination generic/platform=iOS -derivedDataPath /private/tmp/ManaMemoAI-DerivedData CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ios/Tessera.xcodeproj -scheme Tessera -destination generic/platform=iOS -derivedDataPath /private/tmp/Tessera-DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
 For real device or TestFlight builds, set the Apple development team in Xcode Signing & Capabilities.

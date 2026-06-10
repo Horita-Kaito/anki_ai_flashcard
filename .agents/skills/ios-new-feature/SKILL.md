@@ -1,7 +1,7 @@
 ---
 name: ios-new-feature
 description: |
-  **必ず使用する条件**: ios/ManaMemoAI/Features/<FeatureName>/ 配下に新しい SwiftUI feature を作成するすべてのタスク。
+  **必ず使用する条件**: ios/Tessera/Features/<FeatureName>/ 配下に新しい SwiftUI feature を作成するすべてのタスク。
   ユーザーが「iOSにデッキ詳細を追加」「SwiftUIでメモ一覧を作って」「iPhoneアプリの復習画面を実装」等と指示し、新しい feature ディレクトリまたは主要画面を作る場合、書き始める前にこの skill を必ず起動すること。
   やること: docs/12_ios_design.md と docs/03_api_specification.md に従い、View + Model/DTO + Service の構成、Bearer Token API、loading/empty/error、Swift 6 concurrency、xcodebuild検証まで含めて実装する。
   使わない場合: 既存 iOS feature の小規模修正、文言変更、docs/config-only変更。
@@ -23,7 +23,7 @@ description: |
    - endpoint, method, request body, response envelope, status code, validation error を確認。
    - Backend APIが足りない場合は勝手にiOSだけで回避しない。Backend変更が必要なら `api-*` skill の対象か判断する。
 2. 配置を決める。
-   - `ios/ManaMemoAI/Features/<FeatureName>/`
+   - `ios/Tessera/Features/<FeatureName>/`
    - 既存 feature に収まるなら新規featureを作らない。
 3. Swiftファイルを作る。
    - `<Domain>Models.swift`: response DTO / request DTO
@@ -40,7 +40,7 @@ description: |
 7. 検証する。
 
 ```bash
-xcodebuild -project ios/ManaMemoAI.xcodeproj -scheme ManaMemoAI -destination generic/platform=iOS -derivedDataPath /private/tmp/ManaMemoAI-DerivedData CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ios/Tessera.xcodeproj -scheme Tessera -destination generic/platform=iOS -derivedDataPath /private/tmp/Tessera-DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
 ## 実装ルール

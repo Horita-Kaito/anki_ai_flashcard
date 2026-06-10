@@ -3,7 +3,7 @@ import { ReviewSession } from "@/features/review";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "復習 | まなメモAI",
+  title: "復習 | Tessera",
 };
 
 export default function ReviewPage() {

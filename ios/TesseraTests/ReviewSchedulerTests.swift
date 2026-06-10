@@ -1,5 +1,5 @@
 import XCTest
-@testable import ManaMemoAI
+@testable import Tessera
 
 final class ReviewSchedulerTests: XCTestCase {
     func testAgainResetsProgressAndSchedulesTenMinutesLater() {

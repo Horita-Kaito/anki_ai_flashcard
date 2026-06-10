@@ -54,7 +54,7 @@ struct OnboardingView: View {
                 .foregroundStyle(AppColor.accent)
                 .accessibilityHidden(true)
 
-            Text("まなメモAI")
+            Text("Tessera")
                 .font(.largeTitle.bold())
 
             Text("メモから問題を作り、復習で覚える。")

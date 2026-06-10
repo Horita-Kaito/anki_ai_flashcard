@@ -6,7 +6,7 @@ import { buttonVariants } from "@/shared/ui/button";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "デッキ一覧 | まなメモAI",
+  title: "デッキ一覧 | Tessera",
 };
 
 export default function DecksPage() {

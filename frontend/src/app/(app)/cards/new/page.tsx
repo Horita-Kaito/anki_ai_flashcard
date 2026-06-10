@@ -3,7 +3,7 @@ import { CardForm } from "@/features/card";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "カード作成 | まなメモAI",
+  title: "カード作成 | Tessera",
 };
 
 export default function NewCardPage() {

@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 
-export const alt = "まなメモAI - メモを、記憶に残る問いへ。";
+export const alt = "Tessera - メモを、記憶に残る問いへ。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -58,7 +58,7 @@ export default function OpenGraphImage() {
             marginBottom: 16,
           }}
         >
-          まなメモAI
+          Tessera
         </div>
 
         {/* Tagline */}

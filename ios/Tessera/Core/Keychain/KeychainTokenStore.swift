@@ -2,7 +2,7 @@ import Foundation
 import Security
 
 final class KeychainTokenStore: AuthTokenStore {
-    private let service = "jp.manamemoai.auth"
+    private let service = "com.tessera.auth"
     private let account = "bearer-token"
 
     var token: String? {

@@ -32,7 +32,7 @@ final class LocalLLMModelStore: NSObject, ObservableObject {
 
     private let fileManager: FileManager
     private let fileLocator: LocalLLMModelFileLocator
-    private let backgroundSessionIdentifier = "jp.manamemoai.modeldownload"
+    private let backgroundSessionIdentifier = "com.tessera.modeldownload"
     private var activeTask: URLSessionDownloadTask?
     private var resumeDataByModelId: [String: Data] = [:]
 

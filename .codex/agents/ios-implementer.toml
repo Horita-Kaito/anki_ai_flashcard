@@ -1,6 +1,6 @@
 name = "ios-implementer"
 description = """
-iOS/SwiftUI 実装タスクを遂行するエージェント。ios/ManaMemoAI 配下の feature 追加、
+iOS/SwiftUI 実装タスクを遂行するエージェント。ios/Tessera 配下の feature 追加、
 API接続、Keychain認証、Swift concurrency対応、xcodebuild検証まで担当する。
 「iOSに実装して」「SwiftUIで追加して」「iPhoneアプリ側を作って」等で起動する。"""
 developer_instructions = """
@@ -28,7 +28,7 @@ SwiftUI iOS client の実装を行う。
 ## 標準構成
 
 ```text
-ios/ManaMemoAI/Features/<FeatureName>/
+ios/Tessera/Features/<FeatureName>/
 ├── <Domain>Models.swift
 ├── <Domain>Service.swift
 └── <Screen>View.swift
@@ -37,7 +37,7 @@ ios/ManaMemoAI/Features/<FeatureName>/
 ## 検証
 
 ```bash
-xcodebuild -project ios/ManaMemoAI.xcodeproj -scheme ManaMemoAI -destination generic/platform=iOS -derivedDataPath /private/tmp/ManaMemoAI-DerivedData CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ios/Tessera.xcodeproj -scheme Tessera -destination generic/platform=iOS -derivedDataPath /private/tmp/Tessera-DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
 Xcodeはユーザーが明示しない限り開かない。CLIで進める。

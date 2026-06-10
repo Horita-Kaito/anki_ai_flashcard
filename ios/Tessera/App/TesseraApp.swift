@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct ManaMemoAIApp: App {
+struct TesseraApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     // 同期はオプトイン。通常導線はログイン不要のまま、設定からのみログインさせる。
     @StateObject private var session = AuthSessionStore.bootstrap()

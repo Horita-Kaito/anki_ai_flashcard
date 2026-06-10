@@ -3,7 +3,7 @@ import { UserSettingForm } from "@/features/user-setting";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "設定 | まなメモAI",
+  title: "設定 | Tessera",
 };
 
 export default function SettingsPage() {

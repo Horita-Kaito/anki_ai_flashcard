@@ -14,7 +14,7 @@ Reusable project skills live in `.agents/skills/*/SKILL.md`. These are the singl
 | `api-new-service` | Creating a new backend service class |
 | `api-new-migration` | Creating a new migration file |
 | `api-review` | Reviewing backend code before commit or PR |
-| `ios-new-feature` | Creating a new SwiftUI iOS feature under `ios/ManaMemoAI/Features/` |
+| `ios-new-feature` | Creating a new SwiftUI iOS feature under `ios/Tessera/Features/` |
 | `ios-review` | Reviewing iOS Swift/SwiftUI code before commit or PR |
 
 ## Maintenance

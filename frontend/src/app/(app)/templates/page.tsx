@@ -6,7 +6,7 @@ import { buttonVariants } from "@/shared/ui/button";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "分野テンプレート | まなメモAI",
+  title: "分野テンプレート | Tessera",
 };
 
 export default function TemplatesPage() {

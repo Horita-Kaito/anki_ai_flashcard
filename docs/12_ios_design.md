@@ -15,7 +15,7 @@
 ## 2. ディレクトリ構成
 
 ```text
-ios/ManaMemoAI/
+ios/Tessera/
 ├── App/
 ├── Core/
 │   ├── API/
@@ -110,7 +110,7 @@ Feature 間の直接依存は避ける。共有が必要なら `Shared/` また�
 最低限の検証:
 
 ```bash
-xcodebuild -project ios/ManaMemoAI.xcodeproj -scheme ManaMemoAI -destination generic/platform=iOS -derivedDataPath /private/tmp/ManaMemoAI-DerivedData CODE_SIGNING_ALLOWED=NO build
+xcodebuild -project ios/Tessera.xcodeproj -scheme Tessera -destination generic/platform=iOS -derivedDataPath /private/tmp/Tessera-DerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
 実機/Simulator の手動確認が必要な場合のみ Xcode を開く。CLIで済む作業では Xcode を開かない。

@@ -11,7 +11,7 @@ import { buttonVariants } from "@/shared/ui/button";
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "まなメモAI",
+  name: "Tessera",
   description:
     "学習メモを、今日覚えるべき問いに変える作業台。",
   applicationCategory: "EducationalApplication",
@@ -36,7 +36,7 @@ export default function HomePage() {
           <div className="flex flex-col items-center text-center space-y-6 md:space-y-8">
             <span className="bookplate-mark inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs">
               <Sparkles className="size-3 text-primary" aria-hidden />
-              まなメモAI
+              Tessera
             </span>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
@@ -115,7 +115,7 @@ export default function HomePage() {
 
       {/* フッター */}
       <footer className="mx-auto max-w-5xl px-4 md:px-8 py-8 md:py-12 text-xs text-muted-foreground text-center border-t">
-        <p>© {new Date().getFullYear()} まなメモAI · 個人学習支援ツール</p>
+        <p>© {new Date().getFullYear()} Tessera · 個人学習支援ツール</p>
       </footer>
     </main>
   );

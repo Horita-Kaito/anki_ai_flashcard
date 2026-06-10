@@ -3,7 +3,7 @@ import { StatsOverview } from "@/features/review";
 import { PageShell } from "@/shared/ui/page-shell";
 
 export const metadata: Metadata = {
-  title: "学習統計 | まなメモAI",
+  title: "学習統計 | Tessera",
 };
 
 export default function StatsPage() {

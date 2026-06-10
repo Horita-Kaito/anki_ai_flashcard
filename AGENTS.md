@@ -1,4 +1,4 @@
-# まなメモAI Agent Guide
+# Tessera Agent Guide
 
 This file is the canonical project guide for coding agents. Keep it short, durable, and linked to the source documents instead of duplicating every rule.
 
@@ -58,7 +58,7 @@ Use the matching skill before writing files when the task matches the row.
 | Add a new migration file | `api-new-migration` |
 | Review frontend code before commit/PR | `ui-review` |
 | Review backend code before commit/PR | `api-review` |
-| Create `ios/ManaMemoAI/Features/<new>/` or a major new SwiftUI screen | `ios-new-feature` |
+| Create `ios/Tessera/Features/<new>/` or a major new SwiftUI screen | `ios-new-feature` |
 | Review iOS code before commit/PR | `ios-review` |
 
 Small edits to existing files, bug fixes, docs, and config-only changes do not need a scaffold skill unless the change becomes a broad refactor.

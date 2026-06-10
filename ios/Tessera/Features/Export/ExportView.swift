@@ -51,7 +51,7 @@ struct ExportView: View {
             encoder.dateEncodingStrategy = .iso8601
             let data = try encoder.encode(payload)
             let url = FileManager.default.temporaryDirectory
-                .appendingPathComponent("manamemo-export.json")
+                .appendingPathComponent("tessera-export.json")
             try data.write(to: url, options: .atomic)
             exportURL = url
         } catch {
