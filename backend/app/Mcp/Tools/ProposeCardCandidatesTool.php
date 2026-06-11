@@ -40,7 +40,11 @@ final class ProposeCardCandidatesTool extends Tool
                 ->description('Create a new note with this body and attach candidates to it.'),
             'candidates' => $schema->array()->min(1)->max(20)->required()
                 ->items($schema->object([
-                    'question' => $schema->string()->max(2000)->required(),
+                    'question' => $schema->string()->max(2000)->required()
+                        ->description('For card_type "cloze_like", write a declarative sentence containing '
+                            .'{{c1::hidden answer}} where the hidden text equals the answer field. '
+                            .'Never wrap interrogatives like 何/what in cloze markers — if the question '
+                            .'is naturally interrogative, use card_type "basic_qa" instead.'),
                     'answer' => $schema->string()->max(2000)->required()
                         ->description('Keep answers short (~80 chars) for effective recall.'),
                     'card_type' => $schema->string()->enum(CardType::values()),

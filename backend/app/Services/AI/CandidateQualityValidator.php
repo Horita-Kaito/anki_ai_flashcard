@@ -29,14 +29,23 @@ final class CandidateQualityValidator implements CandidateQualityValidatorInterf
             $answer = (string) $candidate['answer'];
             $cardType = (string) $candidate['card_type'];
 
+            // 不整合 cloze (中身が answer と一致しない / 空) は穴埋めとして成立しない
+            // (例: 「...の他に{{c1::何があるか}}?」のように疑問詞を cloze で包むパターン)。
+            // 警告どまりだとレビューをすり抜けて壊れたカードになるため、cloze マーカーを
+            // 除去して basic_qa に自動降格する。質問文自体は通常の問いとして成立する。
+            if ($cardType === 'cloze_like' && ! $this->clozeContainsAnswer($question, $answer)) {
+                $question = $this->stripClozeMarkers($question);
+                $cardType = 'basic_qa';
+                $candidate['question'] = $question;
+                $candidate['card_type'] = $cardType;
+                $warnings[] = 'cloze_downgraded_to_basic';
+            }
+
             if ($cardType !== 'cloze_like' && $this->containsAnswer($question, $answer)) {
                 $warnings[] = 'answer_exposed_in_question';
             }
             if (mb_strlen($answer) > 80) {
                 $warnings[] = 'answer_too_long';
-            }
-            if ($cardType === 'cloze_like' && ! $this->clozeContainsAnswer($question, $answer)) {
-                $warnings[] = 'cloze_answer_mismatch';
             }
 
             $candidate['quality_warnings'] = $warnings;
@@ -91,5 +100,18 @@ final class CandidateQualityValidator implements CandidateQualityValidatorInterf
     private function normalize(string $value): string
     {
         return mb_strtolower((string) preg_replace('/[\s[:punct:]]+/u', '', trim($value)));
+    }
+
+    /**
+     * `{{cN::xxx}}` を `xxx` に置換する。空の cloze (`{{c1::}}`) は文が壊れないよう
+     * 可視の空欄 `____` に置換する (basic_qa の穴埋め文として成立させる)。
+     */
+    private function stripClozeMarkers(string $question): string
+    {
+        return (string) preg_replace_callback(
+            '/\{\{c\d+::([^}]*)\}\}/u',
+            static fn (array $m): string => $m[1] !== '' ? $m[1] : '____',
+            $question,
+        );
     }
 }

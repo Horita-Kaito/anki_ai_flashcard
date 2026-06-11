@@ -27,6 +27,8 @@ const QUALITY_WARNING_LABELS = {
   answer_exposed_in_question: "問題文に答えが含まれている可能性があります",
   answer_too_long: "回答が長いため、分割または短縮を確認してください",
   cloze_answer_mismatch: "穴埋め箇所と回答が一致していません",
+  cloze_downgraded_to_basic:
+    "穴埋めとして成立しなかったため通常カードに変換されています",
 } as const;
 
 export function CandidateCard({

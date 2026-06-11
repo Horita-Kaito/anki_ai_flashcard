@@ -6,6 +6,7 @@ export const QUALITY_WARNINGS = [
   "answer_exposed_in_question",
   "answer_too_long",
   "cloze_answer_mismatch",
+  "cloze_downgraded_to_basic",
 ] as const;
 export type QualityWarning = (typeof QUALITY_WARNINGS)[number];
 
