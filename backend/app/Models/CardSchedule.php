@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\ScheduleState;
+use App\Models\Concerns\BumpsClientUpdatedAt;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CardSchedule extends Model
 {
+    use BumpsClientUpdatedAt;
     use HasFactory;
 
     /** @var array<int, string> */

@@ -18,6 +18,8 @@ iPhoneアプリ版は、ユーザーの正式データとAI候補生成を端末
 - `SyncService`（iOS）と `SyncService`（Backend）が 1 リクエストで push（dirty + 削除）と pull（since 以降のサーバ差分）を行う。
 - 安定キーはローカルの UUID（`client_id`）。サーバ↔ローカルの ID 対応表は持たない。
 - 競合解決は `updated_at`（論理時刻）の Last-Write-Wins。**削除も LWW の対象**で、既存行より新しい削除のときだけ反映する。
+- スケジュール（`card_schedules`）はカード本文と**別の論理時刻**（`LocalCard.scheduleUpdatedAt`）で LWW する。本文編集とレビュー結果は独立した変更であり、同じ時刻で比較すると本文編集がサーバ側のレビュー結果の適用をブロックするため。
+- サーバ側（Web/MCP/CLI 経由 REST）の編集も LWW に参加する。Backend のモデルが保存時に `client_updated_at` を自動で進める（`BumpsClientUpdatedAt` トレイト）ため、古いクライアント push がサーバ編集を上書きしない。
 - 削除は SoftDeletes ではなく専用 tombstone（`LocalSyncTombstone` / `sync_tombstones`）で伝播する。
 - デッキ階層は `parent_client_id` でやり取りする。pull 後にデッキ本体を全件適用してから親参照を二段階で解決し、同一バッチ内で親が後に届いても階層を正しく組む。
 - 同期カーソルと最終同期時刻はログイン中ユーザー単位で名前空間化する。ログアウト時に該当ユーザーのカーソルを破棄し、別アカウント再ログイン時に他人の差分カーソルを引き継がない。

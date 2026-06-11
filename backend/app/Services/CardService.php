@@ -7,11 +7,14 @@ namespace App\Services;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Enums\CardType;
 use App\Enums\ScheduleState;
 use App\Exceptions\Domain\CardNotFoundException;
 use App\Models\Card;
+use App\Support\Cloze;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 final class CardService
@@ -66,6 +69,7 @@ final class CardService
         }
 
         $this->assertTagsOwnedByUser($userId, $tagIds);
+        $this->assertClozeConsistency($attributes);
 
         return DB::transaction(function () use ($userId, $attributes, $tagIds) {
             $card = $this->cardRepository->create($userId, $attributes);
@@ -96,6 +100,8 @@ final class CardService
         if ($tagIds !== null) {
             $this->assertTagsOwnedByUser($userId, $tagIds);
         }
+
+        $this->assertClozeConsistency($attributes, $card);
 
         // scheduler を変更する場合は学習進捗の初期化が必要 (SM-2 と FSRS で
         // 状態変数が互換でないため、書き換えるとアルゴリズムが壊れる)。
@@ -177,6 +183,28 @@ final class CardService
         $this->scheduleRepository->unarchive($schedule, 1);
 
         return $card->refresh()->load(['schedule', 'tags']);
+    }
+
+    /**
+     * cloze_like カードは question に {{cN::...}} マーカーが必須。
+     * 部分更新では指定されなかったフィールドを既存値で補って判定する
+     * (card_type だけ cloze_like に変える / question だけマーカー無しに変える、の両方を防ぐ)。
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    private function assertClozeConsistency(array $attributes, ?Card $card = null): void
+    {
+        $cardType = $attributes['card_type'] ?? $card?->card_type?->value;
+        if ($cardType !== CardType::ClozeLike->value) {
+            return;
+        }
+
+        $question = (string) ($attributes['question'] ?? $card?->question ?? '');
+        if (! Cloze::contains($question)) {
+            throw ValidationException::withMessages([
+                'card_type' => '穴埋めカードには問題文に {{c1::答え}} 形式の空欄が必要です。',
+            ]);
+        }
     }
 
     /**

@@ -232,6 +232,65 @@ final class ReviewSessionControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_アーカイブ済みカードへの回答は409(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = $this->makeCardWithSchedule($user, $deck);
+        $card->schedule()->update(['archived_at' => now()]);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/review-sessions/answer', [
+                'card_id' => $card->id,
+                'rating' => 'good',
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'CARD_NOT_REVIEWABLE');
+
+        $this->assertDatabaseCount('card_reviews', 0);
+    }
+
+    public function test_保留中カードへの回答は409(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = $this->makeCardWithSchedule($user, $deck, ['is_suspended' => true]);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/review-sessions/answer', [
+                'card_id' => $card->id,
+                'rating' => 'good',
+            ])
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'CARD_NOT_REVIEWABLE');
+
+        $this->assertDatabaseCount('card_reviews', 0);
+    }
+
+    public function test_未来due_atのカードにも回答できる_先取り学習(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = Card::factory()->for($user)->for($deck)->create();
+        CardSchedule::create([
+            'user_id' => $user->id,
+            'card_id' => $card->id,
+            'repetitions' => 2,
+            'interval_days' => 3,
+            'ease_factor' => 2.50,
+            'due_at' => now()->addDays(2),
+            'lapse_count' => 0,
+            'state' => 'review',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/review-sessions/answer', [
+                'card_id' => $card->id,
+                'rating' => 'good',
+            ])
+            ->assertOk();
+    }
+
     public function test_不正なrating値で422(): void
     {
         $user = User::factory()->create();
@@ -245,6 +304,22 @@ final class ReviewSessionControllerTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['rating']);
+    }
+
+    public function test_response_time_msは1時間を超えると422(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = $this->makeCardWithSchedule($user, $deck);
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/review-sessions/answer', [
+                'card_id' => $card->id,
+                'rating' => 'good',
+                'response_time_ms' => 3600001,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['response_time_ms']);
     }
 
     public function test_統計を取得できる(): void

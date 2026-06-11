@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Enums\ReviewRating;
 use App\Exceptions\Domain\CardNotFoundException;
+use App\Exceptions\Domain\CardNotReviewableException;
 use App\Services\ReviewSessionService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Validation\Rule;
@@ -35,8 +36,8 @@ final class AnswerReviewTool extends Tool
                 ->description('The reviewed card.'),
             'rating' => $schema->string()->enum(ReviewRating::values())->required()
                 ->description('The user\'s self-rating.'),
-            'response_time_ms' => $schema->integer()->min(0)
-                ->description('Optional time the user took to answer, in milliseconds.'),
+            'response_time_ms' => $schema->integer()->min(0)->max(3600000)
+                ->description('Optional time the user took to answer, in milliseconds (max 1 hour).'),
         ];
     }
 
@@ -47,7 +48,7 @@ final class AnswerReviewTool extends Tool
         $validated = $request->validate([
             'card_id' => ['required', 'integer'],
             'rating' => ['required', 'string', Rule::in(ReviewRating::values())],
-            'response_time_ms' => ['sometimes', 'nullable', 'integer', 'min:0'],
+            'response_time_ms' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:3600000'],
         ]);
 
         try {
@@ -57,7 +58,7 @@ final class AnswerReviewTool extends Tool
                 ReviewRating::from($validated['rating']),
                 $validated['response_time_ms'] ?? null,
             );
-        } catch (CardNotFoundException $e) {
+        } catch (CardNotFoundException|CardNotReviewableException $e) {
             return Response::error($e->getMessage());
         }
 

@@ -92,6 +92,33 @@ final class ListToolsTest extends TestCase
             ->assertStructuredContent(fn ($json) => $json->where('total_returned', 2)->etc());
     }
 
+    public function test_clozeカードのquestionは答えがマスクされる(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = Card::factory()->for($user)->for($deck)->create([
+            'card_type' => 'cloze_like',
+            'question' => 'RFID は {{c1::非接触}} 型の技術である',
+            'answer' => '非接触',
+        ]);
+        CardSchedule::create([
+            'user_id' => $user->id,
+            'card_id' => $card->id,
+            'repetitions' => 0,
+            'interval_days' => 0,
+            'ease_factor' => 2.50,
+            'due_at' => now()->subMinute(),
+            'lapse_count' => 0,
+            'state' => 'new',
+        ]);
+
+        TesseraServer::actingAs($user)->tool(ListDueCardsTool::class, [])
+            ->assertOk()
+            ->assertStructuredContent(fn ($json) => $json
+                ->where('cards.0.question', 'RFID は 【____】 型の技術である')
+                ->etc());
+    }
+
     public function test_limitで取得枚数を制限できる(): void
     {
         $user = User::factory()->create();

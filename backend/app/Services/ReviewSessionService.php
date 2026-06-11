@@ -11,6 +11,7 @@ use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Services\Review\SchedulerResolverInterface;
 use App\Enums\ReviewRating;
 use App\Exceptions\Domain\CardNotFoundException;
+use App\Exceptions\Domain\CardNotReviewableException;
 use App\Models\Card;
 use App\Models\CardReview;
 use App\Models\CardSchedule;
@@ -135,6 +136,7 @@ final class ReviewSessionService
      * @return array{card: Card, schedule: CardSchedule, review: CardReview}
      *
      * @throws CardNotFoundException
+     * @throws CardNotReviewableException アーカイブ済み・保留中カードへの回答
      */
     public function recordAnswer(
         int $userId,
@@ -142,46 +144,43 @@ final class ReviewSessionService
         ReviewRating $rating,
         ?int $responseTimeMs = null,
     ): array {
-        $card = $this->cardRepository->findForUser($userId, $cardId);
-        if ($card === null) {
-            throw CardNotFoundException::make($cardId);
-        }
+        // 読み取りもトランザクション内 + 行ロックで行う。複数クライアント (Web/iOS/CLI/MCP)
+        // からの同時回答で read-modify-write が競合し、スケジュールが二重適用されるのを防ぐ。
+        return DB::transaction(function () use ($userId, $cardId, $rating, $responseTimeMs) {
+            $card = $this->cardRepository->findForUser($userId, $cardId);
+            if ($card === null) {
+                throw CardNotFoundException::make($cardId);
+            }
+            if ($card->is_suspended) {
+                throw CardNotReviewableException::suspended($cardId);
+            }
 
-        $schedule = $this->scheduleRepository->findByCardForUser($userId, $cardId);
-        if ($schedule === null) {
-            throw CardNotFoundException::make($cardId);
-        }
+            $schedule = $this->scheduleRepository->findByCardForUserForUpdate($userId, $cardId);
+            if ($schedule === null) {
+                throw CardNotFoundException::make($cardId);
+            }
+            if ($schedule->archived_at !== null) {
+                throw CardNotReviewableException::archived($cardId);
+            }
 
-        $now = now();
-        $previousDueAt = $schedule->due_at;
-        $previousSnapshot = [
-            'repetitions' => $schedule->repetitions,
-            'interval_days' => $schedule->interval_days,
-            'ease_factor' => (float) $schedule->ease_factor,
-            'stability' => $schedule->stability !== null ? (float) $schedule->stability : null,
-            'difficulty' => $schedule->difficulty !== null ? (float) $schedule->difficulty : null,
-            'lapse_count' => $schedule->lapse_count,
-            'state' => $schedule->state instanceof \BackedEnum
-                ? $schedule->state->value
-                : (string) $schedule->state,
-            'scheduler' => $card->scheduler,
-        ];
+            $now = now();
+            $previousDueAt = $schedule->due_at;
+            $previousSnapshot = [
+                'repetitions' => $schedule->repetitions,
+                'interval_days' => $schedule->interval_days,
+                'ease_factor' => (float) $schedule->ease_factor,
+                'stability' => $schedule->stability !== null ? (float) $schedule->stability : null,
+                'difficulty' => $schedule->difficulty !== null ? (float) $schedule->difficulty : null,
+                'lapse_count' => $schedule->lapse_count,
+                'state' => $schedule->state instanceof \BackedEnum
+                    ? $schedule->state->value
+                    : (string) $schedule->state,
+                'scheduler' => $card->scheduler,
+            ];
 
-        $scheduler = $this->schedulerResolver->resolveForCard($card);
-        $update = $scheduler->next($schedule, $rating, $now->toDateTime());
+            $scheduler = $this->schedulerResolver->resolveForCard($card);
+            $update = $scheduler->next($schedule, $rating, $now->toDateTime());
 
-        return DB::transaction(function () use (
-            $userId,
-            $cardId,
-            $card,
-            $rating,
-            $responseTimeMs,
-            $schedule,
-            $update,
-            $now,
-            $previousDueAt,
-            $previousSnapshot,
-        ) {
             $updatedSchedule = $this->scheduleRepository->update($schedule, $update->toArray());
 
             // Auto-archive: scheduler ごとに別の閾値で判定。

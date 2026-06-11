@@ -70,6 +70,12 @@ interface CardScheduleRepositoryInterface
     public function findByCardForUser(int $userId, int $cardId): ?CardSchedule;
 
     /**
+     * カードIDでスケジュールを行ロック付きで取得する (user_id スコープ付き)。
+     * 回答記録など read-modify-write をトランザクション内で直列化したい場合に使う。
+     */
+    public function findByCardForUserForUpdate(int $userId, int $cardId): ?CardSchedule;
+
+    /**
      * まだ due でないカードを due_at 昇順で取得する (追加復習用)
      *
      * @return array<int, CardSchedule>

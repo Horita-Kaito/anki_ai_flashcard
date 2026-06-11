@@ -7,11 +7,13 @@ namespace App\Services;
 use App\Contracts\Repositories\AiCardCandidateRepositoryInterface;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Services\AI\CandidateQualityValidatorInterface;
 use App\Enums\CandidateStatus;
 use App\Exceptions\Domain\AiCardCandidateDuplicateQuestionException;
 use App\Exceptions\Domain\AiCardCandidateNotAdoptableException;
 use App\Exceptions\Domain\AiCardCandidateNotFoundException;
+use App\Exceptions\Domain\DeckNotFoundException;
 use App\Models\AiCardCandidate;
 use App\Models\Card;
 use Illuminate\Database\QueryException;
@@ -28,6 +30,7 @@ final class AiCardCandidateService
         private readonly AiCardCandidateRepositoryInterface $candidateRepository,
         private readonly CardRepositoryInterface $cardRepository,
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
+        private readonly DeckRepositoryInterface $deckRepository,
         private readonly CandidateQualityValidatorInterface $qualityValidator,
     ) {}
 
@@ -122,6 +125,7 @@ final class AiCardCandidateService
      *
      * @throws AiCardCandidateNotAdoptableException
      * @throws AiCardCandidateNotFoundException
+     * @throws DeckNotFoundException 採用先デッキが検証後に削除された場合
      */
     public function adoptForUser(int $userId, int $candidateId, array $overrides): Card
     {
@@ -136,6 +140,12 @@ final class AiCardCandidateService
                     $candidateId,
                     $candidate->status->value,
                 );
+            }
+
+            // FormRequest 検証後にデッキが削除されている可能性があるため
+            // トランザクション内で再検証する (FK 違反の 500 を防ぐ)。
+            if ($this->deckRepository->findForUser($userId, (int) $overrides['deck_id']) === null) {
+                throw DeckNotFoundException::make((int) $overrides['deck_id']);
             }
 
             $card = $this->cardRepository->create($userId, [

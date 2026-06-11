@@ -152,6 +152,59 @@ final class CardControllerTest extends TestCase
             ->assertJsonValidationErrors(['card_type']);
     }
 
+    public function test_clozeマーカーの無いcloze_likeカードは作成できない(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+
+        $this->actingAs($user)
+            ->postJson('/api/v1/cards', [
+                'deck_id' => $deck->id,
+                'question' => '空欄のない問題文',
+                'answer' => 'A',
+                'card_type' => 'cloze_like',
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['card_type']);
+    }
+
+    public function test_card_typeだけをcloze_likeへ変える更新はマーカーが無ければ422(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = Card::factory()->for($user)->for($deck)->create([
+            'question' => '空欄のない問題文',
+            'card_type' => 'basic_qa',
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$card->id}", ['card_type' => 'cloze_like'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['card_type']);
+    }
+
+    public function test_clozeカードのquestionからマーカーを消す更新は422(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $card = Card::factory()->for($user)->for($deck)->create([
+            'question' => 'RFID は {{c1::非接触}} 型の技術',
+            'answer' => '非接触',
+            'card_type' => 'cloze_like',
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$card->id}", ['question' => 'マーカーを消した問題文'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['card_type']);
+
+        // マーカー付きの編集は通る
+        $this->actingAs($user)
+            ->putJson("/api/v1/cards/{$card->id}", ['question' => 'NFC も {{c1::非接触}} 型の技術'])
+            ->assertOk()
+            ->assertJsonPath('data.question', 'NFC も {{c1::非接触}} 型の技術');
+    }
+
     public function test_他ユーザーのカードは詳細取得できない(): void
     {
         $me = User::factory()->create();

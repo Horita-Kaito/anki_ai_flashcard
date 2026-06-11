@@ -370,8 +370,11 @@ final class SyncService implements SyncServiceInterface
     private function latestLogicalTime(?Model $existing, ?SyncTombstone $tombstone): ?CarbonInterface
     {
         $candidates = [];
-        if ($existing !== null && $existing->client_updated_at instanceof CarbonInterface) {
-            $candidates[] = $existing->client_updated_at;
+        // client_updated_at が無い行 (トレイト導入前にサーバー側で作られた行) は
+        // updated_at にフォールバックし、古いクライアント push に上書きされないようにする。
+        $existingTime = $existing?->client_updated_at ?? $existing?->updated_at;
+        if ($existingTime instanceof CarbonInterface) {
+            $candidates[] = $existingTime;
         }
         if ($tombstone !== null && $tombstone->client_updated_at instanceof CarbonInterface) {
             $candidates[] = $tombstone->client_updated_at;

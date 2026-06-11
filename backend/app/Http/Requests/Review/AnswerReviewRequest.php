@@ -21,7 +21,9 @@ final class AnswerReviewRequest extends FormRequest
         return [
             'card_id' => ['required', 'integer'],
             'rating' => ['required', 'string', Rule::in(ReviewRating::values())],
-            'response_time_ms' => ['nullable', 'integer', 'min:0'],
+            // 上限 1 時間。クライアントのタイマー異常 (放置・時計巻き戻り) による
+            // 統計汚染と integer オーバーフローを防ぐ。
+            'response_time_ms' => ['nullable', 'integer', 'min:0', 'max:3600000'],
         ];
     }
 }

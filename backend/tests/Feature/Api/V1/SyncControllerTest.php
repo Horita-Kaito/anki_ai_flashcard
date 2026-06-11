@@ -10,6 +10,7 @@ use App\Models\Deck;
 use App\Models\NoteSeed;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -170,6 +171,51 @@ final class SyncControllerTest extends TestCase
 
         $this->assertDatabaseHas('decks', ['client_id' => $cid, 'name' => '復活']);
         $this->assertDatabaseMissing('sync_tombstones', ['client_id' => $cid]);
+    }
+
+    public function test_server_edit_beats_older_client_push(): void
+    {
+        $user = User::factory()->create();
+        $cid = (string) Str::uuid();
+
+        // クライアントが 06-02 時点の編集を push
+        $this->sync($user, ['changes' => [
+            'decks' => [['client_id' => $cid, 'name' => 'クライアント編集', 'updated_at' => '2026-06-02T00:00:00Z']],
+        ]])->assertOk();
+
+        // 06-05 にサーバー側 (Web/MCP) で編集 → client_updated_at が自動で進む
+        Carbon::setTestNow('2026-06-05 00:00:00');
+        try {
+            Deck::where('client_id', $cid)->firstOrFail()->update(['name' => 'サーバー編集']);
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        // 06-03 時点の古いクライアント push はサーバー編集に負ける
+        $this->sync($user, ['changes' => [
+            'decks' => [['client_id' => $cid, 'name' => '古いクライアント編集', 'updated_at' => '2026-06-03T00:00:00Z']],
+        ]])->assertOk();
+
+        $this->assertSame('サーバー編集', Deck::where('client_id', $cid)->firstOrFail()->name);
+    }
+
+    public function test_client_updated_atが無いサーバー作成行も古いpushに上書きされない(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create(['name' => 'Web作成']);
+        // トレイト導入前に作られた行を再現 (client_updated_at = NULL)
+        $clientId = (string) Str::uuid();
+        Deck::query()->whereKey($deck->id)->toBase()->update([
+            'client_id' => $clientId,
+            'client_updated_at' => null,
+        ]);
+
+        // 行の updated_at (= 現在) より古い push は無視される
+        $this->sync($user, ['changes' => [
+            'decks' => [['client_id' => $clientId, 'name' => '古いクライアント編集', 'updated_at' => '2026-06-01T00:00:00Z']],
+        ]])->assertOk();
+
+        $this->assertSame('Web作成', $deck->fresh()->name);
     }
 
     public function test_users_are_isolated(): void

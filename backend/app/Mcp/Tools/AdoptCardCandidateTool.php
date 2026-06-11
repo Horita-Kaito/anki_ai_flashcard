@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Exceptions\Domain\AiCardCandidateNotAdoptableException;
 use App\Exceptions\Domain\AiCardCandidateNotFoundException;
+use App\Exceptions\Domain\DeckNotFoundException;
 use App\Services\AiCardCandidateService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Validation\Rule;
@@ -66,7 +67,7 @@ final class AdoptCardCandidateTool extends Tool
 
         try {
             $card = $this->candidateService->adoptForUser($userId, $candidateId, $validated);
-        } catch (AiCardCandidateNotFoundException|AiCardCandidateNotAdoptableException $e) {
+        } catch (AiCardCandidateNotFoundException|AiCardCandidateNotAdoptableException|DeckNotFoundException $e) {
             return Response::error($e->getMessage());
         }
 

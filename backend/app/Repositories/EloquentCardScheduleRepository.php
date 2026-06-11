@@ -83,6 +83,15 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
 
     public function decayOverdueForUser(int $userId, \DateTimeInterface $now): void
     {
+        // 3 つの UPDATE は overdue 期間で排他的だが、途中失敗や並行実行で
+        // 一部だけ適用された状態を見せないよう 1 トランザクションにまとめる。
+        DB::transaction(function () use ($userId, $now): void {
+            $this->applyOverdueDecay($userId, $now);
+        });
+    }
+
+    private function applyOverdueDecay(int $userId, \DateTimeInterface $now): void
+    {
         $nowCarbon = Carbon::instance($now);
         $cutoff1 = $nowCarbon->copy()->subDay();
         $cutoff7 = $nowCarbon->copy()->subDays(7);
@@ -157,6 +166,15 @@ final class EloquentCardScheduleRepository implements CardScheduleRepositoryInte
         return CardSchedule::query()
             ->where('user_id', $userId)
             ->where('card_id', $cardId)
+            ->first();
+    }
+
+    public function findByCardForUserForUpdate(int $userId, int $cardId): ?CardSchedule
+    {
+        return CardSchedule::query()
+            ->where('user_id', $userId)
+            ->where('card_id', $cardId)
+            ->lockForUpdate()
             ->first();
     }
 

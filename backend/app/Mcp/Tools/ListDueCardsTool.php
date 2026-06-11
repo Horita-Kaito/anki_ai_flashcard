@@ -6,6 +6,7 @@ namespace App\Mcp\Tools;
 
 use App\Models\CardSchedule;
 use App\Services\ReviewSessionService;
+use App\Support\Cloze;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Validation\Rule;
 use Laravel\Mcp\Request;
@@ -62,7 +63,8 @@ final class ListDueCardsTool extends Tool
             'total_returned' => count($schedules),
             'cards' => array_map(static fn (CardSchedule $schedule): array => [
                 'card_id' => $schedule->card_id,
-                'question' => $schedule->card->question,
+                // cloze の中身は答えそのものなので、マスクして出題側に渡す
+                'question' => Cloze::mask($schedule->card->question),
                 'answer' => $schedule->card->answer,
                 'explanation' => $schedule->card->explanation,
                 'deck_id' => $schedule->card->deck_id,

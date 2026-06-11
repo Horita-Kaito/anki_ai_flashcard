@@ -72,6 +72,34 @@ final class AnswerReviewToolTest extends TestCase
         $this->assertDatabaseCount('card_reviews', 0);
     }
 
+    public function test_アーカイブ済みカードには回答を記録できない(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->makeDueCard($user);
+        $card->schedule()->update(['archived_at' => now()]);
+
+        TesseraServer::actingAs($user)->tool(AnswerReviewTool::class, [
+            'card_id' => $card->id,
+            'rating' => 'good',
+        ])->assertSee('アーカイブ済み');
+
+        $this->assertDatabaseCount('card_reviews', 0);
+    }
+
+    public function test_保留中カードには回答を記録できない(): void
+    {
+        $user = User::factory()->create();
+        $card = $this->makeDueCard($user);
+        $card->update(['is_suspended' => true]);
+
+        TesseraServer::actingAs($user)->tool(AnswerReviewTool::class, [
+            'card_id' => $card->id,
+            'rating' => 'good',
+        ])->assertSee('保留中');
+
+        $this->assertDatabaseCount('card_reviews', 0);
+    }
+
     public function test_他ユーザーのカードには回答を記録できない(): void
     {
         $user = User::factory()->create();

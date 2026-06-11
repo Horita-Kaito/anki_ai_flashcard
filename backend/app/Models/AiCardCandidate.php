@@ -6,12 +6,14 @@ namespace App\Models;
 
 use App\Enums\CandidateStatus;
 use App\Enums\CardType;
+use App\Models\Concerns\BumpsClientUpdatedAt;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AiCardCandidate extends Model
 {
+    use BumpsClientUpdatedAt;
     use HasFactory;
 
     /** @var array<int, string> */
