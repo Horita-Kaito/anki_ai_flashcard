@@ -57,6 +57,8 @@ enum ReviewScheduler {
             card.dueAt = Calendar.current.date(byAdding: .day, value: card.intervalDays, to: now) ?? now
         }
 
+        // スケジュール専用の論理時刻を進める (本文編集の updatedAt とは別軸で LWW する)。
+        card.scheduleUpdatedAt = now
         card.markDirty(now: now)
     }
 

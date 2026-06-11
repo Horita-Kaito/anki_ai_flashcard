@@ -179,9 +179,11 @@ final class SyncService {
     }
 
     /// card_schedules は iOS では LocalCard に内包。card と同じ client_id で別レコードとして送る。
+    /// 論理時刻はスケジュール専用の scheduleUpdatedAt を使う。本文編集の時刻で送ると、
+    /// 古いスケジュール値が新しい時刻を持ってサーバー側の復習結果を上書きしてしまう。
     private func scheduleRecord(_ card: LocalCard) -> SyncRecord {
         var record = SyncRecord(clientId: card.id.uuidString)
-        record.updatedAt = card.updatedAt
+        record.updatedAt = card.scheduleUpdatedAt ?? card.createdAt
         record.cardClientId = card.id.uuidString
         record.repetitions = card.repetitions
         record.intervalDays = card.intervalDays
@@ -421,13 +423,15 @@ final class SyncService {
         if record.deleted == true { return }
 
         let incoming = record.updatedAt ?? Date()
-        // card 本体が LWW で更新された場合のみスケジュールも適用（整合性維持）。
-        if card.updatedAt > incoming { return }
+        // スケジュール自身の論理時刻で LWW 比較する。card.updatedAt (本文の編集時刻) と
+        // 比較すると、本文をローカル編集しただけでサーバー側の復習結果が永久に適用されなくなる。
+        if let current = card.scheduleUpdatedAt, current > incoming { return }
 
         card.repetitions = record.repetitions ?? card.repetitions
         card.intervalDays = record.intervalDays ?? card.intervalDays
         card.dueAt = record.dueAt ?? card.dueAt
         card.lapseCount = record.lapseCount ?? card.lapseCount
+        card.scheduleUpdatedAt = incoming
     }
 
     // MARK: - Fetch helpers

@@ -142,7 +142,7 @@ private struct DeckCardRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.xs) {
-            Text(card.question)
+            Text(Cloze.reveal(card.question))
                 .lineLimit(1)
 
             if card.isSuspended {

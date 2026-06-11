@@ -172,7 +172,8 @@ struct ReviewView: View {
                 Text("表")
                     .eyebrowStyle()
 
-                Text(card.question)
+                // cloze カードは答えを見るまで空欄を伏せ、答えを見たら埋めて表示する。
+                Text(isAnswerVisible ? Cloze.reveal(card.question) : Cloze.mask(card.question))
                     .appTitle()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)

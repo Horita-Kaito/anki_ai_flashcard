@@ -142,6 +142,11 @@ final class LocalCard: SyncTrackable {
     // 一時停止中のカードは復習キューから除外する。
     // 追加プロパティ（既定 false）なので SwiftData の軽量マイグレーションで自動追従する。
     var isSuspended: Bool
+    // スケジュール項目 (repetitions/intervalDays/dueAt/lapseCount) 専用の論理時刻。
+    // カード本文の updatedAt と分離することで、本文編集がサーバー側の復習結果の
+    // 同期をブロックしない (LWW をエンティティ別に行う)。nil は未復習 (本文時刻で代用)。
+    // 追加の optional プロパティなので SwiftData の軽量マイグレーションで自動追従する。
+    var scheduleUpdatedAt: Date?
     var createdAt: Date
     var updatedAt: Date
     var dirty: Bool
@@ -161,6 +166,7 @@ final class LocalCard: SyncTrackable {
         intervalDays: Int = 0,
         lapseCount: Int = 0,
         isSuspended: Bool = false,
+        scheduleUpdatedAt: Date? = nil,
         createdAt: Date = .now,
         updatedAt: Date = .now,
         dirty: Bool = true,
@@ -179,6 +185,7 @@ final class LocalCard: SyncTrackable {
         self.intervalDays = intervalDays
         self.lapseCount = lapseCount
         self.isSuspended = isSuspended
+        self.scheduleUpdatedAt = scheduleUpdatedAt
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.dirty = dirty

@@ -171,7 +171,7 @@ private struct CardRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppSpacing.sm) {
-            Text(card.question)
+            Text(Cloze.reveal(card.question))
                 .font(.headline)
                 .lineLimit(2)
 

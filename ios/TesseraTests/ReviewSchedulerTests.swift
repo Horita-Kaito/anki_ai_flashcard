@@ -44,6 +44,18 @@ final class ReviewSchedulerTests: XCTestCase {
         XCTAssertDate(card.updatedAt, equals: now)
     }
 
+    func testApplyAdvancesScheduleLogicalClock() {
+        let now = fixedDate()
+        let card = makeCard(repetitions: 0, intervalDays: 0, dueAt: now)
+        XCTAssertNil(card.scheduleUpdatedAt)
+
+        ReviewScheduler.apply(.good, to: card, now: now)
+
+        // スケジュール専用の論理時刻が採点時刻になる (本文編集の updatedAt とは別軸)。
+        XCTAssertNotNil(card.scheduleUpdatedAt)
+        XCTAssertDate(card.scheduleUpdatedAt!, equals: now)
+    }
+
     func testEasyStartsAtFourDaysAndCapsAtOneYear() {
         let now = fixedDate()
         let newCard = makeCard(repetitions: 0, intervalDays: 0, dueAt: now)
