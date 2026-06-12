@@ -56,25 +56,22 @@ function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <article
       className={cn(
-        "flex gap-3",
+        "flex gap-4 py-2",
         message.role === "user" ? "justify-end" : "justify-start"
       )}
     >
       {message.role === "assistant" && <AssistantAvatar />}
-      <div
-        className={cn(
-          "max-w-[min(42rem,85%)] rounded-lg px-3 py-2 text-sm",
-          message.role === "user"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted"
-        )}
-      >
-        {message.role === "assistant" ? (
-          <MarkdownText text={message.content} />
-        ) : (
+      
+      {message.role === "user" ? (
+        <div className="max-w-[85%] md:max-w-[70%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
           <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex-1 min-w-0 py-1 text-sm text-foreground leading-relaxed">
+          <MarkdownText text={message.content} />
+        </div>
+      )}
+      
       {message.role === "user" && <UserAvatar />}
     </article>
   );
@@ -86,8 +83,8 @@ interface PendingUserBubbleProps {
 
 function PendingUserBubble({ content }: PendingUserBubbleProps) {
   return (
-    <article className="flex justify-end gap-3 opacity-80">
-      <div className="max-w-[min(42rem,85%)] rounded-lg bg-primary px-3 py-2 text-sm text-primary-foreground">
+    <article className="flex justify-end gap-4 py-2 opacity-80">
+      <div className="max-w-[85%] md:max-w-[70%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
         <p className="whitespace-pre-wrap leading-relaxed">{content}</p>
       </div>
       <UserAvatar />
@@ -97,20 +94,20 @@ function PendingUserBubble({ content }: PendingUserBubbleProps) {
 
 function AssistantThinkingBubble() {
   return (
-    <article className="flex gap-3" role="status" aria-live="polite">
+    <article className="flex gap-4 py-2" role="status" aria-live="polite">
       <AssistantAvatar active />
-      <div className="max-w-[min(34rem,85%)] rounded-lg border bg-card px-3 py-3 text-sm shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1" aria-hidden>
-            <span className="thinking-dot" />
-            <span className="thinking-dot [animation-delay:140ms]" />
-            <span className="thinking-dot [animation-delay:280ms]" />
+      <div className="flex-1 min-w-0 py-1 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5" aria-hidden>
+            <span className="thinking-dot animate-bounce" />
+            <span className="thinking-dot animate-bounce [animation-delay:140ms]" />
+            <span className="thinking-dot animate-bounce [animation-delay:280ms]" />
           </div>
-          <span className="text-muted-foreground">回答を組み立てています</span>
+          <span>回答を組み立てています</span>
         </div>
-        <div className="mt-3 space-y-1.5" aria-hidden>
-          <div className="h-2 w-11/12 rounded-full shimmer" />
-          <div className="h-2 w-7/12 rounded-full shimmer" />
+        <div className="mt-3 space-y-2 max-w-md" aria-hidden>
+          <div className="h-2 w-full rounded-full shimmer bg-muted" />
+          <div className="h-2 w-2/3 rounded-full shimmer bg-muted" />
         </div>
       </div>
     </article>
@@ -125,7 +122,7 @@ function AssistantAvatar({ active = false }: AssistantAvatarProps) {
   return (
     <div
       className={cn(
-        "mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary",
+        "flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground",
         active && "subtle-bob ring-2 ring-primary/15"
       )}
     >
@@ -136,7 +133,7 @@ function AssistantAvatar({ active = false }: AssistantAvatarProps) {
 
 function UserAvatar() {
   return (
-    <div className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-border text-muted-foreground">
       <UserRound className="size-4" aria-hidden />
     </div>
   );

@@ -116,7 +116,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="grid gap-6 md:grid-cols-[18rem_minmax(0,1fr)]">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}
@@ -128,39 +128,39 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
         onDelete={handleDeleteChat}
       />
 
-      <section className="min-h-[70dvh] rounded-lg border bg-background">
-        <div className="flex min-h-[70dvh] flex-col">
-          <header className="flex items-center justify-between gap-3 border-b px-4 py-3">
-            <div>
-              <h2 className="text-base font-semibold">
-                {activeSession?.title ?? "学習チャット"}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                質問して理解を深め、必要な学びだけメモ化します。
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              className="min-h-11"
-              onClick={handleMaterialize}
-              disabled={
-                !canMaterialize ||
-                materialize.isPending ||
-                sendMessage.isPending
-              }
-            >
-              {materialize.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Sparkles className="size-4" aria-hidden />
-              )}
-              {CHAT_MATERIALIZE_LABEL}
-            </Button>
-          </header>
+      <section className="flex h-[75dvh] flex-col overflow-hidden rounded-2xl border bg-background/50 shadow-sm">
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b bg-background/80 px-6 py-4 backdrop-blur-sm">
+          <div>
+            <h2 className="text-base font-semibold tracking-tight">
+              {activeSession?.title ?? "新しい学習チャット"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              質問して理解を深め、必要な学びだけメモ化します。
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="min-h-10 shadow-sm gap-1.5"
+            onClick={handleMaterialize}
+            disabled={
+              !canMaterialize ||
+              materialize.isPending ||
+              sendMessage.isPending
+            }
+          >
+            {materialize.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="size-3.5 text-primary" aria-hidden />
+            )}
+            <span className="font-medium text-xs">{CHAT_MATERIALIZE_LABEL}</span>
+          </Button>
+        </header>
 
-          <div ref={messagesRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        <div ref={messagesRef} className="flex-1 overflow-y-auto bg-muted/5 py-6">
+          <div className="mx-auto max-w-3xl w-full px-6 space-y-6">
             <ChatMessageList
               messages={messages}
               isLoading={sessionLoading}
@@ -168,8 +168,10 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               isAssistantThinking={sendMessage.isPending && pendingPrompt !== null}
             />
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="border-t p-3 pb-28 md:pb-3">
+        <div className="shrink-0 border-t bg-background/80 px-6 py-4 pb-28 md:pb-4 backdrop-blur-sm">
+          <form onSubmit={handleSubmit} className="mx-auto max-w-3xl w-full">
             <ChatComposer
               value={content}
               isSending={sendMessage.isPending}
@@ -177,6 +179,9 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
               onChange={setContent}
               onSubmit={() => void submitMessage()}
             />
+            <p className="mt-2 text-center text-[10px] text-muted-foreground">
+              AIの回答から得た学びをメモ化して、フラッシュカードを作成できます。
+            </p>
           </form>
         </div>
       </section>

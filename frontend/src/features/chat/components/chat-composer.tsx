@@ -28,20 +28,20 @@ export function ChatComposer({
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="relative flex items-end rounded-2xl border bg-background shadow-sm transition-all focus-within:ring-2 focus-within:ring-primary/20">
       <textarea
         aria-label="質問"
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="質問を入力"
+        placeholder="質問を入力..."
         rows={2}
-        className="min-h-16 flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="min-h-[60px] w-full resize-none border-0 bg-transparent py-4.5 pl-4 pr-14 text-sm outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <Button
         type="submit"
-        size="icon-lg"
-        className="min-h-11 min-w-11 self-end"
+        size="icon"
+        className="absolute right-2.5 bottom-2.5 size-10 rounded-full shrink-0"
         disabled={isSending || isCreating || value.trim() === ""}
         aria-label="送信"
       >
