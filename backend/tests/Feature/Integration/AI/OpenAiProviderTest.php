@@ -119,7 +119,7 @@ final class OpenAiProviderTest extends TestCase
         });
     }
 
-    public function test_json_schemaがnullでresponseJsonがtrueならjson_objectモードにフォールバック(): void
+    public function test_json_schemaがnullでresponse_jsonがtrueならjson_objectモードにフォールバック(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([
@@ -145,7 +145,7 @@ final class OpenAiProviderTest extends TestCase
         });
     }
 
-    public function test_responseJsonがfalseならtextモードで送信される(): void
+    public function test_response_jsonがfalseならtextモードで送信される(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([

@@ -59,7 +59,7 @@ final class GoogleAiProviderTest extends TestCase
         });
     }
 
-    public function test_json_schemaがnullでresponseJsonがfalseならtext_plainモードになる(): void
+    public function test_json_schemaがnullでresponse_jsonがfalseならtext_plainモードになる(): void
     {
         Http::fake([
             'generativelanguage.googleapis.com/*' => Http::response([
@@ -99,7 +99,7 @@ final class GoogleAiProviderTest extends TestCase
         });
     }
 
-    public function test_json_schemaがnullでresponseJsonがtrueならapplication_jsonモードになる(): void
+    public function test_json_schemaがnullでresponse_jsonがtrueならapplication_jsonモードになる(): void
     {
         Http::fake([
             'generativelanguage.googleapis.com/*' => Http::response([
