@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { MessageSquarePlus, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
@@ -16,6 +17,7 @@ interface ChatSessionListProps {
   onCreate: () => void;
   onSelect: (id: number) => void;
   onDelete: (id: number) => Promise<void>;
+  footer?: ReactNode;
 }
 
 export function ChatSessionList({
@@ -27,6 +29,7 @@ export function ChatSessionList({
   onCreate,
   onSelect,
   onDelete,
+  footer,
 }: ChatSessionListProps) {
   const [deleteTarget, setDeleteTarget] = useState<ChatSession | null>(null);
   const selectedId = activeId ?? sessions[0]?.id ?? null;
@@ -105,6 +108,7 @@ export function ChatSessionList({
           </ul>
         )}
       </div>
+      {footer}
     </aside>
   );
 }

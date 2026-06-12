@@ -132,6 +132,33 @@ export function ChatPageClient() {
         candidateNoteIds.length > 0 &&
         noteQueries.some((query) => query.isLoading || query.isFetching)));
   const recentBatches = batchesQuery.data?.data ?? [];
+  const recentCardizationHistory =
+    recentBatches.length > 0 ? (
+      <section className="rounded-lg border bg-background p-2">
+        <div className="flex items-center gap-2 px-2 py-2 text-xs font-medium text-muted-foreground">
+          <History className="size-3.5" aria-hidden />
+          最近のカード化
+        </div>
+        <ul className="space-y-1">
+          {recentBatches.map((batch) => (
+            <li key={batch.id}>
+              <Button
+                type="button"
+                variant={selectedBatchId === batch.id ? "secondary" : "ghost"}
+                size="sm"
+                className="min-h-11 w-full justify-start gap-2 px-3 text-left"
+                onClick={() => handleOpenBatch(batch.id)}
+              >
+                <span className="min-w-0 flex-1 truncate">
+                  {batch.source_chat_session_title ?? `Batch #${batch.id}`}
+                </span>
+                <span className="shrink-0 text-xs opacity-70">{batch.notes_count}件</span>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null;
 
   return (
     <PageShell
@@ -147,32 +174,10 @@ export function ChatPageClient() {
         }
       >
         <div className="space-y-3">
-          <ChatWorkspace onMaterialized={handleMaterialized} />
-          {recentBatches.length > 0 && (
-            <section className="rounded-lg border bg-background px-4 py-3">
-              <div className="mb-3 flex items-center gap-2 text-sm font-medium">
-                <History className="size-4" aria-hidden />
-                最近のカード化
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {recentBatches.map((batch) => (
-                  <Button
-                    key={batch.id}
-                    type="button"
-                    variant={selectedBatchId === batch.id ? "default" : "outline"}
-                    size="sm"
-                    className="min-h-11 max-w-full"
-                    onClick={() => handleOpenBatch(batch.id)}
-                  >
-                    <span className="truncate">
-                      {batch.source_chat_session_title ?? `Batch #${batch.id}`}
-                    </span>
-                    <span className="shrink-0 text-xs opacity-70">{batch.notes_count}件</span>
-                  </Button>
-                ))}
-              </div>
-            </section>
-          )}
+          <ChatWorkspace
+            onMaterialized={handleMaterialized}
+            sidebarFooter={recentCardizationHistory}
+          />
           {hasCandidateNotes && !isCandidatePanelOpen && (
             <div className="flex justify-end">
               <Button

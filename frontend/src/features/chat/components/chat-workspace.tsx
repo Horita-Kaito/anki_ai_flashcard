@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
@@ -20,9 +21,10 @@ import type { MaterializeChatNotesResult } from "../api/endpoints";
 
 interface ChatWorkspaceProps {
   onMaterialized?: (result: MaterializeChatNotesResult) => void;
+  sidebarFooter?: ReactNode;
 }
 
-export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
+export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspaceProps) {
   const { data: sessionsPage, isLoading: sessionsLoading } = useChatSessions();
   const createSession = useCreateChatSession();
   const [activeId, setActiveId] = useState<number | null>(null);
@@ -126,6 +128,7 @@ export function ChatWorkspace({ onMaterialized }: ChatWorkspaceProps) {
         onCreate={handleNewChat}
         onSelect={setActiveId}
         onDelete={handleDeleteChat}
+        footer={sidebarFooter}
       />
 
       <section className="flex h-[75dvh] flex-col overflow-hidden rounded-2xl border bg-background/50 shadow-sm">

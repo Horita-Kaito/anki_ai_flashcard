@@ -35,7 +35,7 @@ export function NoteSeedListItem({
   const preview = stripMarkdown(note.body);
 
   // 一括選択モードでは Link ではなく button として動作させ、誤遷移を防ぐ
-  const wrapperClass = `group flex h-36 items-start gap-3 overflow-hidden rounded-lg border bg-card p-4 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
+  const wrapperClass = `group relative z-0 flex h-40 items-start gap-3 rounded-lg border bg-card p-4 hover:z-10 hover:bg-muted/50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors ${
     selectable && selected
       ? "border-primary ring-2 ring-primary/30 bg-primary/5"
       : ""
@@ -63,7 +63,7 @@ export function NoteSeedListItem({
         </span>
       )}
       <span className="flex h-full min-w-0 flex-1 flex-col gap-2">
-        <span className="knowledge-text block min-h-10 overflow-hidden text-sm line-clamp-2 break-words">
+        <span className="knowledge-text block min-h-0 flex-1 overflow-hidden text-sm line-clamp-2 break-words">
           {preview}
         </span>
         <NoteSeedStatusBadges
@@ -81,7 +81,7 @@ export function NoteSeedListItem({
 
   if (selectable) {
     return (
-      <li className="h-36">
+      <li className="h-40">
         <button
           type="button"
           onClick={onToggleSelect}
@@ -97,7 +97,7 @@ export function NoteSeedListItem({
   }
 
   return (
-    <li className="h-36">
+    <li className="h-40">
       <Link
         href={`/notes/${note.id}`}
         className={wrapperClass}
@@ -122,7 +122,7 @@ function NoteSeedStatusBadges({
 }: StatusBadgesProps) {
   if (!hasAttempt) {
     return (
-      <span className="inline-flex h-6 max-w-full items-center gap-1 overflow-hidden rounded-full border border-dashed border-muted-foreground/40 px-2 py-0.5 text-xs text-muted-foreground">
+      <span className="relative z-10 inline-flex h-6 max-w-full shrink-0 items-center gap-1 rounded-full border border-dashed border-muted-foreground/40 px-2 py-0.5 text-xs text-muted-foreground">
         <Wand2 className="size-3" aria-hidden />
         <span className="truncate">未生成</span>
       </span>
@@ -130,7 +130,7 @@ function NoteSeedStatusBadges({
   }
 
   return (
-    <span className="flex h-6 max-w-full flex-nowrap gap-1.5 overflow-hidden">
+    <span className="relative z-10 flex min-h-6 max-w-full shrink-0 flex-wrap gap-1.5">
       {pending > 0 ? (
         <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-[var(--persimmon-faint)] px-2 py-0.5 text-xs font-medium text-foreground">
           <Sparkles className="size-3" aria-hidden />
