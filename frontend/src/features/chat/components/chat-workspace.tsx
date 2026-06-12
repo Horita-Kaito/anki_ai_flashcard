@@ -118,7 +118,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
   }
 
   return (
-    <div className="grid h-full min-h-0 gap-4 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-0">
+    <div className="grid h-[calc(100dvh-6.5rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 md:h-full md:grid-cols-[18rem_minmax(0,1fr)] md:grid-rows-none md:gap-0">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}
@@ -131,7 +131,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
         footer={sidebarFooter}
       />
 
-      <section className="flex min-h-[32rem] min-w-0 flex-col overflow-hidden border-t pt-4 md:min-h-0 md:border-l md:border-t-0 md:pt-0">
+      <section className="relative flex min-h-0 min-w-0 flex-col overflow-hidden border-t pt-3 md:border-l md:border-t-0 md:pt-0">
         <header className="shrink-0 border-b bg-background/80 py-3 backdrop-blur-sm md:py-4">
           <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-1 sm:px-2 md:px-6">
             <div className="min-w-0">
@@ -159,7 +159,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
               ) : (
                 <Sparkles className="size-3.5 text-primary" aria-hidden />
               )}
-              <span className="font-medium text-xs">{CHAT_MATERIALIZE_LABEL}</span>
+              <span className="hidden text-xs font-medium sm:inline">{CHAT_MATERIALIZE_LABEL}</span>
             </Button>
           </div>
         </header>
@@ -175,7 +175,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
           </div>
         </div>
 
-        <div className="shrink-0 bg-background/95 py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:py-4">
+        <div className="sticky bottom-0 z-20 shrink-0 bg-background/95 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:py-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl px-1 sm:px-2 md:px-6">
             <ChatComposer
               value={content}

@@ -160,15 +160,15 @@ export function ChatPageClient() {
     ) : null;
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col px-3 py-3 md:h-dvh md:px-0 md:py-0">
+    <main className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-2 md:h-full md:px-0 md:py-0">
       <div
         className={
           hasCandidateNotes && isCandidatePanelOpen
-            ? "grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]"
-            : "min-h-0 flex-1"
+            ? "grid min-h-0 flex-1 items-stretch gap-4 overflow-hidden xl:grid-cols-[minmax(0,1fr)_25rem]"
+            : "min-h-0 flex-1 overflow-hidden"
         }
       >
-        <div className="min-h-0">
+        <div className="min-h-0 overflow-hidden">
           <ChatWorkspace
             onMaterialized={handleMaterialized}
             sidebarFooter={recentCardizationHistory}
@@ -195,10 +195,12 @@ export function ChatPageClient() {
           )}
         </div>
         {hasCandidateNotes && isCandidatePanelOpen && (
-          <ChatCandidateReview
-            notes={recoveredNotes}
-            onClose={() => setIsCandidatePanelClosed(true)}
-          />
+          <div className="min-h-0 overflow-y-auto">
+            <ChatCandidateReview
+              notes={recoveredNotes}
+              onClose={() => setIsCandidatePanelClosed(true)}
+            />
+          </div>
         )}
       </div>
     </main>

@@ -45,7 +45,7 @@ export function ChatSessionList({
   }
 
   return (
-    <aside className="flex min-h-0 flex-col gap-3 md:h-dvh md:border-r md:bg-sidebar md:p-3">
+    <aside className="flex max-h-48 min-h-0 flex-col gap-2 rounded-xl border bg-sidebar p-2 md:h-full md:max-h-none md:rounded-none md:border-0 md:border-r md:p-3">
       <ConfirmDialog
         open={deleteTarget !== null}
         title="チャットを削除"
@@ -109,7 +109,7 @@ export function ChatSessionList({
           </ul>
         )}
       </div>
-      <div className="shrink-0">{footer}</div>
+      {footer ? <div className="hidden shrink-0 md:block">{footer}</div> : null}
     </aside>
   );
 }
