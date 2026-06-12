@@ -45,7 +45,7 @@ export function ChatSessionList({
   }
 
   return (
-    <aside className="space-y-3 md:sticky md:top-4 md:self-start">
+    <aside className="flex min-h-0 flex-col gap-3 md:h-dvh md:border-r md:bg-sidebar md:p-3">
       <ConfirmDialog
         open={deleteTarget !== null}
         title="チャットを削除"
@@ -58,15 +58,16 @@ export function ChatSessionList({
       />
       <Button
         type="button"
+        variant="ghost"
         size="lg"
-        className="min-h-11 w-full"
+        className="min-h-11 w-full justify-start gap-3 px-3"
         onClick={onCreate}
         disabled={isCreating}
       >
         <MessageSquarePlus className="size-4" aria-hidden />
         新しいチャット
       </Button>
-      <div className="rounded-lg border bg-background p-2">
+      <div className="min-h-0 flex-1 overflow-y-auto rounded-lg p-1">
         {isLoading ? (
           <p className="px-2 py-3 text-sm text-muted-foreground">読み込み中...</p>
         ) : sessions.length === 0 ? (
@@ -80,7 +81,7 @@ export function ChatSessionList({
                     "group flex min-h-11 items-stretch rounded-md transition-colors",
                     selectedId === session.id
                       ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
                   <button
@@ -108,7 +109,7 @@ export function ChatSessionList({
           </ul>
         )}
       </div>
-      {footer}
+      <div className="shrink-0">{footer}</div>
     </aside>
   );
 }

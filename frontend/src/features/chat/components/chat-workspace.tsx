@@ -118,7 +118,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
   }
 
   return (
-    <div className="grid gap-5 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-x-6">
+    <div className="grid h-full min-h-0 gap-4 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-0">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}
@@ -131,9 +131,9 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
         footer={sidebarFooter}
       />
 
-      <section className="flex h-[calc(100dvh-15rem)] min-h-[32rem] min-w-0 flex-col overflow-hidden border-t pt-4 md:h-[calc(100dvh-12rem)] md:min-h-[34rem] md:border-l md:border-t-0 md:pl-6 md:pt-0">
-        <header className="shrink-0 border-b bg-background/80 py-4 backdrop-blur-sm">
-          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-1 sm:px-2 md:px-0">
+      <section className="flex min-h-[32rem] min-w-0 flex-col overflow-hidden border-t pt-4 md:min-h-0 md:border-l md:border-t-0 md:pt-0">
+        <header className="shrink-0 border-b bg-background/80 py-3 backdrop-blur-sm md:py-4">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-1 sm:px-2 md:px-6">
             <div className="min-w-0">
               <h2 className="truncate text-base font-semibold tracking-tight">
                 {activeSession?.title ?? "新しい学習チャット"}
@@ -164,8 +164,8 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
           </div>
         </header>
 
-        <div ref={messagesRef} className="flex-1 overflow-y-auto py-6">
-          <div className="mx-auto w-full max-w-3xl space-y-6 px-1 sm:px-2 md:px-0">
+        <div ref={messagesRef} className="flex-1 overflow-y-auto py-6 md:py-8">
+          <div className="mx-auto w-full max-w-3xl space-y-6 px-1 sm:px-2 md:px-6">
             <ChatMessageList
               messages={messages}
               isLoading={sessionLoading}
@@ -175,8 +175,8 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
           </div>
         </div>
 
-        <div className="shrink-0 border-t bg-background/80 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm">
-          <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl px-1 sm:px-2 md:px-0">
+        <div className="shrink-0 bg-background/95 py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:py-4">
+          <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl px-1 sm:px-2 md:px-6">
             <ChatComposer
               value={content}
               isSending={sendMessage.isPending}

@@ -10,7 +10,6 @@ import {
 } from "@/features/chat/api/chat-queries";
 import { useNoteSeeds } from "@/entities/note-seed/api/note-seed-queries";
 import type { NoteSeed } from "@/entities/note-seed/types";
-import { PageShell } from "@/shared/ui/page-shell";
 import { ChatCandidateReview } from "@/widgets/chat-cardization/chat-candidate-review";
 import { Button } from "@/shared/ui/button";
 
@@ -134,7 +133,7 @@ export function ChatPageClient() {
   const recentBatches = batchesQuery.data?.data ?? [];
   const recentCardizationHistory =
     recentBatches.length > 0 ? (
-      <section className="rounded-lg border bg-background p-2">
+      <section className="rounded-lg p-1.5">
         <div className="flex items-center gap-2 px-2 py-2 text-xs font-medium text-muted-foreground">
           <History className="size-3.5" aria-hidden />
           最近のカード化
@@ -161,19 +160,15 @@ export function ChatPageClient() {
     ) : null;
 
   return (
-    <PageShell
-      title="チャット"
-      description="質問から得た学びをメモ化し、カード候補生成までつなげます。"
-      maxWidth="7xl"
-    >
+    <main className="flex min-h-0 flex-1 flex-col px-3 py-3 md:h-dvh md:px-0 md:py-0">
       <div
         className={
           hasCandidateNotes && isCandidatePanelOpen
-            ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]"
-            : ""
+            ? "grid min-h-0 flex-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]"
+            : "min-h-0 flex-1"
         }
       >
-        <div className="space-y-3">
+        <div className="min-h-0">
           <ChatWorkspace
             onMaterialized={handleMaterialized}
             sidebarFooter={recentCardizationHistory}
@@ -206,6 +201,6 @@ export function ChatPageClient() {
           />
         )}
       </div>
-    </PageShell>
+    </main>
   );
 }
