@@ -169,8 +169,8 @@ export function ChatPageClient() {
       <div
         className={
           hasCandidateNotes && isCandidatePanelOpen
-            ? "grid items-start gap-4 pb-28 md:pb-0 xl:grid-cols-[minmax(0,1fr)_25rem]"
-            : "pb-28 md:pb-0"
+            ? "grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_25rem]"
+            : ""
         }
       >
         <div className="space-y-3">

@@ -118,7 +118,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-0">
+    <div className="grid gap-5 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-x-6">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}
@@ -131,39 +131,41 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
         footer={sidebarFooter}
       />
 
-      <section className="flex h-[75dvh] flex-col overflow-hidden border-t md:border-l md:border-t-0 md:pl-6">
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b bg-background/80 px-6 py-4 backdrop-blur-sm">
-          <div>
-            <h2 className="text-base font-semibold tracking-tight">
-              {activeSession?.title ?? "新しい学習チャット"}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              質問して理解を深め、必要な学びだけメモ化します。
-            </p>
+      <section className="flex h-[calc(100dvh-15rem)] min-h-[32rem] min-w-0 flex-col overflow-hidden border-t pt-4 md:h-[calc(100dvh-12rem)] md:min-h-[34rem] md:border-l md:border-t-0 md:pl-6 md:pt-0">
+        <header className="shrink-0 border-b bg-background/80 py-4 backdrop-blur-sm">
+          <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-1 sm:px-2 md:px-0">
+            <div className="min-w-0">
+              <h2 className="truncate text-base font-semibold tracking-tight">
+                {activeSession?.title ?? "新しい学習チャット"}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                質問して理解を深め、必要な学びだけメモ化します。
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-10 shrink-0 gap-1.5 shadow-sm"
+              onClick={handleMaterialize}
+              disabled={
+                !canMaterialize ||
+                materialize.isPending ||
+                sendMessage.isPending
+              }
+            >
+              {materialize.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="size-3.5 text-primary" aria-hidden />
+              )}
+              <span className="font-medium text-xs">{CHAT_MATERIALIZE_LABEL}</span>
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-10 shadow-sm gap-1.5"
-            onClick={handleMaterialize}
-            disabled={
-              !canMaterialize ||
-              materialize.isPending ||
-              sendMessage.isPending
-            }
-          >
-            {materialize.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Sparkles className="size-3.5 text-primary" aria-hidden />
-            )}
-            <span className="font-medium text-xs">{CHAT_MATERIALIZE_LABEL}</span>
-          </Button>
         </header>
 
-        <div ref={messagesRef} className="flex-1 overflow-y-auto bg-muted/5 py-6">
-          <div className="mx-auto max-w-3xl w-full px-6 space-y-6">
+        <div ref={messagesRef} className="flex-1 overflow-y-auto py-6">
+          <div className="mx-auto w-full max-w-3xl space-y-6 px-1 sm:px-2 md:px-0">
             <ChatMessageList
               messages={messages}
               isLoading={sessionLoading}
@@ -173,8 +175,8 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
           </div>
         </div>
 
-        <div className="shrink-0 border-t bg-background/80 px-6 py-4 pb-28 md:pb-4 backdrop-blur-sm">
-          <form onSubmit={handleSubmit} className="mx-auto max-w-3xl w-full">
+        <div className="shrink-0 border-t bg-background/80 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur-sm">
+          <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl px-1 sm:px-2 md:px-0">
             <ChatComposer
               value={content}
               isSending={sendMessage.isPending}
