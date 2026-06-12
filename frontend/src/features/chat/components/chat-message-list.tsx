@@ -1,6 +1,5 @@
 "use client";
 
-import { Bot, UserRound } from "lucide-react";
 import { MarkdownText } from "@/shared/ui/markdown-text";
 import { cn } from "@/shared/lib/utils";
 import type { ChatMessage } from "@/entities/chat/types";
@@ -56,12 +55,10 @@ function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <article
       className={cn(
-        "flex gap-4 py-2",
+        "flex py-2",
         message.role === "user" ? "justify-end" : "justify-start"
       )}
     >
-      {message.role === "assistant" && <AssistantAvatar />}
-      
       {message.role === "user" ? (
         <div className="max-w-[85%] md:max-w-[70%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
           <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
@@ -71,8 +68,6 @@ function MessageBubble({ message }: MessageBubbleProps) {
           <MarkdownText text={message.content} />
         </div>
       )}
-      
-      {message.role === "user" && <UserAvatar />}
     </article>
   );
 }
@@ -83,19 +78,17 @@ interface PendingUserBubbleProps {
 
 function PendingUserBubble({ content }: PendingUserBubbleProps) {
   return (
-    <article className="flex justify-end gap-4 py-2 opacity-80">
+    <article className="flex justify-end py-2 opacity-80">
       <div className="max-w-[85%] md:max-w-[70%] rounded-2xl bg-muted px-4 py-2.5 text-sm text-foreground">
         <p className="whitespace-pre-wrap leading-relaxed">{content}</p>
       </div>
-      <UserAvatar />
     </article>
   );
 }
 
 function AssistantThinkingBubble() {
   return (
-    <article className="flex gap-4 py-2" role="status" aria-live="polite">
-      <AssistantAvatar active />
+    <article className="flex py-2" role="status" aria-live="polite">
       <div className="flex-1 min-w-0 py-1 text-sm text-muted-foreground">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5" aria-hidden>
@@ -111,30 +104,5 @@ function AssistantThinkingBubble() {
         </div>
       </div>
     </article>
-  );
-}
-
-interface AssistantAvatarProps {
-  active?: boolean;
-}
-
-function AssistantAvatar({ active = false }: AssistantAvatarProps) {
-  return (
-    <div
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground",
-        active && "subtle-bob ring-2 ring-primary/15"
-      )}
-    >
-      <Bot className="size-4" aria-hidden />
-    </div>
-  );
-}
-
-function UserAvatar() {
-  return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-border text-muted-foreground">
-      <UserRound className="size-4" aria-hidden />
-    </div>
   );
 }
