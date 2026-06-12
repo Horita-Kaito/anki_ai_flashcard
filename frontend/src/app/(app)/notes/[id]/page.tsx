@@ -25,7 +25,7 @@ export default function NoteDetailPage({
   const { data: note, isLoading, isError } = useNoteSeed(noteId);
   const deleteMutation = useDeleteNoteSeed();
   const [editing, setEditing] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   async function handleDelete() {
     if (!note) return;
@@ -86,7 +86,7 @@ export default function NoteDetailPage({
                 note={note}
                 onSuccess={() => {
                   setEditing(false);
-                  setExpanded(false);
+                  setExpanded(true);
                 }}
                 onCancel={() => setEditing(false)}
               />

@@ -6,7 +6,7 @@ export function NoteSeedListSkeleton() {
       {Array.from({ length: 4 }).map((_, i) => (
         <li
           key={i}
-          className="border rounded-xl p-4 space-y-3"
+          className="h-36 rounded-xl border p-4 space-y-3"
           aria-hidden
         >
           <Skeleton className="h-4 w-2/3" />
