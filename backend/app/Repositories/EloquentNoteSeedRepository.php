@@ -32,6 +32,7 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
         $templateId = $filters['domain_template_id'] ?? null;
         $keyword = $filters['q'] ?? null;
         $generationStatus = $filters['generation_status'] ?? null;
+        $reviewStatus = $filters['review_status'] ?? null;
 
         return $this->userScopedQuery($userId)
             ->withCount([
@@ -41,6 +42,10 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
             ])
             ->when($templateId !== null, fn ($q) => $q->where('domain_template_id', $templateId))
             ->when($generationStatus === 'no-attempt', fn ($q) => $q->whereDoesntHave('generationLogs'))
+            ->when($reviewStatus === 'needs-review', function ($q) {
+                $q->whereHas('candidates', fn ($candidate) => $candidate->where('status', 'pending'))
+                    ->whereDoesntHave('candidates', fn ($candidate) => $candidate->where('status', 'adopted'));
+            })
             ->when($keyword !== null && $keyword !== '', function ($q) use ($keyword) {
                 $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $keyword);
                 $like = '%'.$escaped.'%';
@@ -56,6 +61,7 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
                 'domain_template_id' => $templateId,
                 'q' => $keyword,
                 'generation_status' => $generationStatus,
+                'review_status' => $reviewStatus,
             ], fn ($v) => $v !== null && $v !== ''));
     }
 

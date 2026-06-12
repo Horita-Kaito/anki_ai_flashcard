@@ -15,6 +15,7 @@ export interface NoteSeedListFilters {
   domain_template_id?: number;
   q?: string;
   generation_status?: "no-attempt";
+  review_status?: "needs-review";
 }
 
 export async function fetchNoteSeedList(
@@ -29,6 +30,9 @@ export async function fetchNoteSeedList(
   if (filters.q && filters.q.trim() !== "") params.q = filters.q;
   if (filters.generation_status) {
     params.generation_status = filters.generation_status;
+  }
+  if (filters.review_status) {
+    params.review_status = filters.review_status;
   }
 
   const res = await apiClient.get("/note-seeds", { params });

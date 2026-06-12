@@ -21,7 +21,7 @@ const BULK_LIMIT = 10;
 export function NoteSeedList() {
   const [keyword, setKeyword] = useState("");
   const [templateId, setTemplateId] = useState<number | "">("");
-  const [onlyNoAttempt, setOnlyNoAttempt] = useState(false);
+  const [onlyNeedsReview, setOnlyNeedsReview] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -30,7 +30,7 @@ export function NoteSeedList() {
   const filters = {
     q: debouncedKeyword || undefined,
     domain_template_id: templateId === "" ? undefined : Number(templateId),
-    generation_status: onlyNoAttempt ? ("no-attempt" as const) : undefined,
+    review_status: onlyNeedsReview ? ("needs-review" as const) : undefined,
   };
 
   const {
@@ -60,14 +60,14 @@ export function NoteSeedList() {
     enabled: !!hasNextPage && !isFetchingNextPage,
   });
 
-  const hasActiveFilter = keyword !== "" || templateId !== "" || onlyNoAttempt;
+  const hasActiveFilter = keyword !== "" || templateId !== "" || onlyNeedsReview;
   const selectedCount = selectedIds.size;
   const reachedLimit = selectedCount >= BULK_LIMIT;
 
   function resetFilters() {
     setKeyword("");
     setTemplateId("");
-    setOnlyNoAttempt(false);
+    setOnlyNeedsReview(false);
   }
 
   function toggleSelect(noteId: number) {
@@ -155,11 +155,11 @@ export function NoteSeedList() {
         <label className="flex items-center gap-2 min-h-11 cursor-pointer select-none">
           <input
             type="checkbox"
-            checked={onlyNoAttempt}
-            onChange={(e) => setOnlyNoAttempt(e.target.checked)}
+            checked={onlyNeedsReview}
+            onChange={(e) => setOnlyNeedsReview(e.target.checked)}
             className="size-4 rounded border-input accent-primary cursor-pointer"
           />
-          <span className="text-sm">未生成のメモのみ表示</span>
+          <span className="text-sm">レビュー待ち・カード未作成のメモのみ表示</span>
         </label>
 
         <div className="flex flex-wrap items-center gap-2">

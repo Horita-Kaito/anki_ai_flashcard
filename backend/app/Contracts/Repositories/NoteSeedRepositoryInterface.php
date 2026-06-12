@@ -14,7 +14,7 @@ interface NoteSeedRepositoryInterface
     public function findForUser(int $userId, int $noteSeedId): ?NoteSeed;
 
     /**
-     * @param  array{domain_template_id?: int, q?: string, generation_status?: string}  $filters
+     * @param  array{domain_template_id?: int, q?: string, generation_status?: string, review_status?: string}  $filters
      * @return LengthAwarePaginator<int, NoteSeed>
      */
     public function paginateForUser(int $userId, array $filters = [], int $perPage = 20): LengthAwarePaginator;

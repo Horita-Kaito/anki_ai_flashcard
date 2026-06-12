@@ -164,30 +164,39 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
           </div>
         </header>
 
-        <div ref={messagesRef} className="flex-1 overflow-y-auto py-6 md:py-8">
-          <div className="mx-auto w-full max-w-3xl space-y-6 px-1 sm:px-2 md:px-6">
-            <ChatMessageList
-              messages={messages}
-              isLoading={sessionLoading}
-              pendingUserMessage={pendingPrompt}
-              isAssistantThinking={sendMessage.isPending && pendingPrompt !== null}
-            />
+        <div className="relative min-h-0 flex-1">
+          <div
+            ref={messagesRef}
+            className="absolute inset-0 overflow-y-auto py-6 md:py-8"
+          >
+            <div className="mx-auto w-full max-w-3xl space-y-6 px-1 sm:px-2 md:px-6">
+              <ChatMessageList
+                messages={messages}
+                isLoading={sessionLoading}
+                pendingUserMessage={pendingPrompt}
+                isAssistantThinking={sendMessage.isPending && pendingPrompt !== null}
+              />
+              <div aria-hidden className="h-36 md:h-40" />
+            </div>
           </div>
-        </div>
 
-        <div className="sticky bottom-0 z-20 shrink-0 bg-background/95 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-sm md:py-4 md:pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          <form onSubmit={handleSubmit} className="mx-auto w-full max-w-3xl px-1 sm:px-2 md:px-6">
-            <ChatComposer
-              value={content}
-              isSending={sendMessage.isPending}
-              isCreating={createSession.isPending}
-              onChange={setContent}
-              onSubmit={() => void submitMessage()}
-            />
-            <p className="mt-2 text-center text-[10px] text-muted-foreground">
-              AIの回答から得た学びをメモ化して、フラッシュカードを作成できます。
-            </p>
-          </form>
+          <div className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent pt-10">
+            <form
+              onSubmit={handleSubmit}
+              className="mx-auto w-full max-w-3xl px-1 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-2 md:px-6 md:pb-[calc(1rem+env(safe-area-inset-bottom))]"
+            >
+              <ChatComposer
+                value={content}
+                isSending={sendMessage.isPending}
+                isCreating={createSession.isPending}
+                onChange={setContent}
+                onSubmit={() => void submitMessage()}
+              />
+              <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                AIの回答から得た学びをメモ化して、フラッシュカードを作成できます。
+              </p>
+            </form>
+          </div>
         </div>
       </section>
     </div>

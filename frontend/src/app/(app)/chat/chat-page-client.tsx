@@ -168,7 +168,7 @@ export function ChatPageClient() {
             : "min-h-0 flex-1 overflow-hidden"
         }
       >
-        <div className="min-h-0 overflow-hidden">
+        <div className="h-full min-h-0 overflow-hidden">
           <ChatWorkspace
             onMaterialized={handleMaterialized}
             sidebarFooter={recentCardizationHistory}

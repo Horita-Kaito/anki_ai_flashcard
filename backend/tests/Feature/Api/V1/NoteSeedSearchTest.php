@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Api\V1;
 
+use App\Models\AiCardCandidate;
 use App\Models\AiGenerationLog;
 use App\Models\DomainTemplate;
 use App\Models\NoteSeed;
@@ -95,6 +96,26 @@ final class NoteSeedSearchTest extends TestCase
             ->assertJsonPath('data.0.id', $withoutLog->id);
     }
 
+    public function test_review_status_needs_reviewでレビュー待ちかつカード未作成のメモのみ返る(): void
+    {
+        $user = User::factory()->create();
+        $target = NoteSeed::factory()->for($user)->create(['body' => 'レビュー待ち']);
+        $adopted = NoteSeed::factory()->for($user)->create(['body' => '採用済み']);
+        $rejectedOnly = NoteSeed::factory()->for($user)->create(['body' => '却下のみ']);
+        NoteSeed::factory()->for($user)->create(['body' => '候補なし']);
+
+        AiCardCandidate::factory()->for($user)->for($target)->create(['status' => 'pending']);
+        AiCardCandidate::factory()->for($user)->for($adopted)->create(['status' => 'pending']);
+        AiCardCandidate::factory()->for($user)->for($adopted)->create(['status' => 'adopted']);
+        AiCardCandidate::factory()->for($user)->for($rejectedOnly)->create(['status' => 'rejected']);
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/note-seeds?review_status=needs-review')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $target->id);
+    }
+
     public function test_generation_status_の不正値は無視される(): void
     {
         $user = User::factory()->create();
@@ -102,6 +123,17 @@ final class NoteSeedSearchTest extends TestCase
 
         $this->actingAs($user)
             ->getJson('/api/v1/note-seeds?generation_status=garbage')
+            ->assertOk()
+            ->assertJsonCount(3, 'data');
+    }
+
+    public function test_review_status_の不正値は無視される(): void
+    {
+        $user = User::factory()->create();
+        NoteSeed::factory()->for($user)->count(3)->create();
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/note-seeds?review_status=garbage')
             ->assertOk()
             ->assertJsonCount(3, 'data');
     }
