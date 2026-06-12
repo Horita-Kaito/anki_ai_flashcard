@@ -56,11 +56,13 @@ final class OpenAiProvider implements AiProviderInterface
 
         $startMs = (int) (microtime(true) * 1000);
 
-        // json_schema (strict) を使うとフィールド欠落・enum 違反等の構造起因 PARSE_ERROR を構造的にゼロにできる。
-        // 指定がなければ従来通り json_object モード (構造保証なし) にフォールバックする。
-        $responseFormat = $request->jsonSchema !== null
-            ? ['type' => 'json_schema', 'json_schema' => $request->jsonSchema]
-            : ['type' => 'json_object'];
+        if ($request->jsonSchema !== null) {
+            $responseFormat = ['type' => 'json_schema', 'json_schema' => $request->jsonSchema];
+        } elseif ($request->responseJson) {
+            $responseFormat = ['type' => 'json_object'];
+        } else {
+            $responseFormat = ['type' => 'text'];
+        }
 
         try {
             $response = Http::withToken($this->apiKey)

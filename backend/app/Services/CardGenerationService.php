@@ -219,6 +219,7 @@ final class CardGenerationService
             jsonSchema: $runtime->provider->supportsJsonSchema()
                 ? CandidateJsonSchema::forOpenAi()
                 : null,
+            responseJson: true,
         );
 
         try {

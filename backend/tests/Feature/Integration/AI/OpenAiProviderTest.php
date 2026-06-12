@@ -119,7 +119,7 @@ final class OpenAiProviderTest extends TestCase
         });
     }
 
-    public function test_json_schemaがnullならjson_objectモードにフォールバック(): void
+    public function test_json_schemaがnullでresponseJsonがtrueならjson_objectモードにフォールバック(): void
     {
         Http::fake([
             'api.openai.com/*' => Http::response([
@@ -128,10 +128,46 @@ final class OpenAiProviderTest extends TestCase
             ], 200),
         ]);
 
-        $this->makeProvider()->generate($this->makeRequest());
+        $request = new AiGenerationRequest(
+            systemPrompt: 'system',
+            userPrompt: 'user',
+            model: 'gpt-4o-mini',
+            temperature: 0.6,
+            maxOutputTokens: 2000,
+            jsonSchema: null,
+            responseJson: true,
+        );
+
+        $this->makeProvider()->generate($request);
 
         Http::assertSent(function ($req) {
             return $req->data()['response_format']['type'] === 'json_object';
+        });
+    }
+
+    public function test_responseJsonがfalseならtextモードで送信される(): void
+    {
+        Http::fake([
+            'api.openai.com/*' => Http::response([
+                'choices' => [['message' => ['content' => 'hello']]],
+                'usage' => ['prompt_tokens' => 1, 'completion_tokens' => 1],
+            ], 200),
+        ]);
+
+        $request = new AiGenerationRequest(
+            systemPrompt: 'system',
+            userPrompt: 'user',
+            model: 'gpt-4o-mini',
+            temperature: 0.6,
+            maxOutputTokens: 2000,
+            jsonSchema: null,
+            responseJson: false,
+        );
+
+        $this->makeProvider()->generate($request);
+
+        Http::assertSent(function ($req) {
+            return $req->data()['response_format']['type'] === 'text';
         });
     }
 }

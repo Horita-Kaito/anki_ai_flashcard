@@ -58,4 +58,84 @@ final class GoogleAiProviderTest extends TestCase
                 && ! isset($generationConfig['responseSchema']);
         });
     }
+
+    public function test_json_schemaがnullでresponseJsonがfalseならtext_plainモードになる(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => 'hello']]],
+                    'finishReason' => 'STOP',
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 10,
+                    'candidatesTokenCount' => 5,
+                ],
+            ]),
+        ]);
+
+        $provider = new GoogleAiProvider(
+            pricing: PricingCalculator::fromConfig(),
+            apiKey: 'test-key',
+            baseUri: 'https://generativelanguage.googleapis.com/v1beta',
+            timeout: 30,
+        );
+
+        $provider->generate(new AiGenerationRequest(
+            systemPrompt: 'system',
+            userPrompt: 'user',
+            model: 'gemini-2.5-flash',
+            temperature: 0.6,
+            maxOutputTokens: 2000,
+            jsonSchema: null,
+            responseJson: false,
+        ));
+
+        Http::assertSent(function ($request): bool {
+            $generationConfig = $request->data()['generationConfig'];
+
+            return $generationConfig['responseMimeType'] === 'text/plain'
+                && ! isset($generationConfig['responseJsonSchema']);
+        });
+    }
+
+    public function test_json_schemaがnullでresponseJsonがtrueならapplication_jsonモードになる(): void
+    {
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [[
+                    'content' => ['parts' => [['text' => '{"foo": "bar"}']]],
+                    'finishReason' => 'STOP',
+                ]],
+                'usageMetadata' => [
+                    'promptTokenCount' => 10,
+                    'candidatesTokenCount' => 5,
+                ],
+            ]),
+        ]);
+
+        $provider = new GoogleAiProvider(
+            pricing: PricingCalculator::fromConfig(),
+            apiKey: 'test-key',
+            baseUri: 'https://generativelanguage.googleapis.com/v1beta',
+            timeout: 30,
+        );
+
+        $provider->generate(new AiGenerationRequest(
+            systemPrompt: 'system',
+            userPrompt: 'user',
+            model: 'gemini-2.5-flash',
+            temperature: 0.6,
+            maxOutputTokens: 2000,
+            jsonSchema: null,
+            responseJson: true,
+        ));
+
+        Http::assertSent(function ($request): bool {
+            $generationConfig = $request->data()['generationConfig'];
+
+            return $generationConfig['responseMimeType'] === 'application/json'
+                && ! isset($generationConfig['responseJsonSchema']);
+        });
+    }
 }

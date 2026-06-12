@@ -97,7 +97,9 @@ final class GoogleAiProvider implements AiProviderInterface
                     'generationConfig' => array_filter([
                         'temperature' => $request->temperature,
                         'maxOutputTokens' => $request->maxOutputTokens,
-                        'responseMimeType' => 'application/json',
+                        'responseMimeType' => $request->responseJson || $request->jsonSchema !== null
+                            ? 'application/json'
+                            : 'text/plain',
                         'responseJsonSchema' => $request->jsonSchema !== null
                             ? $request->jsonSchema['schema'] ?? []
                             : null,

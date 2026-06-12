@@ -399,6 +399,7 @@ PROMPT;
                 temperature: 0.2,
                 maxOutputTokens: 2200,
                 jsonSchema: $runtime->provider->supportsJsonSchema() ? $this->noteExtractionSchema() : null,
+                responseJson: true,
             ));
             $this->recordChatUsage($userId, 'chat-extract', $result);
         } catch (AiGenerationFailedException $e) {

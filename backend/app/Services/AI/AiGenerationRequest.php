@@ -22,5 +22,6 @@ final class AiGenerationRequest
         public readonly float $temperature = 0.6,
         public readonly int $maxOutputTokens = 2000,
         public readonly ?array $jsonSchema = null,
+        public readonly bool $responseJson = false,
     ) {}
 }
