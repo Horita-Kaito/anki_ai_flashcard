@@ -118,7 +118,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-[18rem_minmax(0,1fr)]">
+    <div className="grid gap-4 md:grid-cols-[18rem_minmax(0,1fr)] md:gap-0">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}
@@ -131,7 +131,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
         footer={sidebarFooter}
       />
 
-      <section className="flex h-[75dvh] flex-col overflow-hidden rounded-2xl border bg-background/50 shadow-sm">
+      <section className="flex h-[75dvh] flex-col overflow-hidden border-t md:border-l md:border-t-0 md:pl-6">
         <header className="flex shrink-0 items-center justify-between gap-3 border-b bg-background/80 px-6 py-4 backdrop-blur-sm">
           <div>
             <h2 className="text-base font-semibold tracking-tight">
