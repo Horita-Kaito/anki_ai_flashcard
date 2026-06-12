@@ -13,21 +13,21 @@ import { Fab } from "./fab";
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const focusMode = pathname === "/review";
   const chatMode = pathname === "/chat";
+  const fixedViewportMode = chatMode || pathname === "/review";
 
   return (
-    <div className={`flex-1 flex flex-col md:flex-row min-h-dvh ${chatMode ? "md:h-dvh md:overflow-hidden" : ""}`}>
-      {!focusMode && <DesktopSidebar />}
+    <div className={`flex-1 flex flex-col md:flex-row min-h-dvh ${fixedViewportMode ? "md:h-dvh md:overflow-hidden" : ""}`}>
+      <DesktopSidebar />
       <div
         className={`flex-1 flex flex-col min-w-0 ${
-          focusMode ? "pb-0" : "pb-16 md:pb-0"
-        } ${chatMode ? "overflow-hidden" : ""}`}
+          fixedViewportMode ? "overflow-hidden pb-16 md:pb-0" : "pb-16 md:pb-0"
+        }`}
       >
         {children}
       </div>
-      {!focusMode && <Fab />}
-      {!focusMode && <BottomTabBar />}
+      <Fab />
+      <BottomTabBar />
     </div>
   );
 }

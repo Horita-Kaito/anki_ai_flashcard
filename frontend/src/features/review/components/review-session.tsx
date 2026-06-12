@@ -394,94 +394,99 @@ export function ReviewSession() {
   if (!current) return null;
 
   return (
-    <div className="space-y-5 pb-40 md:pb-0">
-      <ReviewExitBar />
+    <div className="relative h-[calc(100dvh-6.5rem)] min-h-0 overflow-hidden md:h-full">
+      <div className="absolute inset-0 overflow-y-auto pb-36 md:pb-40">
+        <div className="mx-auto max-w-2xl space-y-4 md:space-y-5">
+          <ReviewExitBar />
 
-      {extraMode && (
-        <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
-          <CalendarClock className="size-4" aria-hidden />
-          閲覧モード — スケジュールには影響しません
+          {extraMode && (
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
+              <CalendarClock className="size-4" aria-hidden />
+              閲覧モード — スケジュールには影響しません
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">
+              {activeCompleted} / {activeCards.length} 完了
+            </span>
+            <span className="text-muted-foreground">
+              残り {activeCards.length - activeIndex} 枚
+            </span>
+          </div>
+          <div
+            className="h-1 bg-muted rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={activeCompleted}
+            aria-valuemin={0}
+            aria-valuemax={activeCards.length}
+          >
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${activeCards.length > 0 ? (activeCompleted / activeCards.length) * 100 : 0}%` }}
+            />
+          </div>
+
+          {currentExtraCard && (
+            <div className="flex justify-center">
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+                📅 {currentExtraCard.days_until_due}日後に出題予定
+              </span>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2">
+            <Link
+              href={`/cards/${current.id}?next=/review`}
+              className={`${buttonVariants({ variant: "ghost", size: "sm" })} min-h-11 text-muted-foreground`}
+            >
+              <Pencil className="size-4 mr-1" aria-hidden />
+              編集
+            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="min-h-11 text-muted-foreground"
+              disabled={archiveMutation.isPending || answerMutation.isPending}
+              onClick={() => {
+                archiveMutation.mutate(current.id, {
+                  onSuccess: () => {
+                    haptic("success");
+                    toast.success("カードをアーカイブしました");
+                    if (extraMode) {
+                      setExtraCompleted((c) => c + 1);
+                      setExtraIndex((i) => i + 1);
+                    } else {
+                      setCompleted((c) => c + 1);
+                      setIndex((i) => i + 1);
+                    }
+                    setShowAnswer(false);
+                    setStartedAt(Date.now());
+                  },
+                  onError: () => {
+                    haptic("warning");
+                    toast.error("アーカイブに失敗しました");
+                  },
+                });
+              }}
+            >
+              <Archive className="size-4 mr-1" aria-hidden />
+              アーカイブ
+            </Button>
+          </div>
+
+          <ReviewCardFlip
+            card={current}
+            showAnswer={showAnswer}
+            onReveal={handleReveal}
+            disabled={answerMutation.isPending}
+          />
         </div>
-      )}
-
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">
-          {activeCompleted} / {activeCards.length} 完了
-        </span>
-        <span className="text-muted-foreground">
-          残り {activeCards.length - activeIndex} 枚
-        </span>
       </div>
-      <div
-        className="h-1 bg-muted rounded-full overflow-hidden"
-        role="progressbar"
-        aria-valuenow={activeCompleted}
-        aria-valuemin={0}
-        aria-valuemax={activeCards.length}
-      >
-        <div
-          className="h-full bg-primary transition-all"
-          style={{ width: `${activeCards.length > 0 ? (activeCompleted / activeCards.length) * 100 : 0}%` }}
-        />
-      </div>
-
-      {currentExtraCard && (
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
-            📅 {currentExtraCard.days_until_due}日後に出題予定
-          </span>
-        </div>
-      )}
-
-      <div className="flex justify-end gap-2">
-        <Link
-          href={`/cards/${current.id}?next=/review`}
-          className={`${buttonVariants({ variant: "ghost", size: "sm" })} min-h-11 text-muted-foreground`}
-        >
-          <Pencil className="size-4 mr-1" aria-hidden />
-          編集
-        </Link>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="min-h-11 text-muted-foreground"
-          disabled={archiveMutation.isPending || answerMutation.isPending}
-          onClick={() => {
-            archiveMutation.mutate(current.id, {
-              onSuccess: () => {
-                haptic("success");
-                toast.success("カードをアーカイブしました");
-                if (extraMode) {
-                  setExtraCompleted((c) => c + 1);
-                  setExtraIndex((i) => i + 1);
-                } else {
-                  setCompleted((c) => c + 1);
-                  setIndex((i) => i + 1);
-                }
-                setShowAnswer(false);
-                setStartedAt(Date.now());
-              },
-              onError: () => {
-                haptic("warning");
-                toast.error("アーカイブに失敗しました");
-              },
-            });
-          }}
-        >
-          <Archive className="size-4 mr-1" aria-hidden />
-          アーカイブ
-        </Button>
-      </div>
-
-      <ReviewCardFlip
-        card={current}
-        showAnswer={showAnswer}
-        onReveal={handleReveal}
-        disabled={answerMutation.isPending}
-      />
 
       {!showAnswer ? (
-        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-0 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-2">
+          <div className="mx-auto max-w-2xl">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -492,9 +497,11 @@ export function ReviewSession() {
               (Space / Enter)
             </span>
           </Button>
+          </div>
         </div>
       ) : extraMode ? (
-        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-0 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-2">
+          <div className="mx-auto max-w-2xl">
           <Button
             size="lg"
             className="w-full md:w-auto md:mx-auto md:flex min-h-12 text-base"
@@ -505,9 +512,10 @@ export function ReviewSession() {
               (Space / Enter)
             </span>
           </Button>
+          </div>
         </div>
       ) : (
-        <div className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] border-t bg-background/95 backdrop-blur z-30 p-3 md:static md:border-0 md:bg-transparent md:backdrop-blur-0 md:p-0 md:pb-0">
+        <div className="absolute inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-0 pt-10 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-2">
           <div className="mx-auto grid max-w-4xl grid-cols-2 gap-2 sm:grid-cols-4 md:gap-3">
             {REVIEW_RATINGS.map((rating) => (
               <button
