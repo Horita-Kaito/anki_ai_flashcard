@@ -92,4 +92,14 @@ final class AuthControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.is_admin', true);
     }
+
+    public function test_meはフォールバック管理者の場合_is_admin_がtrue(): void
+    {
+        config()->set('admin.emails', ['horitapublic@gmail.com']);
+        $admin = User::factory()->create(['email' => 'horitapublic@gmail.com']);
+
+        $this->actingAs($admin)->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.is_admin', true);
+    }
 }
