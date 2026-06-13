@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useDashboardSummary } from "../api/dashboard-queries";
+import { DashboardLearningCharts } from "./dashboard-learning-charts";
 import { StreakRing } from "./streak-ring";
 
 /**
@@ -161,6 +162,8 @@ export function DashboardOverview() {
           <StreakRing streak={data.streak} />
         </div>
       </section>
+
+      <DashboardLearningCharts summary={data} pendingReview={pendingReview} />
 
       {/* 補助統計 (一段下げ、border 控えめ、冗長な数字は削減) */}
       <section

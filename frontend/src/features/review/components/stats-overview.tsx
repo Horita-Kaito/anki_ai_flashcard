@@ -2,6 +2,7 @@
 
 import { BarChart3, TrendingDown } from "lucide-react";
 import { useReviewStats } from "../api/review-queries";
+import { ReviewStatsCharts } from "./review-stats-charts";
 
 function StatBox({
   label,
@@ -78,6 +79,8 @@ export function StatsOverview() {
           <StatBox label="今月の復習" value={data.month.completed_count} />
         </div>
       </section>
+
+      <ReviewStatsCharts stats={data} />
 
       {/* デッキ別 */}
       <section aria-labelledby="stats-decks" className="space-y-3">
