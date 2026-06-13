@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { MessageSquarePlus, Trash2 } from "lucide-react";
+import { ChevronDown, MessageSquarePlus, Trash2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 import { cn } from "@/shared/lib/utils";
@@ -32,7 +32,19 @@ export function ChatSessionList({
   footer,
 }: ChatSessionListProps) {
   const [deleteTarget, setDeleteTarget] = useState<ChatSession | null>(null);
+  const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
   const selectedId = activeId ?? sessions[0]?.id ?? null;
+  const selectedSession = sessions.find((session) => session.id === selectedId);
+
+  function handleCreate() {
+    setMobileHistoryOpen(false);
+    onCreate();
+  }
+
+  function handleSelect(id: number) {
+    setMobileHistoryOpen(false);
+    onSelect(id);
+  }
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -45,7 +57,7 @@ export function ChatSessionList({
   }
 
   return (
-    <aside className="flex max-h-48 min-h-0 flex-col gap-2 rounded-xl border bg-sidebar p-2 md:h-full md:max-h-none md:rounded-none md:border-0 md:border-r md:p-3">
+    <aside className="flex min-h-0 shrink-0 flex-col gap-2 rounded-xl border bg-sidebar p-2 md:h-full md:max-h-none md:shrink md:rounded-none md:border-0 md:border-r md:p-3">
       <ConfirmDialog
         open={deleteTarget !== null}
         title="チャットを削除"
@@ -56,18 +68,54 @@ export function ChatSessionList({
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+      <div className="flex items-center gap-2 md:hidden">
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="min-h-11 min-w-11 shrink-0"
+          onClick={handleCreate}
+          disabled={isCreating}
+          aria-label="新しいチャット"
+        >
+          <MessageSquarePlus className="size-4" aria-hidden />
+        </Button>
+        <button
+          type="button"
+          className="flex min-h-11 min-w-0 flex-1 items-center justify-between gap-2 rounded-md px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          onClick={() => setMobileHistoryOpen((open) => !open)}
+          aria-label="チャット履歴を開閉"
+          aria-expanded={mobileHistoryOpen}
+        >
+          <span className="min-w-0 truncate">
+            {selectedSession?.title ?? (sessions.length > 0 ? "チャット履歴" : "履歴なし")}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 transition-transform",
+              mobileHistoryOpen && "rotate-180"
+            )}
+            aria-hidden
+          />
+        </button>
+      </div>
       <Button
         type="button"
         variant="ghost"
         size="lg"
-        className="min-h-11 w-full justify-start gap-3 px-3"
-        onClick={onCreate}
+        className="hidden min-h-11 w-full justify-start gap-3 px-3 md:flex"
+        onClick={handleCreate}
         disabled={isCreating}
       >
         <MessageSquarePlus className="size-4" aria-hidden />
         新しいチャット
       </Button>
-      <div className="min-h-0 flex-1 overflow-y-auto rounded-lg p-1">
+      <div
+        className={cn(
+          "min-h-0 rounded-lg p-1 md:block md:flex-1 md:overflow-y-auto",
+          mobileHistoryOpen ? "max-h-44 overflow-y-auto" : "hidden"
+        )}
+      >
         {isLoading ? (
           <p className="px-2 py-3 text-sm text-muted-foreground">読み込み中...</p>
         ) : sessions.length === 0 ? (
@@ -86,7 +134,7 @@ export function ChatSessionList({
                 >
                   <button
                     type="button"
-                    onClick={() => onSelect(session.id)}
+                    onClick={() => handleSelect(session.id)}
                     className={cn(
                       "min-w-0 flex-1 rounded-l-md px-3 py-2 text-left text-sm focus-visible:ring-2 focus-visible:ring-ring",
                       selectedId === session.id && "font-medium"

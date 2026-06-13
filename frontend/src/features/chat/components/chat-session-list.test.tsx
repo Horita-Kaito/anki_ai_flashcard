@@ -15,6 +15,34 @@ const session: ChatSession = {
 };
 
 describe("ChatSessionList", () => {
+  it("モバイル履歴を開いてチャット選択後に閉じる", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <ChatSessionList
+        sessions={[session]}
+        activeId={session.id}
+        isLoading={false}
+        isCreating={false}
+        onCreate={vi.fn()}
+        onSelect={onSelect}
+        onDelete={vi.fn()}
+      />
+    );
+
+    const historyToggle = screen.getByRole("button", { name: "チャット履歴を開閉" });
+    expect(historyToggle).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(historyToggle);
+    expect(historyToggle).toHaveAttribute("aria-expanded", "true");
+
+    await user.click(screen.getByRole("button", { name: "HTTP キャッシュ" }));
+
+    expect(onSelect).toHaveBeenCalledWith(session.id);
+    expect(historyToggle).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("確認後にチャット削除を実行する", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn().mockResolvedValue(undefined);

@@ -165,10 +165,10 @@ export function ChatPageClient() {
         className={
           hasCandidateNotes && isCandidatePanelOpen
             ? "grid min-h-0 flex-1 items-stretch gap-4 overflow-hidden xl:grid-cols-[minmax(0,1fr)_25rem]"
-            : "min-h-0 flex-1 overflow-hidden"
+            : "flex min-h-0 flex-1 overflow-hidden"
         }
       >
-        <div className="h-full min-h-0 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <ChatWorkspace
             onMaterialized={handleMaterialized}
             sidebarFooter={recentCardizationHistory}

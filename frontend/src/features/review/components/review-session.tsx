@@ -394,48 +394,47 @@ export function ReviewSession() {
   if (!current) return null;
 
   return (
-    <div className="relative h-full min-h-0 overflow-hidden">
-      <div className="absolute inset-0 overflow-y-auto pb-36 md:pb-40">
-        <div className="mx-auto max-w-2xl space-y-4 md:space-y-5">
-          <ReviewExitBar />
+    <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="mx-auto w-full max-w-2xl shrink-0 space-y-3 pb-3 md:space-y-4 md:pb-4">
+        <ReviewExitBar />
 
-          {extraMode && (
-            <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
-              <CalendarClock className="size-4" aria-hidden />
-              閲覧モード — スケジュールには影響しません
-            </div>
-          )}
-
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">
-              {activeCompleted} / {activeCards.length} 完了
-            </span>
-            <span className="text-muted-foreground">
-              残り {activeCards.length - activeIndex} 枚
-            </span>
+        {extraMode && (
+          <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
+            <CalendarClock className="size-4" aria-hidden />
+            閲覧モード — スケジュールには影響しません
           </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">
+            {activeCompleted} / {activeCards.length} 完了
+          </span>
+          <span className="text-muted-foreground">
+            残り {activeCards.length - activeIndex} 枚
+          </span>
+        </div>
+        <div
+          className="h-1 bg-muted rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={activeCompleted}
+          aria-valuemin={0}
+          aria-valuemax={activeCards.length}
+        >
           <div
-            className="h-1 bg-muted rounded-full overflow-hidden"
-            role="progressbar"
-            aria-valuenow={activeCompleted}
-            aria-valuemin={0}
-            aria-valuemax={activeCards.length}
-          >
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${activeCards.length > 0 ? (activeCompleted / activeCards.length) * 100 : 0}%` }}
-            />
-          </div>
+            className="h-full bg-primary transition-all"
+            style={{ width: `${activeCards.length > 0 ? (activeCompleted / activeCards.length) * 100 : 0}%` }}
+          />
+        </div>
 
-          {currentExtraCard && (
-            <div className="flex justify-center">
-              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            {currentExtraCard ? (
+              <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
                 📅 {currentExtraCard.days_until_due}日後に出題予定
               </span>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
+            ) : null}
+          </div>
+          <div className="flex shrink-0 justify-end gap-2">
             <Link
               href={`/cards/${current.id}?next=/review`}
               className={`${buttonVariants({ variant: "ghost", size: "sm" })} min-h-11 text-muted-foreground`}
@@ -474,13 +473,19 @@ export function ReviewSession() {
               アーカイブ
             </Button>
           </div>
+        </div>
+      </div>
 
-          <ReviewCardFlip
-            card={current}
-            showAnswer={showAnswer}
-            onReveal={handleReveal}
-            disabled={answerMutation.isPending}
-          />
+      <div className="relative min-h-0 flex-1">
+        <div className="absolute inset-0 overflow-y-auto">
+          <div className="mx-auto max-w-2xl pb-36 md:pb-40">
+            <ReviewCardFlip
+              card={current}
+              showAnswer={showAnswer}
+              onReveal={handleReveal}
+              disabled={answerMutation.isPending}
+            />
+          </div>
         </div>
       </div>
 
