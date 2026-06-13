@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const fixedViewportMode = chatMode || pathname === "/review";
 
   return (
-    <div className={`flex-1 flex flex-col md:flex-row min-h-dvh ${fixedViewportMode ? "md:h-dvh md:overflow-hidden" : ""}`}>
+    <div className={`flex-1 flex flex-col md:flex-row min-h-dvh ${fixedViewportMode ? "h-dvh overflow-hidden" : ""}`}>
       <DesktopSidebar />
       <div
         className={`flex-1 flex flex-col min-w-0 ${

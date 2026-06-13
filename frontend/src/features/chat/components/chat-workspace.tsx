@@ -118,7 +118,7 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
   }
 
   return (
-    <div className="grid h-[calc(100dvh-6.5rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 md:h-full md:grid-cols-[18rem_minmax(0,1fr)] md:grid-rows-none md:gap-0">
+    <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3 md:grid-cols-[18rem_minmax(0,1fr)] md:grid-rows-none md:gap-0">
       <ChatSessionList
         sessions={sessions}
         activeId={activeId}

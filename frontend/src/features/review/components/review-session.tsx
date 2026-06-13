@@ -394,7 +394,7 @@ export function ReviewSession() {
   if (!current) return null;
 
   return (
-    <div className="relative h-[calc(100dvh-6.5rem)] min-h-0 overflow-hidden md:h-full">
+    <div className="relative h-full min-h-0 overflow-hidden">
       <div className="absolute inset-0 overflow-y-auto pb-36 md:pb-40">
         <div className="mx-auto max-w-2xl space-y-4 md:space-y-5">
           <ReviewExitBar />

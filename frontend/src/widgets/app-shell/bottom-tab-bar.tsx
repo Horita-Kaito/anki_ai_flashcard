@@ -62,7 +62,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="主要ナビゲーション"
-      className="md:hidden sticky bottom-0 z-50 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-50 border-t bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex items-stretch">
         {tabs.map((tab) => {
