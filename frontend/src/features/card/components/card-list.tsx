@@ -89,7 +89,7 @@ export function CardList({ lockedDeckId }: CardListProps = {}) {
             type="search"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="カードを検索 (⌘K は準備中)"
+            placeholder="カードを検索"
             className="w-full border rounded-md pl-10 pr-3 py-2.5 text-base md:text-sm min-h-11"
             aria-label="キーワード検索"
           />

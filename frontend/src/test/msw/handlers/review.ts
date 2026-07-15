@@ -9,6 +9,7 @@ export const reviewHandlers = [
         total_due: 0,
         new_count: 0,
         review_count: 0,
+        has_cards: true,
         cards: [],
       },
     })

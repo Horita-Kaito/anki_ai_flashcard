@@ -53,7 +53,19 @@ final class ReviewSessionControllerTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.total_due', 2)
             ->assertJsonPath('data.new_count', 2)
+            ->assertJsonPath('data.has_cards', true)
             ->assertJsonCount(2, 'data.cards');
+    }
+
+    public function test_カード未作成ユーザーはhas_cardsがfalse(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->getJson('/api/v1/review-sessions/today')
+            ->assertOk()
+            ->assertJsonPath('data.total_due', 0)
+            ->assertJsonPath('data.has_cards', false);
     }
 
     public function test_今日の復習対象カードは作成順のまま返さない(): void

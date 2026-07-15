@@ -12,6 +12,7 @@ import {
   Pencil,
   RotateCcw,
   Sparkles,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -28,7 +29,9 @@ import {
   type ReviewRating,
 } from "@/entities/review/types";
 import type { ExtraCard } from "@/entities/review/types";
+import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { Button, buttonVariants } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { haptic } from "@/shared/lib/haptics";
 
 const RATING_CLASSES: Record<ReviewRating, string> = {
@@ -36,13 +39,6 @@ const RATING_CLASSES: Record<ReviewRating, string> = {
   hard: "border-[color-mix(in_oklch,var(--persimmon),transparent_45%)] bg-[var(--persimmon-faint)] text-foreground hover:bg-[var(--persimmon-soft)]/60",
   good: "border-primary/35 bg-[var(--forest-faint)] text-primary hover:bg-[var(--forest-soft)]/60",
   easy: "border-[color-mix(in_oklch,var(--bronze),transparent_35%)] bg-[var(--bronze-faint)] text-foreground hover:bg-[var(--bronze-soft)]/70",
-};
-
-const RATING_HINTS: Record<ReviewRating, string> = {
-  again: "<1分",
-  hard: "10分",
-  good: "4日",
-  easy: "12日",
 };
 
 const RATING_DISPLAY_LABELS: Record<ReviewRating, string> = {
@@ -109,9 +105,17 @@ function ReviewExitBar() {
   );
 }
 
-export function ReviewSession() {
-  const todaySession = useTodaySession();
+interface ReviewSessionProps {
+  /** 指定するとこのデッキ (子孫含む) の due カードのみ出題する集中復習モード */
+  deckId?: number;
+}
+
+export function ReviewSession({ deckId }: ReviewSessionProps = {}) {
+  const todaySession = useTodaySession(deckId);
   const { data, isError, refetch } = todaySession;
+  const { data: allDecks } = useDeckList();
+  const scopedDeck =
+    deckId !== undefined ? allDecks?.find((d) => d.id === deckId) : undefined;
   // gcTime (10分) で残った前回セッションのキャッシュが一瞬表示されて
   // 別カードがチラつく現象を抑止する。マウント後の初回 fetch 完了 (=画面の
   // データが「今この瞬間」の状態と確実に一致) までは読み込み中扱い。
@@ -242,7 +246,17 @@ export function ReviewSession() {
 
   if (isInitialLoading) {
     return (
-      <p className="text-center text-muted-foreground py-20">読み込み中...</p>
+      <div className="mx-auto w-full max-w-2xl space-y-4 py-4" aria-busy="true">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-2 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+          <Skeleton className="h-16" />
+        </div>
+      </div>
     );
   }
 
@@ -258,6 +272,60 @@ export function ReviewSession() {
   }
 
   if (cards.length === 0) {
+    // 初回ユーザー (カード未作成): 「完了」ではなく作成導線を出す
+    if (data?.has_cards === false) {
+      return (
+        <div className="flex flex-col items-center gap-4 border border-dashed rounded-xl p-8 text-center">
+          <NotebookPen className="size-8 text-muted-foreground" aria-hidden />
+          <div className="space-y-1">
+            <p className="font-medium">まだ復習するカードがありません</p>
+            <p className="text-sm text-muted-foreground">
+              メモを書いて AI にカード候補を作ってもらいましょう
+            </p>
+          </div>
+          <Link
+            href="/notes/new"
+            className={`${buttonVariants({ size: "lg" })} min-h-11`}
+          >
+            メモを書く
+          </Link>
+        </div>
+      );
+    }
+
+    // デッキ絞り込み中: このデッキだけ終わっている可能性を明示し、全体へ戻れるように
+    if (deckId !== undefined) {
+      return (
+        <div className="flex flex-col items-center gap-4 border border-dashed rounded-xl p-8 text-center">
+          <Sparkles className="size-8 text-muted-foreground" aria-hidden />
+          <div className="space-y-1">
+            <p className="font-medium">
+              {scopedDeck
+                ? `「${scopedDeck.name}」の今日の復習は完了しています`
+                : "このデッキの今日の復習は完了しています"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              他のデッキにはまだ復習が残っているかもしれません
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href="/review"
+              className={`${buttonVariants({ size: "lg" })} min-h-11`}
+            >
+              すべてのデッキで復習
+            </Link>
+            <Link
+              href="/dashboard"
+              className={`${buttonVariants({ variant: "outline", size: "lg" })} min-h-11`}
+            >
+              ダッシュボードへ
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col items-center gap-4 border border-dashed rounded-xl p-8 text-center">
         <Sparkles className="size-8 text-muted-foreground" aria-hidden />
@@ -398,6 +466,24 @@ export function ReviewSession() {
       <div className="mx-auto w-full max-w-2xl shrink-0 space-y-3 pb-3 md:space-y-4 md:pb-4">
         <ReviewExitBar />
 
+        {deckId !== undefined && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/25 bg-[var(--forest-faint)] px-3 py-1.5 text-sm">
+            <span className="inline-flex min-w-0 items-center gap-1.5 text-muted-foreground">
+              <Layers className="size-4 shrink-0 text-primary" aria-hidden />
+              <span className="truncate">
+                {scopedDeck ? `「${scopedDeck.name}」を集中復習中` : "デッキを集中復習中"}
+              </span>
+            </span>
+            <Link
+              href="/review"
+              className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X className="size-3.5" aria-hidden />
+              解除
+            </Link>
+          </div>
+        )}
+
         {extraMode && (
           <div className="flex items-center justify-center gap-2 rounded-lg bg-[var(--bronze-faint)] border border-[color-mix(in_oklch,var(--bronze),transparent_55%)] px-4 py-2 text-sm font-medium text-muted-foreground">
             <CalendarClock className="size-4" aria-hidden />
@@ -530,16 +616,13 @@ export function ReviewSession() {
                 disabled={answerMutation.isPending}
                 className={`${RATING_CLASSES[rating]} ${RATING_BUTTON_CLASSES[rating]} flex min-w-0 flex-col items-center justify-center rounded-md border px-2 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 md:px-3`}
                 aria-keyshortcuts={REVIEW_RATING_SHORTCUTS[rating]}
-                aria-label={`${REVIEW_RATING_LABELS[rating]}、${RATING_DESCRIPTIONS[rating]}、次回 ${RATING_HINTS[rating]}`}
+                aria-label={`${REVIEW_RATING_LABELS[rating]}、${RATING_DESCRIPTIONS[rating]}`}
               >
                 <span className={`block max-w-full truncate ${RATING_LABEL_CLASSES[rating]}`}>
                   {RATING_DISPLAY_LABELS[rating]}
                 </span>
-                <span className="mt-1 hidden text-[11px] leading-tight opacity-80 sm:block md:text-xs">
+                <span className="mt-1 block text-[11px] leading-tight opacity-80 md:text-xs">
                   {RATING_DESCRIPTIONS[rating]}
-                </span>
-                <span className="mt-1 block text-[11px] leading-tight opacity-80">
-                  {RATING_HINTS[rating]}
                 </span>
                 <kbd className="mt-1 hidden rounded bg-card/70 px-1.5 py-0.5 text-[10px] opacity-75 md:mt-2 md:inline-flex">
                   {REVIEW_RATING_SHORTCUTS[rating]}

@@ -3,14 +3,15 @@
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ChevronDown, ChevronRight, Pencil } from "lucide-react";
+import { ChevronDown, ChevronRight, GraduationCap, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useDeck, useDeleteDeck, DeckForm } from "@/features/deck";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { CardList } from "@/features/card";
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 export default function DeckDetailPage({
   params,
@@ -53,8 +54,12 @@ export default function DeckDetailPage({
 
   if (isLoading) {
     return (
-      <main className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">読み込み中...</p>
+      <main className="flex-1 p-4 md:p-8" aria-busy="true">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       </main>
     );
   }
@@ -164,6 +169,15 @@ export default function DeckDetailPage({
                   {deck.description}
                 </p>
               )}
+
+              {/* このデッキ (子孫含む) に絞った集中復習への導線 */}
+              <Link
+                href={`/review?deck_id=${deck.id}`}
+                className={`${buttonVariants({ size: "lg" })} min-h-11 w-full sm:w-auto`}
+              >
+                <GraduationCap className="size-4" aria-hidden />
+                このデッキを復習
+              </Link>
 
               {/* 詳細 (折りたたみ) */}
               <button

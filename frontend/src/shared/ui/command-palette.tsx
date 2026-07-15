@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Layers,
   NotebookPen,
+  MessagesSquare,
   FileText,
   BarChart3,
   Settings,
@@ -77,7 +78,6 @@ export function CommandPalette() {
               <PaletteItem
                 icon={<LayoutDashboard className="size-4" />}
                 label="ダッシュボード"
-                shortcut="g d"
                 onSelect={() => navigate("/dashboard")}
               />
               <PaletteItem
@@ -94,6 +94,11 @@ export function CommandPalette() {
                 icon={<NotebookPen className="size-4" />}
                 label="メモ"
                 onSelect={() => navigate("/notes")}
+              />
+              <PaletteItem
+                icon={<MessagesSquare className="size-4" />}
+                label="チャット"
+                onSelect={() => navigate("/chat")}
               />
               <PaletteItem
                 icon={<GraduationCap className="size-4" />}

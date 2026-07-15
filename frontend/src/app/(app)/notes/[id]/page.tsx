@@ -14,6 +14,7 @@ import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
 import { MarkdownText } from "@/shared/ui/markdown-text";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 export default function NoteDetailPage({
   params,
@@ -54,8 +55,13 @@ export default function NoteDetailPage({
 
   if (isLoading) {
     return (
-      <main className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">読み込み中...</p>
+      <main className="flex-1 p-4 md:p-8" aria-busy="true">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
       </main>
     );
   }

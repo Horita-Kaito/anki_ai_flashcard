@@ -27,6 +27,10 @@ export function useTodaySession(deckId?: number) {
     // gcTime のキャッシュ (前回訪問時のスナップショット) が一瞬出て
     // 別カードがチラつく現象を防ぐため、マウント時は必ず refetch する。
     refetchOnMount: "always",
+    // セッション中はスナップショットを最後まで使う不変条件がある
+    // (useAnswerReview のコメント参照)。タブ切替による focus refetch で
+    // 配列が縮むと index がズレてカードを飛ばすため必ず無効化する。
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -37,6 +41,8 @@ export function useExtraSession(enabled: boolean) {
     enabled,
     staleTime: 0,
     refetchOnMount: "always",
+    // useTodaySession と同じ理由で focus refetch を無効化
+    refetchOnWindowFocus: false,
   });
 }
 

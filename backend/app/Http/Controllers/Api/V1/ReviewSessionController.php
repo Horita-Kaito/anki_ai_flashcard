@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardReviewRepositoryInterface;
 use App\Enums\ReviewRating;
 use App\Http\Controllers\Controller;
@@ -20,6 +21,7 @@ final class ReviewSessionController extends Controller
     public function __construct(
         private readonly ReviewSessionService $sessionService,
         private readonly CardReviewRepositoryInterface $reviewRepository,
+        private readonly CardRepositoryInterface $cardRepository,
     ) {}
 
     /**
@@ -57,6 +59,9 @@ final class ReviewSessionController extends Controller
                 'total_due' => count($schedules),
                 'new_count' => $newCount,
                 'review_count' => $reviewCount,
+                // due 0 件時に「初回ユーザー (カード未作成)」と「今日は完了」を
+                // フロントで区別するためのフラグ
+                'has_cards' => $this->cardRepository->countForUser($request->user()->id) > 0,
                 'cards' => CardResource::collection(collect($cards))->toArray($request),
             ],
         ]);

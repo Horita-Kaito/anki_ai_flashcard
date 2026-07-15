@@ -21,6 +21,8 @@ export interface TodaySession {
   total_due: number;
   new_count: number;
   review_count: number;
+  /** due 0 件時に初回ユーザー (カード未作成) かを区別する。旧レスポンスでは undefined。 */
+  has_cards?: boolean;
   cards: Card[];
 }
 

@@ -22,6 +22,13 @@ export const SHORTCUTS: readonly ShortcutDef[] = [
   { keys: ["3"], description: "普通 (Good)", scope: "review" },
   { keys: ["4"], description: "簡単 (Easy)", scope: "review" },
 
+  // AI 候補レビュー (candidate-review-list / candidate-card 実装済み)
+  { keys: ["j"], description: "次の候補へ移動", scope: "candidate" },
+  { keys: ["k"], description: "前の候補へ移動", scope: "candidate" },
+  { keys: ["a"], description: "フォーカス中の候補を採用", scope: "candidate" },
+  { keys: ["e"], description: "フォーカス中の候補を編集", scope: "candidate" },
+  { keys: ["r"], description: "フォーカス中の候補を却下", scope: "candidate" },
+
   // フォーム
   { keys: ["⌘Enter", "Ctrl+Enter"], description: "フォーム送信", scope: "global" },
 ] as const;

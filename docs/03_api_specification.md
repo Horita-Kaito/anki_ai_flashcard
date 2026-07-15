@@ -882,6 +882,7 @@ AI候補生成
     "total_due": 15,
     "new_count": 5,
     "review_count": 10,
+    "has_cards": true,
     "cards": [
       {
         "id": 1,

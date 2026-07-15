@@ -20,7 +20,13 @@ export function Fab() {
     return null;
   }
 
-  const { href, label } = resolveAction(pathname);
+  const action = resolveAction(pathname);
+  // 文脈に合う作成アクションがないページでは FAB を出さない
+  // (タグ管理や統計画面に「メモを書く」FAB が浮くのを避ける)
+  if (action === null) {
+    return null;
+  }
+  const { href, label } = action;
 
   return (
     <Link
@@ -41,7 +47,9 @@ export function Fab() {
   );
 }
 
-function resolveAction(pathname: string): { href: string; label: string } {
+function resolveAction(
+  pathname: string
+): { href: string; label: string } | null {
   if (pathname.startsWith("/decks")) {
     return { href: "/decks/new", label: "新しいデッキを作成" };
   }
@@ -51,6 +59,9 @@ function resolveAction(pathname: string): { href: string; label: string } {
   if (pathname.startsWith("/templates")) {
     return { href: "/templates/new", label: "新しいテンプレートを作成" };
   }
-  // メモ画面 or その他ではメモ作成 (最頻アクション)
-  return { href: "/notes/new", label: "新しいメモを書く" };
+  // コア動線 (ホーム/メモ) ではメモ作成が最頻アクション
+  if (pathname.startsWith("/notes") || pathname.startsWith("/dashboard")) {
+    return { href: "/notes/new", label: "新しいメモを書く" };
+  }
+  return null;
 }

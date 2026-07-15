@@ -26,6 +26,7 @@ import { noteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
 import { useDomainTemplateList } from "@/entities/domain-template/api/domain-template-queries";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 interface GenerateCandidatesViewProps {
   noteSeedId: number;
@@ -150,7 +151,12 @@ export function GenerateCandidatesView({
   }
 
   if (noteLoading) {
-    return <p className="text-muted-foreground">読み込み中...</p>;
+    return (
+      <div className="space-y-4" aria-busy="true">
+        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    );
   }
 
   if (!note) {

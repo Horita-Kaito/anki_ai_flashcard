@@ -8,6 +8,8 @@ export const todaySessionResponseSchema = z
     total_due: z.number(),
     new_count: z.number(),
     review_count: z.number(),
+    // due 0 件時に「カード未作成の初回ユーザー」と「今日は完了」を区別する
+    has_cards: z.boolean().optional(),
     cards: z.array(cardResponseSchema),
   })
   .passthrough();

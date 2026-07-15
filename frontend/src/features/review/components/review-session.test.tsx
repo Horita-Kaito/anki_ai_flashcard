@@ -52,7 +52,7 @@ describe("ReviewSession", () => {
     expect(screen.getByText(reviewCard.answer)).toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: "普通、標準、次回 4日" })
+      screen.getByRole("button", { name: "普通、標準" })
     );
 
     expect(await screen.findByText("お疲れさまでした")).toBeInTheDocument();
@@ -94,7 +94,7 @@ describe("ReviewSession", () => {
     expect(await screen.findByText(reviewCard.question)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /答えを見る/ }));
     const goodButton = screen.getByRole("button", {
-      name: "普通、標準、次回 4日",
+      name: "普通、標準",
     });
     fireEvent.click(goodButton);
     fireEvent.click(goodButton);
