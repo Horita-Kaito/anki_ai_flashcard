@@ -39,8 +39,6 @@ final class ReviewSessionService
      */
     public function dueCardsForUser(int $userId, ?int $deckId, int $limit = 50): array
     {
-        $this->applyOverdueDecay($userId);
-
         // 親デッキを指定された場合は、全子孫デッキのカードも対象に含める
         $deckIds = null;
         if ($deckId !== null) {
@@ -87,15 +85,6 @@ final class ReviewSessionService
         });
 
         return array_values($schedules);
-    }
-
-    /**
-     * 期限切れカードの interval を減衰させる (On-demand interval decay)。
-     * Repository 側で 3 つの UPDATE 文に集約し、N 件のループ + refresh を回避する。
-     */
-    private function applyOverdueDecay(int $userId): void
-    {
-        $this->scheduleRepository->decayOverdueForUser($userId, now());
     }
 
     /**

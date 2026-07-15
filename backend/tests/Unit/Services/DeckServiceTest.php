@@ -6,6 +6,7 @@ namespace Tests\Unit\Services;
 
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
+use App\Contracts\Services\Sync\SyncTombstoneRecorderInterface;
 use App\Exceptions\Domain\DeckHasCardsException;
 use App\Exceptions\Domain\DeckNotFoundException;
 use App\Models\Deck;
@@ -25,7 +26,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $service = new DeckService($repo, $this->cardRepoStub());
+        $service = new DeckService($repo, $this->cardRepoStub(), $this->recorderStub());
 
         $this->expectException(DeckNotFoundException::class);
         $service->getForUser(1, 99);
@@ -43,7 +44,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn($deck);
 
-        $service = new DeckService($repo, $this->cardRepoStub());
+        $service = new DeckService($repo, $this->cardRepoStub(), $this->recorderStub());
         $result = $service->getForUser(1, 10);
 
         $this->assertSame($deck, $result);
@@ -60,7 +61,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn($expected);
 
-        $service = new DeckService($repo, $this->cardRepoStub());
+        $service = new DeckService($repo, $this->cardRepoStub(), $this->recorderStub());
         $result = $service->createForUser(1, ['name' => 'New']);
 
         $this->assertSame($expected, $result);
@@ -75,7 +76,7 @@ final class DeckServiceTest extends TestCase
             ->once()
             ->andReturn(null);
 
-        $service = new DeckService($repo, $this->cardRepoStub());
+        $service = new DeckService($repo, $this->cardRepoStub(), $this->recorderStub());
 
         $this->expectException(DeckNotFoundException::class);
         $service->updateForUser(1, 99, ['name' => 'x']);
@@ -95,7 +96,7 @@ final class DeckServiceTest extends TestCase
         $cardRepo = Mockery::mock(CardRepositoryInterface::class);
         $cardRepo->shouldReceive('countForDeck')->with(1, 7)->once()->andReturn(3);
 
-        $service = new DeckService($repo, $cardRepo);
+        $service = new DeckService($repo, $cardRepo, $this->recorderStub());
 
         $this->expectException(DeckHasCardsException::class);
         $service->deleteForUser(1, 7);
@@ -105,6 +106,15 @@ final class DeckServiceTest extends TestCase
     {
         /** @var CardRepositoryInterface&MockInterface $stub */
         $stub = Mockery::mock(CardRepositoryInterface::class);
+
+        return $stub;
+    }
+
+    private function recorderStub(): SyncTombstoneRecorderInterface
+    {
+        /** @var SyncTombstoneRecorderInterface&MockInterface $stub */
+        $stub = Mockery::mock(SyncTombstoneRecorderInterface::class);
+        $stub->shouldReceive('recordForDeckDeletion')->byDefault();
 
         return $stub;
     }

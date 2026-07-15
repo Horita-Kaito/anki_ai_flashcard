@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\TagRepositoryInterface;
+use App\Contracts\Services\Sync\SyncTombstoneRecorderInterface;
 use App\Enums\CardType;
 use App\Enums\ScheduleState;
 use App\Exceptions\Domain\CardNotFoundException;
@@ -23,6 +24,7 @@ final class CardService
         private readonly CardRepositoryInterface $cardRepository,
         private readonly CardScheduleRepositoryInterface $scheduleRepository,
         private readonly TagRepositoryInterface $tagRepository,
+        private readonly SyncTombstoneRecorderInterface $tombstoneRecorder,
     ) {}
 
     /**
@@ -146,7 +148,12 @@ final class CardService
     public function deleteForUser(int $userId, int $cardId): void
     {
         $card = $this->getForUser($userId, $cardId);
-        $this->cardRepository->delete($card);
+
+        DB::transaction(function () use ($card): void {
+            // iOS への削除伝播用の墓標 (schedule 含む) を削除前に残す
+            $this->tombstoneRecorder->recordForCardDeletion($card);
+            $this->cardRepository->delete($card);
+        });
     }
 
     /**

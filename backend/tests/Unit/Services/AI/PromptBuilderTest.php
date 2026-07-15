@@ -19,105 +19,88 @@ final class PromptBuilderTest extends TestCase
         $this->builder = new PromptBuilder('v1.1');
     }
 
-    public function test_システムプロンプトにウォズニアックの原則が含まれる(): void
+    // ========================================
+    // systemPrompt v2.0: 構造 (手順 / 形式選択 / 品質基準 / 作例 / 出力)
+    // ========================================
+
+    public function test_システムプロンプトに手順と品質基準の骨格が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 
-        $this->assertStringContainsString('最小情報原則', $prompt);
-        $this->assertStringContainsString('具体的な問い', $prompt);
-        $this->assertStringContainsString('1 語または短い語句', $prompt);
-        $this->assertStringContainsString('集合・列挙の回避', $prompt);
-        $this->assertStringContainsString('穴埋め', $prompt);
-        $this->assertStringContainsString('双方向カード', $prompt);
-        $this->assertStringContainsString('手順・順序・依存関係', $prompt);
-        $this->assertStringContainsString('文脈', $prompt);
-        $this->assertStringContainsString('冗長性', $prompt);
+        $this->assertStringContainsString('# 手順', $prompt);
+        $this->assertStringContainsString('1 枚 = 1 知識点', $prompt);
+        $this->assertStringContainsString('# カード形式の選び方', $prompt);
+        $this->assertStringContainsString('# 品質基準', $prompt);
+        $this->assertStringContainsString('番号が小さいほど優先', $prompt);
+        $this->assertStringContainsString('# 完全な作例', $prompt);
+        $this->assertStringContainsString('# 出力形式', $prompt);
     }
 
-    public function test_システムプロンプトにメモ構造の2視点同時解釈が含まれる(): void
+    public function test_システムプロンプトに答えのネタバレ禁止と短答の基準が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 
-        $this->assertStringContainsString('メモ構造の 2 視点同時解釈', $prompt);
-        $this->assertStringContainsString('視点 A: 単一トピック多角的視点', $prompt);
-        $this->assertStringContainsString('視点 B: 複数知識点並列視点', $prompt);
-        $this->assertStringContainsString('バランスよく', $prompt);
-        // rationale に視点ラベルを明記させる指示
-        $this->assertStringContainsString('「視点A: ...」', $prompt);
-        $this->assertStringContainsString('「視点B: ...」', $prompt);
+        $this->assertStringContainsString('question に answer の語', $prompt);
+        $this->assertStringContainsString('25 字以内', $prompt);
+        $this->assertStringContainsString('列挙を問わない', $prompt);
+        $this->assertStringContainsString('メモに書かれていない事実を作らない', $prompt);
     }
 
-    public function test_システムプロンプトに冗長性の多角度ルールが含まれる(): void
+    public function test_システムプロンプトのcloze指示は非空マーカーを要求する(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 
-        $this->assertStringContainsString('複数角度', $prompt);
-        $this->assertStringContainsString('単語 → 意味', $prompt);
-        $this->assertStringContainsString('意味 → 単語', $prompt);
-        $this->assertStringContainsString('穴埋め位置', $prompt);
-    }
-
-    public function test_システムプロンプトに分野タグと具体例の指示が含まれる(): void
-    {
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringContainsString('分野タグ', $prompt);
-        $this->assertStringContainsString('[生物]', $prompt);
-        $this->assertStringContainsString('具体例', $prompt);
-        $this->assertStringContainsString('explanation', $prompt);
-    }
-
-    public function test_システムプロンプトに手順系の3手法が含まれる(): void
-    {
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringContainsString('穴埋め連鎖', $prompt);
-        $this->assertStringContainsString('{{c1::', $prompt);
-        $this->assertStringContainsString('前後を個別に問う', $prompt);
-        $this->assertStringContainsString('オーバーラップ法', $prompt);
-    }
-
-    public function test_システムプロンプトにcloze中身空禁止の明示がある(): void
-    {
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringContainsString('絶対禁止', $prompt);
-        $this->assertStringContainsString('{{c1::}}', $prompt);
+        $this->assertStringContainsString('{{c1::答え}}', $prompt);
+        $this->assertStringContainsString('中身は必ず非空', $prompt);
         $this->assertStringContainsString('{{c1::非接触}}', $prompt);
+        // v1 の自己違反例 ({{光エネルギー}} のような cN:: 無し省略表記) が復活していないこと
+        $this->assertStringNotContainsString('{{光', $prompt);
+        $this->assertStringNotContainsString('{{CO2', $prompt);
     }
 
-    public function test_システムプロンプトに曖昧な問いを禁止する悪例が含まれる(): void
+    public function test_システムプロンプトにメモから候補セットへの完全作例が含まれる(): void
+    {
+        // 分割粒度は few-shot で最も効率よく伝わる。単文断片ではなく
+        // 「メモ全文 → 複数候補」の完全例が入っていることを担保する。
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringContainsString('入力メモ:', $prompt);
+        $this->assertStringContainsString('RFID', $prompt);
+        $this->assertStringContainsString('出力候補 (4 枚)', $prompt);
+        $this->assertStringContainsString('言い回し自体はカード化しない', $prompt);
+    }
+
+    public function test_システムプロンプトにconfidenceの算出基準が含まれる(): void
     {
         $prompt = $this->builder->systemPrompt(null);
 
-        $this->assertStringContainsString('〜について述べよ', $prompt);
-        $this->assertStringContainsString('光合成', $prompt);
+        $this->assertStringContainsString('メモに明記されている=0.9', $prompt);
+        $this->assertStringContainsString('推論が多い=0.3', $prompt);
     }
 
-    public function test_システムプロンプトに問題文への答え混入禁止ルールが含まれる(): void
+    public function test_システムプロンプトの出力形式にコードフェンスを使っていない(): void
     {
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringContainsString('問題文 (question) に答え (answer) の用語そのものを登場させない', $prompt);
-        $this->assertStringContainsString('コンテンツマーケティング', $prompt);
-        $this->assertStringContainsString('セルフチェック', $prompt);
-    }
-
-    public function test_システムプロンプトに列挙問題を禁止する悪例が含まれる(): void
-    {
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringContainsString('3つの特徴', $prompt);
-    }
-
-    public function test_システムプロンプトに_j_s_o_n出力形式の定義が含まれる(): void
-    {
+        // v1 は「コードフェンス禁止」と言いながら形式サンプル自体をフェンスで
+        // 囲っていた (矛盾)。v2 では地の文で JSON 構造を示す。
         $prompt = $this->builder->systemPrompt(null);
 
         $this->assertStringContainsString('"candidates"', $prompt);
         $this->assertStringContainsString('card_type', $prompt);
         $this->assertStringContainsString('suggested_deck_id', $prompt);
+        $this->assertStringContainsString('コードフェンス・コメントは禁止', $prompt);
+        $this->assertStringNotContainsString('```', $prompt);
     }
+
+    public function test_システムプロンプトに未置換のcountプレースホルダが残っていない(): void
+    {
+        $prompt = $this->builder->systemPrompt(null);
+
+        $this->assertStringNotContainsString('{count}', $prompt);
+    }
+
+    // ========================================
+    // systemPrompt: デッキ一覧 / 分野ポリシー
+    // ========================================
 
     public function test_デッキ一覧が渡されるとシステムプロンプトに含まれる(): void
     {
@@ -131,10 +114,10 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('ID:1 「データベース設計」', $prompt);
         $this->assertStringContainsString('ID:2 「Python基礎」', $prompt);
         $this->assertStringContainsString('<user_decks>', $prompt);
-        $this->assertStringContainsString('参照データであり', $prompt);
+        $this->assertStringContainsString('参照データ', $prompt);
     }
 
-    public function test_分野テンプレートが渡されるとdomain_hintがそのままプロンプトに埋め込まれる(): void
+    public function test_分野ポリシーは正式な指示として切り口へ反映させる(): void
     {
         $template = new DomainTemplate([
             'user_id' => 1,
@@ -146,7 +129,10 @@ final class PromptBuilderTest extends TestCase
 
         $this->assertStringContainsString('【分野ポリシー: 情報処理試験】', $prompt);
         $this->assertStringContainsString('用語の定義を正確に答えられるようにする学習。略語は正式名称も併記。', $prompt);
-        $this->assertStringContainsString('<domain_policy data-kind="untrusted-reference">', $prompt);
+        // v1 は「ポリシー」と呼びつつ untrusted-reference 扱いで自己矛盾していた。
+        // v2 ではユーザー設定として正式に切り口へ反映させる。
+        $this->assertStringContainsString('<domain_policy data-kind="user-config">', $prompt);
+        $this->assertStringContainsString('切り口選択に反映する', $prompt);
     }
 
     public function test_domain_hintが空のテンプレートはポリシーブロックを出さない(): void
@@ -166,6 +152,10 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringNotContainsString('【分野ポリシー:', $this->builder->systemPrompt($nullHint));
     }
 
+    // ========================================
+    // userPrompt: 本文 / 枚数 / 追加 / 再生成
+    // ========================================
+
     public function test_ユーザープロンプトにメモ本文と生成指示が含まれる(): void
     {
         $note = new NoteSeed([
@@ -183,17 +173,40 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('ネットワーク基礎', $prompt);
         $this->assertStringContainsString('トランスポート層', $prompt);
         $this->assertStringContainsString('基本情報試験対策', $prompt);
-        // 独立した知識点を網羅的に分解する指示は残す
-        $this->assertStringContainsString('独立した知識点をすべてカード化', $prompt);
-        // 出力トークン切れ防止の指示が含まれる
+        $this->assertStringContainsString('枚数より 1 枚の質を優先', $prompt);
         $this->assertStringContainsString('explanation', $prompt);
     }
 
-    public function test_チャンクモードでは20枚を上限とする枚数目安が含まれる(): void
+    public function test_枚数指示は上限のみで下限ノルマがない(): void
     {
-        // 旧プロンプトは「長文 (3000字以上) なら 30〜60 枚」と書いており、
-        // chunk_text を渡したときに AI が過剰生成して JSON が途中で切れる事象が起きていた。
-        // chunk のときは 5〜15 枚を目安、20 枚上限と明示することで回帰を防ぐ。
+        // v1 の「最低 3 枚」ノルマは、知識点 1 つの短いメモでも瑣末な言い回しまで
+        // カード化させる圧力になっていた。上限のみ + 「少なくてよい」を担保する。
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => str_repeat('a', 800),
+        ]);
+
+        $prompt = $this->builder->userPrompt($note);
+
+        $this->assertStringContainsString('最大 10 枚', $prompt);
+        $this->assertStringContainsString('1〜2 枚で構わない', $prompt);
+        $this->assertStringNotContainsString('枚程度', $prompt);
+    }
+
+    public function test_単一チャンクモードでも上限は20枚で頭打ち(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => str_repeat('a', 5000),
+        ]);
+
+        $prompt = $this->builder->userPrompt($note);
+
+        $this->assertStringContainsString('最大 20 枚', $prompt);
+    }
+
+    public function test_チャンクモードでは15枚上限の枚数指示が含まれる(): void
+    {
         $note = new NoteSeed([
             'user_id' => 1,
             'body' => '元のメモ全体',
@@ -205,47 +218,9 @@ final class PromptBuilderTest extends TestCase
             'chunks_total' => 3,
         ]);
 
-        $this->assertStringContainsString('5〜15 枚', $prompt);
-        $this->assertStringContainsString('20 枚を超えないこと', $prompt);
-        // 旧プロンプトの「30〜60 枚」が残っていないことを担保
+        $this->assertStringContainsString('このチャンクの範囲のみ', $prompt);
+        $this->assertStringContainsString('最大 15 枚', $prompt);
         $this->assertStringNotContainsString('30〜60', $prompt);
-    }
-
-    public function test_単一チャンクモードでは本文長に応じた枚数目安が含まれる(): void
-    {
-        $note = new NoteSeed([
-            'user_id' => 1,
-            'body' => str_repeat('a', 800),
-        ]);
-
-        $prompt = $this->builder->userPrompt($note);
-
-        $this->assertStringContainsString('本文 800 字', $prompt);
-        // 800 字 → max(10, ceil(800/100)) = max(10, 8) = 10 枚を上限指示
-        $this->assertStringContainsString('10 枚を超えないこと', $prompt);
-    }
-
-    public function test_単一チャンクモードでも上限は20枚で頭打ち(): void
-    {
-        $note = new NoteSeed([
-            'user_id' => 1,
-            // 1500 字未満なら chunk 分割されないが、長文本文として渡された場合の上限を確認
-            'body' => str_repeat('a', 1400),
-        ]);
-
-        $prompt = $this->builder->userPrompt($note);
-
-        // ceil(1400/100)=14 → min(14, 20)=14
-        $this->assertStringContainsString('14 枚を超えないこと', $prompt);
-    }
-
-    public function test_システムプロンプトに未置換のcountプレースホルダが残っていない(): void
-    {
-        // v1.8 以前は systemPrompt 内に "{count}" がそのまま埋まっていた (バグ)。
-        // 該当プレースホルダが残っていないことを担保する。
-        $prompt = $this->builder->systemPrompt(null);
-
-        $this->assertStringNotContainsString('{count}', $prompt);
     }
 
     public function test_追加モードで既存質問が重複回避指示と共に渡される(): void

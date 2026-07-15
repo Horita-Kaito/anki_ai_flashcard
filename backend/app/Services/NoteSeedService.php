@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
+use App\Contracts\Services\Sync\SyncTombstoneRecorderInterface;
 use App\Exceptions\Domain\NoteSeedNotFoundException;
 use App\Models\NoteSeed;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -16,6 +17,7 @@ final class NoteSeedService
     public function __construct(
         private readonly NoteSeedRepositoryInterface $noteSeedRepository,
         private readonly CardRepositoryInterface $cardRepository,
+        private readonly SyncTombstoneRecorderInterface $tombstoneRecorder,
     ) {}
 
     /**
@@ -80,6 +82,10 @@ final class NoteSeedService
         $noteSeed = $this->getForUser($userId, $noteSeedId);
 
         return DB::transaction(function () use ($userId, $noteSeedId, $noteSeed, $deleteCards): int {
+            // 削除前に client_id を収集して iOS 向けの削除墓標を残す
+            // (CASCADE で消える候補・スケジュールは削除後には列挙できない)
+            $this->tombstoneRecorder->recordForNoteSeedDeletion($noteSeed, includeCards: $deleteCards);
+
             $deletedCards = $deleteCards
                 ? $this->cardRepository->deleteBySourceNoteSeedForUser($userId, $noteSeedId)
                 : 0;

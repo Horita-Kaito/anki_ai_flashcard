@@ -10,12 +10,14 @@ use App\Contracts\Repositories\CardScheduleRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
 use App\Contracts\Services\AI\CandidateQualityValidatorInterface;
 use App\Enums\CandidateStatus;
+use App\Enums\CardType;
 use App\Exceptions\Domain\AiCardCandidateDuplicateQuestionException;
 use App\Exceptions\Domain\AiCardCandidateNotAdoptableException;
 use App\Exceptions\Domain\AiCardCandidateNotFoundException;
 use App\Exceptions\Domain\DeckNotFoundException;
 use App\Models\AiCardCandidate;
 use App\Models\Card;
+use App\Support\Cloze;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
@@ -148,14 +150,23 @@ final class AiCardCandidateService
                 throw DeckNotFoundException::make((int) $overrides['deck_id']);
             }
 
+            $question = (string) ($overrides['question'] ?? $candidate->question);
+            $cardType = $candidate->card_type?->value ?? 'basic_qa';
+            // 候補編集や override で cloze マーカーが消えた場合、生成時の
+            // 品質検証 (CandidateQualityValidator) と同じルールで basic_qa へ
+            // 自動降格し、答えの出ない壊れた穴埋めカードの誕生を防ぐ。
+            if ($cardType === CardType::ClozeLike->value && ! Cloze::contains($question)) {
+                $cardType = CardType::BasicQa->value;
+            }
+
             $card = $this->cardRepository->create($userId, [
                 'deck_id' => $overrides['deck_id'],
-                'question' => $overrides['question'] ?? $candidate->question,
+                'question' => $question,
                 'answer' => $overrides['answer'] ?? $candidate->answer,
                 'explanation' => array_key_exists('explanation', $overrides)
                     ? $overrides['explanation']
                     : $candidate->explanation,
-                'card_type' => $candidate->card_type?->value ?? 'basic_qa',
+                'card_type' => $cardType,
                 'source_note_seed_id' => $candidate->note_seed_id,
                 'source_ai_candidate_id' => $candidate->id,
                 // 採用時に scheduler 指定が無ければ FSRS をデフォルトに

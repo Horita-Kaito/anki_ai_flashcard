@@ -22,6 +22,7 @@ use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Contracts\Repositories\UserSettingRepositoryInterface;
 use App\Contracts\Services\ChatServiceInterface;
 use App\Contracts\Services\Review\SchedulerResolverInterface;
+use App\Contracts\Services\Sync\SyncTombstoneRecorderInterface;
 use App\Contracts\Services\SyncServiceInterface;
 use App\Contracts\Services\UserCreationServiceInterface;
 use App\Repositories\EloquentAiCardCandidateRepository;
@@ -42,6 +43,7 @@ use App\Repositories\EloquentUserRepository;
 use App\Repositories\EloquentUserSettingRepository;
 use App\Services\ChatService;
 use App\Services\Review\SchedulerResolver;
+use App\Services\Sync\SyncTombstoneRecorder;
 use App\Services\SyncService;
 use App\Services\UserCreationService;
 use Illuminate\Support\ServiceProvider;
@@ -84,6 +86,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         UserCreationServiceInterface::class => UserCreationService::class,
         ChatServiceInterface::class => ChatService::class,
         SyncServiceInterface::class => SyncService::class,
+        SyncTombstoneRecorderInterface::class => SyncTombstoneRecorder::class,
     ];
 
     /**

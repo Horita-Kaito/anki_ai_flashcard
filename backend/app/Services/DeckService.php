@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\DeckRepositoryInterface;
+use App\Contracts\Services\Sync\SyncTombstoneRecorderInterface;
 use App\Exceptions\Domain\DeckCycleDetectedException;
 use App\Exceptions\Domain\DeckHasCardsException;
 use App\Exceptions\Domain\DeckHasChildrenException;
@@ -18,6 +19,7 @@ final class DeckService
     public function __construct(
         private readonly DeckRepositoryInterface $deckRepository,
         private readonly CardRepositoryInterface $cardRepository,
+        private readonly SyncTombstoneRecorderInterface $tombstoneRecorder,
     ) {}
 
     /**
@@ -114,6 +116,8 @@ final class DeckService
             throw DeckHasCardsException::make($deckId, $cardCount);
         }
 
+        // iOS への削除伝播用の墓標を削除前に残す (空デッキのみなので子の列挙は不要)
+        $this->tombstoneRecorder->recordForDeckDeletion($deck);
         $this->deckRepository->delete($deck);
     }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Api\V1;
 
 use App\Contracts\Repositories\CardScheduleRepositoryInterface;
+use App\Models\AiCardCandidate;
 use App\Models\Card;
 use App\Models\Deck;
 use App\Models\DomainTemplate;
@@ -197,6 +198,80 @@ final class NoteSeedControllerTest extends TestCase
             ->assertJsonPath('data.deleted_cards_count', 0);
 
         $this->assertDatabaseHas('cards', ['id' => $otherCard->id]);
+    }
+
+    public function test_メモ削除は同期済み行にtombstoneを残しi_o_sへ削除が伝播する(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create([
+            'client_id' => 'note-uuid-1',
+        ]);
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'client_id' => 'cand-uuid-1',
+        ])->create();
+        $card = Card::factory()->for($user)->for($deck)->create([
+            'source_note_seed_id' => $note->id,
+            'client_id' => 'card-uuid-1',
+        ]);
+        $schedule = $this->scheduleRepository()->createInitial($card);
+        $schedule->forceFill(['client_id' => 'sched-uuid-1'])->save();
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/note-seeds/{$note->id}", ['delete_cards' => true])
+            ->assertOk();
+
+        $this->assertDatabaseHas('sync_tombstones', [
+            'user_id' => $user->id, 'entity' => 'note_seeds', 'client_id' => 'note-uuid-1',
+        ]);
+        $this->assertDatabaseHas('sync_tombstones', [
+            'user_id' => $user->id, 'entity' => 'ai_card_candidates', 'client_id' => 'cand-uuid-1',
+        ]);
+        $this->assertDatabaseHas('sync_tombstones', [
+            'user_id' => $user->id, 'entity' => 'cards', 'client_id' => 'card-uuid-1',
+        ]);
+        $this->assertDatabaseHas('sync_tombstones', [
+            'user_id' => $user->id, 'entity' => 'card_schedules', 'client_id' => 'sched-uuid-1',
+        ]);
+
+        // 候補は CASCADE で消えていること (削除自体の確認)
+        $this->assertDatabaseMissing('ai_card_candidates', ['id' => $candidate->id]);
+    }
+
+    public function test_未同期の行を削除してもtombstoneは作られない(): void
+    {
+        $user = User::factory()->create();
+        $note = NoteSeed::factory()->for($user)->create(['client_id' => null]);
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/note-seeds/{$note->id}")
+            ->assertOk();
+
+        $this->assertDatabaseCount('sync_tombstones', 0);
+    }
+
+    public function test_カードを残すメモ削除ではカードのtombstoneを作らない(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create(['client_id' => 'note-uuid-2']);
+        Card::factory()->for($user)->for($deck)->create([
+            'source_note_seed_id' => $note->id,
+            'client_id' => 'card-uuid-2',
+        ]);
+
+        $this->actingAs($user)
+            ->deleteJson("/api/v1/note-seeds/{$note->id}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('sync_tombstones', [
+            'entity' => 'note_seeds', 'client_id' => 'note-uuid-2',
+        ]);
+        $this->assertDatabaseMissing('sync_tombstones', [
+            'entity' => 'cards', 'client_id' => 'card-uuid-2',
+        ]);
     }
 
     public function test_メモ詳細はcards_countを含む(): void

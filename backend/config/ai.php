@@ -42,7 +42,7 @@ return [
     |--------------------------------------------------------------------------
     | プロンプト仕様を変更する度にバンプする。生成ログに記録される。
     */
-    'prompt_version' => env('AI_PROMPT_VERSION', 'v1.11'),
+    'prompt_version' => env('AI_PROMPT_VERSION', 'v2.0'),
 
     /*
     |--------------------------------------------------------------------------
@@ -74,7 +74,7 @@ return [
     */
     'generation' => [
         'max_retries' => (int) env('AI_MAX_RETRIES', 2),
-        'temperature' => (float) env('AI_TEMPERATURE', 0.6),
+        'temperature' => (float) env('AI_TEMPERATURE', 0.3),
         'max_output_tokens' => (int) env('AI_MAX_OUTPUT_TOKENS', 16000),
     ],
 

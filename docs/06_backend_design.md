@@ -382,10 +382,15 @@ ease_factor=2.5、lapse_count=0、archived_at=null)。
 を検出した場合のみリセットを実行。Frontend では destructive ConfirmDialog で
 ユーザーに警告してから送信する。
 
-#### overdue decay の SM-2 限定
-`CardScheduleRepository::decayOverdueForUser` は SM-2 設計の「忘れたら interval
-を縮める」ロジック。FSRS では interval が stability から導出されるため、
-decay は **SM-2 カードに限定** して走らせる (FSRS は次のレビューで自然に再計算)。
+#### overdue decay の SM-2 限定 (回答時にのみ適用)
+overdue decay は「期限を大きく過ぎてから回答されたカードは記憶が減衰している前提で
+前回 interval を割り引く」SM-2 設計のロジック。`Sm2Scheduler::next()` 内の純粋計算として
+**回答時にのみ** 適用する (>14日: interval=1 / >7日: ×0.5 / >1日: ×0.8)。
+FSRS では interval が stability から導出されるため対象外 (次のレビューで自然に再計算)。
+
+旧実装 (`decayOverdueForUser`) は復習一覧の読み取り時に一括 UPDATE していたが、
+適用済みマークが無く**画面を開くたびに再減衰する非冪等バグ**があったため廃止した。
+読み取り系エンドポイントに書き込み副作用を持たせないこと。
 
 #### Auto-archive 閾値
 - SM-2: 180 日 (config: `review.archive_interval_days`)

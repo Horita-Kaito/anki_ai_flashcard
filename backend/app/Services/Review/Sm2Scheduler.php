@@ -49,6 +49,14 @@ final class Sm2Scheduler implements SchedulerInterface
         $currentReps = (int) $current->repetitions;
         $currentLapses = (int) $current->lapse_count;
 
+        // Overdue decay: 期限を大きく過ぎてから回答されたカードは、記憶が
+        // 減衰している前提で「前回 interval」を割り引いてから次回を計算する。
+        // 回答時にのみ適用する純粋計算なので、画面を開くだけで interval が
+        // 減り続ける副作用はない (旧実装は読み取り時 UPDATE で非冪等だった)。
+        if ($state === ScheduleState::Review && $currentInterval > 0) {
+            $currentInterval = $this->decayedIntervalForOverdue($current, $currentInterval, $now);
+        }
+
         $update = match ($state) {
             ScheduleState::New, ScheduleState::Learning, ScheduleState::Relearning => $this->processLearning(
                 $rating,
@@ -73,6 +81,38 @@ final class Sm2Scheduler implements SchedulerInterface
         }
 
         return $update;
+    }
+
+    /**
+     * 期限超過日数に応じて前回 interval を割り引く。
+     *
+     *   overdue > 14日 → 1 にリセット
+     *   overdue > 7日  → ×0.5 (最低 1)
+     *   overdue > 1日  → ×0.8 (最低 1)
+     *   それ以外       → そのまま
+     */
+    private function decayedIntervalForOverdue(
+        CardSchedule $schedule,
+        int $intervalDays,
+        \DateTimeInterface $now,
+    ): int {
+        $raw = $schedule->getRawOriginal('due_at') ?? $schedule->getAttributes()['due_at'] ?? null;
+        if ($raw === null) {
+            return $intervalDays;
+        }
+        $dueTs = $raw instanceof \DateTimeInterface ? $raw->getTimestamp() : strtotime((string) $raw);
+        if ($dueTs === false) {
+            return $intervalDays;
+        }
+
+        $overdueDays = ($now->getTimestamp() - $dueTs) / 86400;
+
+        return match (true) {
+            $overdueDays > 14 => 1,
+            $overdueDays > 7 => max(1, (int) floor($intervalDays * 0.5)),
+            $overdueDays > 1 => max(1, (int) floor($intervalDays * 0.8)),
+            default => $intervalDays,
+        };
     }
 
     private function isBeforeDue(CardSchedule $schedule, \DateTimeInterface $now): bool

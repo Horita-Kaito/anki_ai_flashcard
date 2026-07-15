@@ -453,6 +453,51 @@ final class AiCardCandidateControllerTest extends TestCase
         ]);
     }
 
+    public function test_採用時にclozeマーカーが無いcloze候補はbasic_qaへ降格される(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => 'RFID は {{c1::非接触}} で情報を読み取る',
+            'answer' => '非接触',
+            'card_type' => 'cloze_like',
+        ])->create();
+
+        // 候補編集 (override) で cloze マーカーを消して採用しても、
+        // 壊れた cloze カードにならず basic_qa に降格される
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/adopt", [
+                'deck_id' => $deck->id,
+                'question' => 'RFID の読み取り方式は?',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.card_type', 'basic_qa');
+    }
+
+    public function test_採用時にclozeマーカーが残っていればcloze_likeのまま(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        $note = NoteSeed::factory()->for($user)->create();
+        $candidate = AiCardCandidate::factory()->state([
+            'user_id' => $user->id,
+            'note_seed_id' => $note->id,
+            'question' => 'RFID は {{c1::非接触}} で情報を読み取る',
+            'answer' => '非接触',
+            'card_type' => 'cloze_like',
+        ])->create();
+
+        $this->actingAs($user)
+            ->postJson("/api/v1/ai-card-candidates/{$candidate->id}/adopt", [
+                'deck_id' => $deck->id,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.card_type', 'cloze_like');
+    }
+
     public function test_採用時にexplanationを上書きできる(): void
     {
         $user = User::factory()->create();

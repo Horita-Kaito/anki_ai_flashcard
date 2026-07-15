@@ -40,21 +40,6 @@ interface CardScheduleRepositoryInterface
     public function update(CardSchedule $schedule, array $attributes): CardSchedule;
 
     /**
-     * 期限切れカード (overdue) のスケジュールを取得する (decay 適用対象)
-     *
-     * @return array<int, CardSchedule>
-     */
-    public function overdueCardsForUser(int $userId, \DateTimeInterface $before): array;
-
-    /**
-     * 期限切れの interval を一括で減衰させる (1 リクエスト 3 UPDATE)。
-     * - overdue > 14日: interval=1 にリセット
-     * - 7 < overdue <= 14: interval *= 0.5 (最低1)
-     * - 1 < overdue <= 7: interval *= 0.8 (最低1)
-     */
-    public function decayOverdueForUser(int $userId, \DateTimeInterface $now): void;
-
-    /**
      * カードをアーカイブする
      */
     public function archive(CardSchedule $schedule): CardSchedule;
