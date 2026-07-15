@@ -30,6 +30,14 @@ interface CardRepositoryInterface
     public function delete(Card $card): void;
 
     /**
+     * 指定メモを出所 (source_note_seed_id) とするカードを一括削除する。
+     * 関連する schedule / review は DB の外部キー CASCADE で連動削除される。
+     *
+     * @return int 削除したカード数
+     */
+    public function deleteBySourceNoteSeedForUser(int $userId, int $noteSeedId): int;
+
+    /**
      * @param  array<int, int>  $tagIds
      */
     public function syncTags(Card $card, array $tagIds): void;

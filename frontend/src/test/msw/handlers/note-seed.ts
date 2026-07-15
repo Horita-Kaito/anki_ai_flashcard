@@ -58,9 +58,13 @@ export const noteSeedHandlers = [
     return HttpResponse.json({ data: mockNotes[idx] });
   }),
 
-  http.delete(`${API}/api/v1/note-seeds/:id`, ({ params }) => {
+  http.delete(`${API}/api/v1/note-seeds/:id`, ({ params, request }) => {
     mockNotes = mockNotes.filter((n) => n.id !== Number(params.id));
-    return new HttpResponse(null, { status: 204 });
+    const url = new URL(request.url);
+    const deleteCards = url.searchParams.get("delete_cards") === "true";
+    return HttpResponse.json({
+      data: { deleted_cards_count: deleteCards ? 1 : 0 },
+    });
   }),
 
   http.post(

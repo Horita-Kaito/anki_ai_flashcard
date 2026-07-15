@@ -24,7 +24,10 @@ final class EloquentNoteSeedRepository extends AbstractUserScopedEloquentReposit
     public function findForUser(int $userId, int $noteSeedId): ?NoteSeed
     {
         /** @var NoteSeed|null */
-        return $this->userScopedQuery($userId)->where('id', $noteSeedId)->first();
+        return $this->userScopedQuery($userId)
+            ->withCount('cards as cards_count')
+            ->where('id', $noteSeedId)
+            ->first();
     }
 
     public function paginateForUser(int $userId, array $filters = [], int $perPage = 20): LengthAwarePaginator

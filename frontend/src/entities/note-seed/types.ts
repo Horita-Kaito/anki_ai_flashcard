@@ -13,4 +13,6 @@ export interface NoteSeed {
   candidates_adopted_count?: number;
   /** 一覧でのみ付与される。AI 生成依頼の回数 (成功+失敗)。 */
   generation_attempts_count?: number;
+  /** 詳細取得時のみ付与される。このメモを出所とする採用済みカード数。 */
+  cards_count?: number;
 }

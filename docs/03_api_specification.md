@@ -574,6 +574,20 @@ UI 側で確認ダイアログを介してから送信する想定。
 ---
 
 ### DELETE /api/note-seeds/{id}
+メモを削除する。紐づく未採用の AI 候補は常に連動削除される (FK CASCADE)。
+
+**Query Parameters**:
+
+| パラメータ | 型 | 必須 | 説明 |
+|-----------|---|------|------|
+| delete_cards | boolean | - | true の場合、このメモを出所とする採用済みカード (schedule / review 履歴含む) も削除する。省略時 false: カードは残り `source_note_seed_id` が null になる |
+
+**Response 200**:
+```json
+{
+  "data": { "deleted_cards_count": 3 }
+}
+```
 
 ---
 

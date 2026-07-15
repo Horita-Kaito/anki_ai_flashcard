@@ -16,6 +16,7 @@ import type {
   UpdateNoteSeedInput,
 } from "../schemas/note-seed-schemas";
 import { noteSeedKeys as entityNoteSeedKeys } from "@/entities/note-seed/api/note-seed-queries";
+import { cardKeys } from "@/entities/card/api/card-keys";
 
 // Re-export entity-level read hook for cross-feature consumption
 export { useNoteSeed } from "@/entities/note-seed/api/note-seed-queries";
@@ -64,8 +65,18 @@ export function useUpdateNoteSeed(id: number) {
 export function useDeleteNoteSeed() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => deleteNoteSeed(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: noteSeedKeys.all }),
+    mutationFn: (input: { id: number; deleteCards?: boolean }) =>
+      deleteNoteSeed(input.id, input.deleteCards ?? false),
+    onSuccess: (deletedCards) => {
+      qc.invalidateQueries({ queryKey: noteSeedKeys.all });
+      // カードを併せて削除した場合は、カード一覧・復習キュー・
+      // ダッシュボードの集計も古くなるため再取得させる。
+      if (deletedCards > 0) {
+        qc.invalidateQueries({ queryKey: cardKeys.all });
+        qc.invalidateQueries({ queryKey: ["review"] });
+        qc.invalidateQueries({ queryKey: ["dashboard"] });
+      }
+    },
   });
 }
 

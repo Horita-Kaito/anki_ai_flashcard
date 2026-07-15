@@ -13,6 +13,7 @@ import { GenerateCandidatesView } from "@/features/ai-candidate";
 import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
 import { MarkdownText } from "@/shared/ui/markdown-text";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 
 export default function NoteDetailPage({
   params,
@@ -26,13 +27,25 @@ export default function NoteDetailPage({
   const deleteMutation = useDeleteNoteSeed();
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [alsoDeleteCards, setAlsoDeleteCards] = useState(true);
+
+  const cardsCount = note?.cards_count ?? 0;
 
   async function handleDelete() {
     if (!note) return;
-    if (!confirm("このメモを削除しますか?")) return;
+    const deleteCards = cardsCount > 0 && alsoDeleteCards;
     try {
-      await deleteMutation.mutateAsync(note.id);
-      toast.success("メモを削除しました");
+      const deletedCards = await deleteMutation.mutateAsync({
+        id: note.id,
+        deleteCards,
+      });
+      toast.success(
+        deletedCards > 0
+          ? `メモと ${deletedCards} 枚のカードを削除しました`
+          : "メモを削除しました"
+      );
+      setConfirmingDelete(false);
       router.push("/notes");
     } catch {
       toast.error("削除に失敗しました");
@@ -183,21 +196,69 @@ export default function NoteDetailPage({
               危険な操作
             </h2>
             <p className="text-sm text-muted-foreground">
-              このメモから生成された AI 候補もすべて削除されます (カード採用済みは残ります)。
+              このメモから生成された未採用の AI 候補はすべて削除されます。
+              {cardsCount > 0
+                ? `このメモから採用したカードが ${cardsCount} 枚あります。`
+                : " 採用済みカードはありません。"}
             </p>
             <Button
               type="button"
               variant="destructive"
               size="lg"
               className="min-h-11"
-              onClick={handleDelete}
+              onClick={() => {
+                setAlsoDeleteCards(true);
+                setConfirmingDelete(true);
+              }}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? "削除中..." : "メモを削除"}
+              メモを削除
             </Button>
           </section>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        variant="destructive"
+        title="このメモを削除しますか?"
+        description={
+          <div className="space-y-3">
+            <p>
+              未採用の AI 候補はすべて削除されます。この操作は取り消せません。
+            </p>
+            {cardsCount > 0 && (
+              <label className="flex items-start gap-2 rounded-lg border p-3 text-left">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0"
+                  checked={alsoDeleteCards}
+                  onChange={(e) => setAlsoDeleteCards(e.target.checked)}
+                />
+                <span>
+                  このメモから採用した
+                  <span className="font-medium text-foreground">
+                    {" "}
+                    {cardsCount} 枚のカードと学習履歴{" "}
+                  </span>
+                  も削除する
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    オフにするとカードは残り、メモとの紐付けだけ解除されます。
+                  </span>
+                </span>
+              </label>
+            )}
+          </div>
+        }
+        confirmLabel={
+          cardsCount > 0 && alsoDeleteCards
+            ? `メモと ${cardsCount} 枚を削除`
+            : "メモを削除"
+        }
+        loading={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </main>
   );
 }

@@ -13,6 +13,7 @@ export const noteSeedResponseSchema = z
     candidates_pending_count: z.number().int().nonnegative().optional(),
     candidates_adopted_count: z.number().int().nonnegative().optional(),
     generation_attempts_count: z.number().int().nonnegative().optional(),
+    cards_count: z.number().int().nonnegative().optional(),
   })
   .passthrough();
 

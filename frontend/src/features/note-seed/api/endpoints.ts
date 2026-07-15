@@ -61,9 +61,24 @@ export async function updateNoteSeed(
   return res.data.data;
 }
 
-export async function deleteNoteSeed(id: number): Promise<void> {
+/**
+ * メモを削除する。
+ * `deleteCards=true` の場合、このメモを出所とする採用済みカードと
+ * その学習履歴・スケジュールも併せて削除される。
+ *
+ * @returns 併せて削除されたカード数
+ */
+export async function deleteNoteSeed(
+  id: number,
+  deleteCards = false
+): Promise<number> {
   await fetchCsrfCookie();
-  await apiClient.delete(`/note-seeds/${id}`);
+  const res = await apiClient.delete<{
+    data: { deleted_cards_count: number };
+  }>(`/note-seeds/${id}`, {
+    params: deleteCards ? { delete_cards: true } : undefined,
+  });
+  return res.data.data.deleted_cards_count;
 }
 
 export interface BulkGenerationResult {

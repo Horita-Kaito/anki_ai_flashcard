@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\Repositories\CardRepositoryInterface;
 use App\Contracts\Repositories\NoteSeedRepositoryInterface;
 use App\Exceptions\Domain\NoteSeedNotFoundException;
 use App\Models\NoteSeed;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 final class NoteSeedService
 {
     public function __construct(
         private readonly NoteSeedRepositoryInterface $noteSeedRepository,
+        private readonly CardRepositoryInterface $cardRepository,
     ) {}
 
     /**
@@ -61,11 +64,29 @@ final class NoteSeedService
     }
 
     /**
+     * メモを削除する。
+     *
+     * 未採用の AI 候補はメモに対する外部キー CASCADE で必ず消える。
+     * 採用済みカードは既定では残る (source_note_seed_id が null 化) が、
+     * $deleteCards=true の場合はこのメモを出所とするカードと
+     * その学習履歴・スケジュールも併せて削除する。
+     *
+     * @return int 併せて削除したカード数 (メモのみ削除時は 0)
+     *
      * @throws NoteSeedNotFoundException
      */
-    public function deleteForUser(int $userId, int $noteSeedId): void
+    public function deleteForUser(int $userId, int $noteSeedId, bool $deleteCards = false): int
     {
         $noteSeed = $this->getForUser($userId, $noteSeedId);
-        $this->noteSeedRepository->delete($noteSeed);
+
+        return DB::transaction(function () use ($userId, $noteSeedId, $noteSeed, $deleteCards): int {
+            $deletedCards = $deleteCards
+                ? $this->cardRepository->deleteBySourceNoteSeedForUser($userId, $noteSeedId)
+                : 0;
+
+            $this->noteSeedRepository->delete($noteSeed);
+
+            return $deletedCards;
+        });
     }
 }

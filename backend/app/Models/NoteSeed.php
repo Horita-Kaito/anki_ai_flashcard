@@ -53,6 +53,16 @@ class NoteSeed extends Model
         return $this->hasMany(AiCardCandidate::class);
     }
 
+    /**
+     * このメモを出所として採用されたカード (source_note_seed_id 参照)。
+     *
+     * @return HasMany<Card, self>
+     */
+    public function cards(): HasMany
+    {
+        return $this->hasMany(Card::class, 'source_note_seed_id');
+    }
+
     /** @return HasMany<AiGenerationLog, self> */
     public function generationLogs(): HasMany
     {

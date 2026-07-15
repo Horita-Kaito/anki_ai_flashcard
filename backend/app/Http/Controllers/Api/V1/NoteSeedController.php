@@ -79,11 +79,12 @@ final class NoteSeedController extends Controller
 
     public function destroy(Request $request, int $id): JsonResponse
     {
-        $this->noteSeedService->deleteForUser(
+        $deletedCards = $this->noteSeedService->deleteForUser(
             userId: $request->user()->id,
             noteSeedId: $id,
+            deleteCards: $request->boolean('delete_cards'),
         );
 
-        return response()->json(null, 204);
+        return response()->json(['data' => ['deleted_cards_count' => $deletedCards]]);
     }
 }

@@ -88,6 +88,13 @@ final class EloquentCardRepository extends AbstractUserScopedEloquentRepository 
         $card->delete();
     }
 
+    public function deleteBySourceNoteSeedForUser(int $userId, int $noteSeedId): int
+    {
+        return $this->userScopedQuery($userId)
+            ->where('source_note_seed_id', $noteSeedId)
+            ->delete();
+    }
+
     public function syncTags(Card $card, array $tagIds): void
     {
         $card->tags()->sync($tagIds);

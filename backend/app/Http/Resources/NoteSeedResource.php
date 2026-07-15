@@ -36,6 +36,7 @@ final class NoteSeedResource extends BaseJsonResource
             'candidates_pending_count',
             'candidates_adopted_count',
             'generation_attempts_count',
+            'cards_count',
         ] as $key) {
             $value = $this->resource->getAttribute($key);
             if ($value !== null) {
