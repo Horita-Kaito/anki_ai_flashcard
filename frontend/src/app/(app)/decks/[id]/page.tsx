@@ -10,6 +10,7 @@ import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { CardList } from "@/features/card";
 import { Button } from "@/shared/ui/button";
 import { BackHeader } from "@/shared/ui/back-header";
+import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
 
 export default function DeckDetailPage({
   params,
@@ -24,19 +25,26 @@ export default function DeckDetailPage({
   const deleteMutation = useDeleteDeck();
   const [editing, setEditing] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   async function handleDelete() {
     if (!deck) return;
-    if (!confirm(`デッキ「${deck.name}」を削除しますか?`)) return;
     try {
       await deleteMutation.mutateAsync(deck.id);
       toast.success("デッキを削除しました");
+      setConfirmingDelete(false);
       router.push("/decks");
     } catch (err: unknown) {
-      const status =
-        (err as { response?: { status?: number } }).response?.status;
-      if (status === 409) {
-        toast.error("子デッキがあるため削除できません。先に子デッキを移動または削除してください");
+      setConfirmingDelete(false);
+      const response = (
+        err as { response?: { status?: number; data?: { message?: string } } }
+      ).response;
+      if (response?.status === 409) {
+        // バックエンドが理由 (子デッキ残存 / カード残存) を返すのでそのまま表示する
+        toast.error(
+          response.data?.message ??
+            "子デッキまたはカードが残っているため削除できません"
+        );
       } else {
         toast.error("削除に失敗しました");
       }
@@ -174,18 +182,18 @@ export default function DeckDetailPage({
 
               {detailsOpen && (
                 <div className="pt-2 border-t space-y-2">
-                  <p className="text-xs text-destructive">
-                    デッキを削除するとカードと学習履歴もすべて失われます (子デッキが無い場合のみ削除可能)。
+                  <p className="text-xs text-muted-foreground">
+                    削除できるのは空のデッキのみです。カードや子デッキが残っている場合は、先に移動または削除してください。
                   </p>
                   <Button
                     type="button"
                     variant="destructive"
                     size="sm"
                     className="min-h-9"
-                    onClick={handleDelete}
+                    onClick={() => setConfirmingDelete(true)}
                     disabled={deleteMutation.isPending}
                   >
-                    {deleteMutation.isPending ? "削除中..." : "このデッキを削除"}
+                    このデッキを削除
                   </Button>
                 </div>
               )}
@@ -203,6 +211,17 @@ export default function DeckDetailPage({
           </section>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmingDelete}
+        variant="destructive"
+        title={`デッキ「${deck.name}」を削除しますか?`}
+        description="空のデッキのみ削除できます。カードや子デッキが残っている場合は削除できません。この操作は取り消せません。"
+        confirmLabel="削除する"
+        loading={deleteMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
     </main>
   );
 }

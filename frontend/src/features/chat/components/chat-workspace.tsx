@@ -146,7 +146,8 @@ export function ChatWorkspace({ onMaterialized, sidebarFooter }: ChatWorkspacePr
               type="button"
               variant="outline"
               size="sm"
-              className="min-h-10 shrink-0 gap-1.5 shadow-sm"
+              aria-label={CHAT_MATERIALIZE_LABEL}
+              className="min-h-11 shrink-0 gap-1.5 shadow-sm"
               onClick={handleMaterialize}
               disabled={
                 !canMaterialize ||

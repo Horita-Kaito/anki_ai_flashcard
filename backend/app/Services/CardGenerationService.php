@@ -66,7 +66,7 @@ final class CardGenerationService
      *   - 1 chunk: 従来通り単一ログ + 単一 Job
      *   - N chunks: 親ログ 1 件 + 子ログ N 件、各子に対して Job を dispatch
      *
-     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool}  $options
+     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool, feedback?: string|null}  $options
      *
      * @throws AiUsageLimitExceededException
      * @throws GenerationAlreadyInFlightException
@@ -87,6 +87,7 @@ final class CardGenerationService
         $additional = (bool) ($options['additional'] ?? false);
         $domainTemplateId = $options['domain_template_id'] ?? null;
         $defaultDeckId = $options['default_deck_id'] ?? null;
+        $feedback = $regenerate ? ($options['feedback'] ?? null) : null;
 
         if ($chunksTotal <= 1) {
             // 単一チャンク: 従来通り
@@ -105,6 +106,7 @@ final class CardGenerationService
                 'default_deck_id' => $defaultDeckId,
                 'regenerate' => $regenerate,
                 'additional' => $additional,
+                'feedback' => $feedback,
                 'chunk_text' => $chunks[0] ?? (string) $note->body,
             ]);
 
@@ -144,6 +146,8 @@ final class CardGenerationService
                 // 最初の chunk でのみ適用する。2 つ目以降の chunk で同じ操作をすると先 chunk の結果を消してしまう。
                 'regenerate' => $regenerate && $i === 0,
                 'additional' => $additional,
+                // 修正指示は全チャンクの生成方針に効かせる
+                'feedback' => $feedback,
                 'chunk_text' => $chunkText,
                 'chunk_index' => $i,
                 'chunks_total' => $chunksTotal,
@@ -158,7 +162,7 @@ final class CardGenerationService
      *
      * 子ログ (parent_log_id IS NOT NULL) を処理した場合、最後に親ログの集約を更新する。
      *
-     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool, chunk_text?: string, chunk_index?: int, chunks_total?: int}  $options
+     * @param  array{domain_template_id?: int|null, default_deck_id?: int|null, regenerate?: bool, additional?: bool, feedback?: string|null, chunk_text?: string, chunk_index?: int, chunks_total?: int}  $options
      * @return array<int, AiCardCandidate>
      *
      * @throws AiGenerationFailedException
@@ -189,7 +193,9 @@ final class CardGenerationService
         $defaultDeckId = in_array($options['default_deck_id'] ?? null, $deckIds, true)
             ? (int) $options['default_deck_id']
             : null;
-        $existingQuestions = $additional
+        // additional: 重複回避のため既存候補を渡す。
+        // regenerate: 「前回までの候補と同じ切り口を避ける」ために全候補 (却下済み含む) を渡す。
+        $existingQuestions = ($additional || $regenerate)
             ? $this->candidateRepository
                 ->listForNoteSeed($note->user_id, $note->id, null)
                 ->pluck('question')
@@ -199,6 +205,8 @@ final class CardGenerationService
         $userPromptOptions = [
             'existing_questions' => $existingQuestions,
             'additional' => $additional,
+            'regenerate' => $regenerate,
+            'feedback' => $options['feedback'] ?? null,
         ];
         if ($chunkText !== null) {
             $userPromptOptions['body_override'] = $chunkText;

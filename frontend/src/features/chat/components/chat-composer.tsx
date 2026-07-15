@@ -41,7 +41,7 @@ export function ChatComposer({
       <Button
         type="submit"
         size="icon"
-        className="absolute right-2.5 bottom-2.5 size-10 rounded-full shrink-0"
+        className="absolute right-2 bottom-2 size-11 rounded-full shrink-0"
         disabled={isSending || isCreating || value.trim() === ""}
         aria-label="送信"
       >

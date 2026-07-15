@@ -6,6 +6,8 @@ import { parseApiListResponse } from "@/shared/api/parse-response";
 
 export interface GenerateOptions {
   domain_template_id?: number | null;
+  /** 再生成時のみ有効。「何が気に入らなかったか」を AI に伝える修正指示 (最大500字)。 */
+  feedback?: string | null;
 }
 
 export type GenerationStatusValue =

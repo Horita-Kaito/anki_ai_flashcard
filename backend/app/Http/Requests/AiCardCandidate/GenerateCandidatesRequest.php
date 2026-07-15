@@ -25,6 +25,8 @@ final class GenerateCandidatesRequest extends FormRequest
                 Rule::exists('domain_templates', 'id')
                     ->where('user_id', $this->user()->id),
             ],
+            // 再生成時に「何が気に入らなかったか」を AI へ伝える自由記述。
+            'feedback' => ['sometimes', 'nullable', 'string', 'max:500'],
         ];
     }
 }

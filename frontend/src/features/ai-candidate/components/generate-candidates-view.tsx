@@ -66,6 +66,7 @@ export function GenerateCandidatesView({
     addMoreMutation.isPending;
 
   const [regenerateConfirmOpen, setRegenerateConfirmOpen] = useState(false);
+  const [regenerateFeedback, setRegenerateFeedback] = useState("");
   const [showOptions, setShowOptions] = useState(false);
 
   // 進行中 → 完了 への遷移を検出して toast + 関連 query を invalidate する
@@ -135,8 +136,13 @@ export function GenerateCandidatesView({
 
   async function handleRegenerate() {
     setRegenerateConfirmOpen(false);
+    const feedback = regenerateFeedback.trim();
     try {
-      await regenerateMutation.mutateAsync({ domain_template_id: templateId });
+      await regenerateMutation.mutateAsync({
+        domain_template_id: templateId,
+        feedback: feedback === "" ? null : feedback,
+      });
+      setRegenerateFeedback("");
       toast.success("AI 再生成を開始しました");
     } catch (err: unknown) {
       toast.error(toAiErrorMessage(err, "再生成の開始に失敗しました"));
@@ -155,9 +161,35 @@ export function GenerateCandidatesView({
     <div className="space-y-6 pb-32 md:pb-8">
       <ConfirmDialog
         open={regenerateConfirmOpen}
-        title="再生成"
-        description="現在の未採用候補をすべて却下して、新しい候補を生成します。よろしいですか?"
-        confirmLabel="再生成する"
+        title="候補を作り直す"
+        description={
+          <div className="space-y-3">
+            <p>
+              現在の未採用候補はすべて却下されます。残したい候補は先に採用してください。
+            </p>
+            <div className="space-y-1.5">
+              <label
+                htmlFor="regenerate-feedback"
+                className="block text-xs font-medium text-foreground"
+              >
+                どこを変えたいですか? (任意)
+              </label>
+              <textarea
+                id="regenerate-feedback"
+                value={regenerateFeedback}
+                onChange={(e) => setRegenerateFeedback(e.target.value)}
+                rows={3}
+                maxLength={500}
+                placeholder="例: 答えが長すぎる / もっと細かく分割して / 用語の定義より使い分けを問うてほしい"
+                className="w-full resize-y rounded-md border bg-background px-3 py-2 text-base md:text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                前回の候補と同じ切り口は自動的に避けられます。ここに書いた指示は最優先で反映されます。
+              </p>
+            </div>
+          </div>
+        }
+        confirmLabel="作り直す"
         variant="destructive"
         onConfirm={handleRegenerate}
         onCancel={() => setRegenerateConfirmOpen(false)}

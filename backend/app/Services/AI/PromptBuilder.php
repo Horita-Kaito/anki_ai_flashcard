@@ -232,12 +232,14 @@ PROMPT;
     }
 
     /**
-     * @param  array{existing_questions?: array<int, string>, additional?: bool, body_override?: string, chunk_index?: int, chunks_total?: int}  $options
+     * @param  array{existing_questions?: array<int, string>, additional?: bool, regenerate?: bool, feedback?: string|null, body_override?: string, chunk_index?: int, chunks_total?: int}  $options
      */
     public function userPrompt(NoteSeed $note, array $options = []): string
     {
         $existingQuestions = $options['existing_questions'] ?? [];
         $additional = (bool) ($options['additional'] ?? false);
+        $regenerate = (bool) ($options['regenerate'] ?? false);
+        $feedback = $options['feedback'] ?? null;
         $body = $options['body_override'] ?? $note->body;
         $chunkIndex = $options['chunk_index'] ?? null;
         $chunksTotal = $options['chunks_total'] ?? null;
@@ -273,6 +275,20 @@ PROMPT;
             foreach ($existingQuestions as $q) {
                 $parts[] = '- '.$q;
             }
+        }
+
+        if ($regenerate && $existingQuestions !== []) {
+            $parts[] = "\n【前回までの候補 (ユーザーはこれらに満足しなかった)】";
+            foreach ($existingQuestions as $q) {
+                $parts[] = '- '.$q;
+            }
+            $parts[] = '上記と同じ問い・同じ切り口 (同じ知識点 × 同じ問い方) を再提出しないこと。前回候補に共通する欠点を推定し、それを避ける方向で作り直すこと。';
+        }
+
+        // 複数チャンク時、2 つ目以降は regenerate=false で走るため独立条件にする
+        if (is_string($feedback) && trim($feedback) !== '') {
+            $parts[] = "\n【ユーザーの修正指示 (最優先で反映すること)】";
+            $parts[] = trim($feedback);
         }
 
         $parts[] = "\n【生成指示】";

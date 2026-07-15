@@ -43,7 +43,7 @@ final class NoteSeedServiceTest extends TestCase
         $this->assertSame(0, $service->deleteForUser(1, 5));
     }
 
-    public function test_削除時deleteCards指定でカードも消し件数を返す(): void
+    public function test_削除時delete_cards指定でカードも消し件数を返す(): void
     {
         DB::shouldReceive('transaction')->andReturnUsing(fn (callable $cb) => $cb());
 
@@ -60,7 +60,6 @@ final class NoteSeedServiceTest extends TestCase
         $this->assertSame(3, $service->deleteForUser(1, 5, deleteCards: true));
     }
 
-    /** @return NoteSeedRepositoryInterface&MockInterface */
     private function noteSeedRepo(?NoteSeed $findResult): NoteSeedRepositoryInterface&MockInterface
     {
         /** @var NoteSeedRepositoryInterface&MockInterface $repo */
@@ -70,7 +69,6 @@ final class NoteSeedServiceTest extends TestCase
         return $repo;
     }
 
-    /** @return CardRepositoryInterface&MockInterface */
     private function cardRepo(): CardRepositoryInterface&MockInterface
     {
         /** @var CardRepositoryInterface&MockInterface $repo */

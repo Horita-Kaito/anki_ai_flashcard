@@ -21,6 +21,8 @@ interface CandidateCardProps {
   defaultDeckId?: number;
   ordinal?: number;
   total?: number;
+  /** ユーザーがデッキを選択/採用した時に呼ばれる。リスト側で sticky デフォルトを共有するため。 */
+  onDeckChosen?: (deckId: number) => void;
 }
 
 const QUALITY_WARNING_LABELS = {
@@ -36,17 +38,28 @@ export function CandidateCard({
   defaultDeckId,
   ordinal,
   total,
+  onDeckChosen,
 }: CandidateCardProps) {
   const [editing, setEditing] = useState(false);
   const [question, setQuestion] = useState(candidate.question);
   const [answer, setAnswer] = useState(candidate.answer);
   const [explanation, setExplanation] = useState(candidate.explanation ?? "");
-  const [deckId, setDeckId] = useState<number | "">(
-    candidate.suggested_deck_id ?? defaultDeckId ?? ""
+  // null = 未操作。未操作の間は suggested → sticky デフォルトの順に自動追従し、
+  // 一度でも手で選んだらその値を優先する。
+  const [selectedDeckId, setSelectedDeckId] = useState<number | "" | null>(
+    null
   );
 
   const { data: allDecks } = useDeckList();
   const deckOptions = buildHierarchicalOptions(allDecks ?? []);
+  // 削除済みデッキ id が localStorage に残っていた場合に備えて実在チェック
+  const validDefaultDeckId =
+    defaultDeckId !== undefined &&
+    (allDecks ?? []).some((deck) => deck.id === defaultDeckId)
+      ? defaultDeckId
+      : undefined;
+  const deckId: number | "" =
+    selectedDeckId ?? candidate.suggested_deck_id ?? validDefaultDeckId ?? "";
   const adoptMutation = useAdoptCandidate();
   const rejectMutation = useRejectCandidate();
   const restoreMutation = useRestoreCandidate();
@@ -72,6 +85,7 @@ export function CandidateCard({
           explanation: explanation.trim() === "" ? null : explanation,
         },
       });
+      onDeckChosen?.(Number(deckId));
       toast.success("カードとして採用しました", {
         duration: 5000,
         description: "採用先デッキへ追加しました。",
@@ -350,9 +364,11 @@ export function CandidateCard({
         <div className="space-y-2 pt-1">
           <select
             value={deckId}
-            onChange={(e) =>
-              setDeckId(e.target.value === "" ? "" : Number(e.target.value))
-            }
+            onChange={(e) => {
+              const next = e.target.value === "" ? "" : Number(e.target.value);
+              setSelectedDeckId(next);
+              if (next !== "") onDeckChosen?.(next);
+            }}
             className="w-full border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background max-w-full"
             aria-label="採用先のデッキ"
           >

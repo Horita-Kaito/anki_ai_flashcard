@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BatchAdoptBar } from "./batch-adopt-bar";
 import { CandidateCard } from "./candidate-card";
+import { readLastDeckId, writeLastDeckId } from "../lib/last-deck-storage";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
 
 interface CandidateReviewListProps {
@@ -22,6 +23,16 @@ export function CandidateReviewList({
 }: CandidateReviewListProps) {
   const pendingCandidates = candidates.filter((candidate) => candidate.status === "pending");
   const historyCandidates = candidates.filter((candidate) => candidate.status !== "pending");
+
+  // 「最後に選んだデッキ」を候補間で共有し、localStorage にも永続化する。
+  // 優先順: 明示 prop > 前回選択 (localStorage)。
+  const [stickyDeckId, setStickyDeckId] = useState<number | undefined>(
+    () => defaultDeckId ?? readLastDeckId()
+  );
+  const rememberDeck = useCallback((deckId: number) => {
+    setStickyDeckId(deckId);
+    writeLastDeckId(deckId);
+  }, []);
 
   // j/k で未採用候補カード間のフォーカスを移動する。
   // 入力欄フォーカス中・修飾キー押下時は無効。
@@ -96,7 +107,8 @@ export function CandidateReviewList({
               <CandidateCard
                 key={candidate.id}
                 candidate={candidate}
-                defaultDeckId={defaultDeckId}
+                defaultDeckId={stickyDeckId}
+                onDeckChosen={rememberDeck}
                 ordinal={index + 1}
                 total={pendingCandidates.length}
               />

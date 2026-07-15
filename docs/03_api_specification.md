@@ -856,8 +856,13 @@ AI候補生成
 候補の再生成
 
 既存の pending 候補を rejected にし、新たに生成。
+プロンプトには全既存候補 (却下済み含む) の question が「同じ切り口を避ける」指示と共に渡される。
 
-**Request Body**: generate-candidates と同じ
+**Request Body**: generate-candidates と同じ + 以下
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|---|------|------|
+| feedback | string (max 500) | - | 「何が気に入らなかったか」の修正指示。プロンプトに最優先指示として注入される |
 
 ---
 

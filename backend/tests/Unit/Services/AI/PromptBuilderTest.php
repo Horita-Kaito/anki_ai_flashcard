@@ -270,6 +270,45 @@ final class PromptBuilderTest extends TestCase
         $this->assertStringContainsString('追加生成モード', $prompt);
     }
 
+    public function test_再生成モードで前回候補の回避指示とフィードバックが渡される(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => 'テストメモ',
+        ]);
+
+        $prompt = $this->builder->userPrompt($note, [
+            'regenerate' => true,
+            'existing_questions' => ['DI とは何か?'],
+            'feedback' => '答えが長すぎるので短くして',
+        ]);
+
+        $this->assertStringContainsString('前回までの候補', $prompt);
+        $this->assertStringContainsString('- DI とは何か?', $prompt);
+        $this->assertStringContainsString('同じ問い・同じ切り口', $prompt);
+        $this->assertStringContainsString('ユーザーの修正指示', $prompt);
+        $this->assertStringContainsString('答えが長すぎるので短くして', $prompt);
+        // 追加モード専用の指示は混ざらない
+        $this->assertStringNotContainsString('追加生成モード', $prompt);
+    }
+
+    public function test_再生成モードでもフィードバック未入力なら修正指示ブロックは出ない(): void
+    {
+        $note = new NoteSeed([
+            'user_id' => 1,
+            'body' => 'テストメモ',
+        ]);
+
+        $prompt = $this->builder->userPrompt($note, [
+            'regenerate' => true,
+            'existing_questions' => [],
+            'feedback' => '   ',
+        ]);
+
+        $this->assertStringNotContainsString('ユーザーの修正指示', $prompt);
+        $this->assertStringNotContainsString('前回までの候補', $prompt);
+    }
+
     public function test_プロンプトバージョンを取得できる(): void
     {
         $this->assertSame('v1.1', $this->builder->promptVersion());
