@@ -1,26 +1,21 @@
 import Link from "next/link";
 import { Layers, Plus } from "lucide-react";
+
 import { buttonVariants } from "@/shared/ui/button";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export function DeckListEmpty() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 border border-dashed rounded-xl p-8 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <Layers className="size-6 text-muted-foreground" aria-hidden />
-      </div>
-      <div className="space-y-1">
-        <p className="font-medium">まだデッキがありません</p>
-        <p className="text-sm text-muted-foreground">
-          学習する分野ごとにデッキを作成できます
-        </p>
-      </div>
-      <Link
-        href="/decks/new"
-        className={`${buttonVariants({ size: "lg" })} min-h-11`}
-      >
-        <Plus className="size-4" aria-hidden />
-        最初のデッキを作成
-      </Link>
-    </div>
+    <EmptyState
+      icon={<Layers aria-hidden />}
+      title="まだデッキがありません"
+      description="デッキは学習分野ごとのカードの入れ物です。「簿記 2 級」「ネットワーク」のように作ってみましょう。"
+      action={
+        <Link href="/decks/new" className={buttonVariants({ size: "touch" })}>
+          <Plus aria-hidden />
+          最初のデッキを作成
+        </Link>
+      }
+    />
   );
 }

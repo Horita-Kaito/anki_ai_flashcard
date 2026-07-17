@@ -1,51 +1,20 @@
 "use client";
 
-import type { ComponentType } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Layers,
-  NotebookPen,
-  GraduationCap,
-  Settings,
-  FileText,
-  Tag,
-  BookOpen,
-  BarChart3,
-  ShieldCheck,
-  MessagesSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import { useCurrentUser } from "@/features/auth/api/auth-queries";
-
-const learningItems = [
-  { href: "/dashboard", label: "ダッシュボード", icon: LayoutDashboard },
-  { href: "/notes", label: "メモ", icon: NotebookPen },
-  { href: "/chat", label: "チャット", icon: MessagesSquare },
-  { href: "/review", label: "復習", icon: GraduationCap },
-] as const;
-
-const libraryItems = [
-  { href: "/decks", label: "デッキ", icon: Layers },
-  { href: "/cards", label: "カード", icon: BookOpen },
-  { href: "/templates", label: "テンプレート", icon: FileText },
-  { href: "/tags", label: "タグ", icon: Tag },
-  { href: "/stats", label: "統計", icon: BarChart3 },
-] as const;
-
-const preferenceItems = [
-  { href: "/settings", label: "設定", icon: Settings },
-] as const;
-
-const adminItem = {
-  href: "/admin/users",
-  label: "管理",
-  icon: ShieldCheck,
-} as const;
+import {
+  learningItems,
+  libraryItems,
+  preferenceItems,
+  adminItem,
+  isNavActive,
+  type NavItem,
+} from "./nav-config";
+import { SidebarUserSection } from "./sidebar-user-section";
 
 /**
  * PC 向け左サイドバー (md 以上で表示)
@@ -78,18 +47,34 @@ export function DesktopSidebar() {
         collapsed ? "md:w-[4.5rem] p-2" : "md:w-56 lg:w-64 p-3"
       )}
     >
-      <div className={cn("flex items-start gap-2", collapsed ? "justify-center py-2" : "px-3 py-4")}>
-        <div className={cn("min-w-0 flex-1", collapsed && "hidden")}>
-          <div className="bookplate-mark inline-flex size-9 items-center justify-center rounded-sm font-serif text-lg font-semibold">
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          collapsed ? "justify-center py-1" : "px-2 py-2"
+        )}
+      >
+        <Link
+          href="/dashboard"
+          aria-label="Tessera ホーム"
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-2.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring",
+            collapsed && "hidden"
+          )}
+        >
+          <div className="bookplate-mark inline-flex size-9 shrink-0 items-center justify-center rounded-sm font-serif text-lg font-semibold">
             ま
           </div>
-          <p className="mt-2 text-sm font-semibold">Tessera</p>
-          <p className="text-xs text-muted-foreground">学習メモを問いに変える作業台</p>
-        </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">Tessera</p>
+            <p className="truncate text-xs text-muted-foreground">
+              学習を記憶に変える
+            </p>
+          </div>
+        </Link>
         <button
           type="button"
           onClick={toggleCollapsed}
-          className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex size-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={collapsed ? "サイドバーを開く" : "サイドバーを閉じる"}
           aria-pressed={collapsed}
         >
@@ -100,7 +85,8 @@ export function DesktopSidebar() {
           )}
         </button>
       </div>
-      <nav className="space-y-5">
+
+      <nav className="mt-2 space-y-5">
         <NavGroup
           label="学習"
           items={learningItems}
@@ -120,20 +106,15 @@ export function DesktopSidebar() {
           collapsed={collapsed}
         />
       </nav>
-      <p className={cn("mt-auto px-3 pb-2 text-[11px] leading-relaxed text-muted-foreground", collapsed && "sr-only")}>
-        書き、候補を見て、採用したものだけを復習に回します。
-      </p>
+
+      <SidebarUserSection collapsed={collapsed} />
     </aside>
   );
 }
 
 interface NavGroupProps {
   label: string;
-  items: readonly {
-    href: string;
-    label: string;
-    icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
-  }[];
+  items: readonly NavItem[];
   pathname: string;
   collapsed: boolean;
 }
@@ -141,12 +122,17 @@ interface NavGroupProps {
 function NavGroup({ label, items, pathname, collapsed }: NavGroupProps) {
   return (
     <section aria-label={label} className="space-y-1">
-      <h2 className={cn("px-3 text-[11px] font-medium text-muted-foreground", collapsed && "sr-only")}>
+      <h2
+        className={cn(
+          "px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/80",
+          collapsed && "sr-only"
+        )}
+      >
         {label}
       </h2>
       <ul className="space-y-0.5">
         {items.map((item) => {
-          const active = pathname.startsWith(item.href);
+          const active = isNavActive(pathname, item.href);
           const Icon = item.icon;
           return (
             <li key={item.href}>
@@ -156,10 +142,10 @@ function NavGroup({ label, items, pathname, collapsed }: NavGroupProps) {
                 aria-label={collapsed ? item.label : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "flex min-h-11 items-center rounded-md text-sm transition-colors",
+                  "flex min-h-11 items-center rounded-lg text-sm transition-colors",
                   collapsed ? "justify-center px-2 py-2" : "gap-3 px-3 py-2",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                    ? "bg-[var(--forest-faint)] font-medium text-primary"
                     : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >

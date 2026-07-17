@@ -1,47 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  LayoutDashboard,
-  Layers,
-  NotebookPen,
-  GraduationCap,
-  MoreHorizontal,
-  BookOpen,
-  MessagesSquare,
-  FileText,
-  Tag,
-  BarChart3,
-  Settings,
-  ShieldCheck,
-} from "lucide-react";
+import { MoreHorizontal, LogOut } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";
 import { cn } from "@/shared/lib/utils";
-import { useCurrentUser } from "@/features/auth/api/auth-queries";
+import { ThemeToggle } from "@/shared/ui/theme-toggle";
+import {
+  useCurrentUser,
+  useLogout,
+} from "@/features/auth/api/auth-queries";
+import {
+  learningItems,
+  libraryItems,
+  preferenceItems,
+  adminItem,
+  isNavActive,
+} from "./nav-config";
 
-const tabs = [
-  { href: "/dashboard", label: "ホーム", icon: LayoutDashboard },
-  { href: "/notes", label: "メモ", icon: NotebookPen },
-  { href: "/chat", label: "チャット", icon: MessagesSquare },
-  { href: "/review", label: "復習", icon: GraduationCap },
-] as const;
-
-const moreItems = [
-  { href: "/decks", label: "デッキ", icon: Layers },
-  { href: "/cards", label: "カード", icon: BookOpen },
-  { href: "/templates", label: "テンプレート", icon: FileText },
-  { href: "/tags", label: "タグ", icon: Tag },
-  { href: "/stats", label: "統計", icon: BarChart3 },
-  { href: "/settings", label: "設定", icon: Settings },
-] as const;
-
-const adminMoreItem = {
-  href: "/admin/users",
-  label: "管理",
-  icon: ShieldCheck,
-} as const;
+/** 主要タブは学習動線の 4 つ */
+const tabs = learningItems;
 
 /**
  * モバイル向け下部固定タブバー (md 未満で表示)
@@ -49,15 +28,23 @@ const adminMoreItem = {
  */
 export function BottomTabBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [moreOpen, setMoreOpen] = useState(false);
   const { data: me } = useCurrentUser();
-  const visibleMoreItems = me?.is_admin
-    ? [...moreItems, adminMoreItem]
-    : moreItems;
+  const logout = useLogout();
 
-  const moreActive = visibleMoreItems.some((item) =>
-    pathname.startsWith(item.href)
-  );
+  const moreItems = me?.is_admin
+    ? [...libraryItems, ...preferenceItems, adminItem]
+    : [...libraryItems, ...preferenceItems];
+
+  const moreActive = moreItems.some((item) => isNavActive(pathname, item.href));
+
+  function handleLogout() {
+    setMoreOpen(false);
+    logout.mutate(undefined, {
+      onSuccess: () => router.push("/login"),
+    });
+  }
 
   return (
     <nav
@@ -66,7 +53,7 @@ export function BottomTabBar() {
     >
       <ul className="flex items-stretch">
         {tabs.map((tab) => {
-          const active = pathname.startsWith(tab.href);
+          const active = isNavActive(pathname, tab.href);
           const Icon = tab.icon;
           return (
             <li key={tab.href} className="flex-1">
@@ -74,13 +61,20 @@ export function BottomTabBar() {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 min-h-14 text-xs",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] transition-colors",
                   active
-                    ? "text-foreground"
+                    ? "font-medium text-primary"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="size-5" aria-hidden />
+                <span
+                  className={cn(
+                    "flex items-center justify-center rounded-full px-3 py-0.5 transition-colors",
+                    active && "bg-[var(--forest-faint)]"
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
+                </span>
                 <span>{tab.label}</span>
               </Link>
             </li>
@@ -92,33 +86,46 @@ export function BottomTabBar() {
           <Popover.Root open={moreOpen} onOpenChange={setMoreOpen}>
             <Popover.Trigger
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 py-2 min-h-14 text-xs w-full",
+                "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 py-1.5 text-[11px] transition-colors",
                 moreActive
-                  ? "text-foreground"
+                  ? "font-medium text-primary"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <MoreHorizontal className="size-5" aria-hidden />
+              <span
+                className={cn(
+                  "flex items-center justify-center rounded-full px-3 py-0.5 transition-colors",
+                  moreActive && "bg-[var(--forest-faint)]"
+                )}
+              >
+                <MoreHorizontal className="size-5" aria-hidden />
+              </span>
               <span>その他</span>
             </Popover.Trigger>
             <Popover.Portal>
               <Popover.Backdrop className="fixed inset-0 z-[60]" />
-              <Popover.Positioner side="top" align="end" sideOffset={8} className="z-[70]">
-                <Popover.Popup className="min-w-48 rounded-lg border bg-background p-1 shadow-lg">
+              <Popover.Positioner
+                side="top"
+                align="end"
+                sideOffset={8}
+                className="z-[70]"
+              >
+                <Popover.Popup className="min-w-52 rounded-xl border bg-background p-1 shadow-lg">
                   <ul>
-                    {visibleMoreItems.map((item) => {
-                      const active = pathname.startsWith(item.href);
+                    {moreItems.map((item) => {
+                      const active = isNavActive(pathname, item.href);
                       const Icon = item.icon;
                       return (
                         <li key={item.href}>
                           <Link
                             href={item.href}
                             onClick={() => setMoreOpen(false)}
+                            aria-current={active ? "page" : undefined}
                             className={cn(
-                              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm min-h-11 transition-colors",
+                              "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
                               active
-                                ? "text-foreground font-medium bg-muted"
-                                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                ? "bg-[var(--forest-faint)] font-medium text-primary"
+                                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                             )}
                           >
                             <Icon className="size-4" aria-hidden />
@@ -128,6 +135,26 @@ export function BottomTabBar() {
                       );
                     })}
                   </ul>
+
+                  <div className="my-1 border-t" />
+
+                  <div className="flex items-center justify-between gap-2 px-2 py-1">
+                    <span className="text-xs text-muted-foreground">
+                      {me?.name ?? "アカウント"}
+                    </span>
+                    <ThemeToggle />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={logout.isPending}
+                    className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  >
+                    <LogOut className="size-4" aria-hidden />
+                    <span>
+                      {logout.isPending ? "ログアウト中…" : "ログアウト"}
+                    </span>
+                  </button>
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>
