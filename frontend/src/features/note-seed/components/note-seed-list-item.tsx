@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckCircle2, NotebookPen, Sparkles, Wand2 } from "lucide-react";
 import type { NoteSeed } from "@/entities/note-seed/types";
 import { stripMarkdown } from "@/shared/lib/strip-markdown";
+import { Badge } from "@/shared/ui/badge";
 
 interface NoteSeedListItemProps {
   note: NoteSeed;
@@ -122,9 +123,11 @@ function NoteSeedStatusBadges({
 }: StatusBadgesProps) {
   if (!hasAttempt) {
     return (
-      <span className="relative z-10 inline-flex h-6 max-w-full shrink-0 items-center gap-1 rounded-full border border-dashed border-muted-foreground/40 px-2 py-0.5 text-xs text-muted-foreground">
-        <Wand2 className="size-3" aria-hidden />
-        <span className="truncate">未生成</span>
+      <span className="relative z-10 inline-flex max-w-full">
+        <Badge variant="outline" className="border-dashed">
+          <Wand2 aria-hidden />
+          <span className="truncate">未生成</span>
+        </Badge>
       </span>
     );
   }
@@ -132,21 +135,19 @@ function NoteSeedStatusBadges({
   return (
     <span className="relative z-10 flex min-h-6 max-w-full shrink-0 flex-wrap gap-1.5">
       {pending > 0 ? (
-        <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-[var(--persimmon-faint)] px-2 py-0.5 text-xs font-medium text-foreground">
-          <Sparkles className="size-3" aria-hidden />
+        <Badge variant="attention">
+          <Sparkles aria-hidden />
           レビュー待ち {pending}
-        </span>
+        </Badge>
       ) : null}
       {adopted > 0 ? (
-        <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-[var(--forest-faint)] px-2 py-0.5 text-xs font-medium text-primary">
-          <CheckCircle2 className="size-3" aria-hidden />
+        <Badge variant="success">
+          <CheckCircle2 aria-hidden />
           採用 {adopted}
-        </span>
+        </Badge>
       ) : null}
       {pending === 0 && adopted === 0 ? (
-        <span className="inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          生成済み
-        </span>
+        <Badge variant="secondary">生成済み</Badge>
       ) : null}
     </span>
   );

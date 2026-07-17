@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Pencil, X } from "lucide-react";
+import { Check, Pencil, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   useAdoptCandidate,
@@ -9,10 +9,13 @@ import {
   useRestoreCandidate,
   useUpdateCandidate,
 } from "../api/ai-candidate-queries";
+import { CandidateCardEditor } from "./candidate-card-editor";
 import { CARD_TYPE_LABELS } from "@/entities/card/types";
 import type { AiCardCandidate } from "@/entities/ai-candidate/types";
+import { Badge } from "@/shared/ui/badge";
 import { Button } from "@/shared/ui/button";
 import { ClozeText } from "@/shared/ui/cloze-text";
+import { NativeSelect } from "@/shared/ui/select";
 import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 
@@ -32,6 +35,14 @@ const QUALITY_WARNING_LABELS = {
   cloze_downgraded_to_basic:
     "穴埋めとして成立しなかったため通常カードに変換されています",
 } as const;
+
+const MAX_DECK_NAME_LENGTH = 28;
+
+function truncateDeckName(name: string): string {
+  return name.length > MAX_DECK_NAME_LENGTH
+    ? name.slice(0, MAX_DECK_NAME_LENGTH) + "…"
+    : name;
+}
 
 export function CandidateCard({
   candidate,
@@ -95,6 +106,15 @@ export function CandidateCard({
     }
   }
 
+  async function handleRestore() {
+    try {
+      await restoreMutation.mutateAsync(candidate.id);
+      toast.success("取り消しました");
+    } catch {
+      toast.error("取り消しに失敗しました");
+    }
+  }
+
   async function handleReject() {
     try {
       await rejectMutation.mutateAsync(candidate.id);
@@ -103,13 +123,8 @@ export function CandidateCard({
         duration: 5000,
         action: {
           label: "元に戻す",
-          onClick: async () => {
-            try {
-              await restoreMutation.mutateAsync(candidate.id);
-              toast.success("取り消しました");
-            } catch {
-              toast.error("取り消しに失敗しました");
-            }
+          onClick: () => {
+            void handleRestore();
           },
         },
       });
@@ -202,128 +217,58 @@ export function CandidateCard({
       ref={articleRef}
       tabIndex={isFinal ? undefined : 0}
       data-candidate-card={isFinal ? undefined : ""}
-      className={`border rounded-lg p-4 md:p-5 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+      className={`space-y-4 rounded-xl border p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:p-5 ${
         candidate.status === "adopted"
-          ? "bg-[var(--forest-faint)] border-primary/30"
+          ? "border-[color-mix(in_oklch,var(--forest),transparent_70%)] bg-[var(--forest-faint)]"
           : candidate.status === "rejected"
-            ? "bg-muted/30 opacity-60"
+            ? "bg-muted/40 opacity-70"
             : "bg-card"
       }`}
       aria-label={`AI候補 ${candidate.id}`}
     >
-      <header className="flex items-start justify-between gap-2">
-        <div className="flex flex-wrap gap-2 text-xs">
-          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-            {CARD_TYPE_LABELS[candidate.card_type]}
-          </span>
-          {candidate.focus_type && (
-            <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              {candidate.focus_type}
-            </span>
-          )}
-          {candidate.confidence !== null && (
-            <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              信頼度 {(candidate.confidence * 100).toFixed(0)}%
-            </span>
-          )}
-          {typeof ordinal === "number" && typeof total === "number" && (
-            <span className="px-2 py-0.5 rounded-full bg-[var(--bronze-faint)] text-muted-foreground">
-              {ordinal} / {total}
-            </span>
-          )}
-          {candidate.status !== "pending" && (
-            <span
-              className={`px-2 py-0.5 rounded-full text-xs ${
-                candidate.status === "adopted"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-destructive/20 text-destructive"
-              }`}
-            >
-              {candidate.status === "adopted" ? "採用済" : "却下済"}
-            </span>
-          )}
-        </div>
+      <header className="flex flex-wrap items-center gap-2">
+        <Badge variant="default">{CARD_TYPE_LABELS[candidate.card_type]}</Badge>
+        {typeof ordinal === "number" && typeof total === "number" && (
+          <Badge variant="outline">
+            {ordinal} / {total}
+          </Badge>
+        )}
+        {candidate.status === "adopted" && (
+          <Badge variant="success" className="ml-auto">
+            <Check aria-hidden />
+            採用済
+          </Badge>
+        )}
+        {candidate.status === "rejected" && (
+          <Badge variant="secondary" className="ml-auto">
+            却下済
+          </Badge>
+        )}
       </header>
 
       {editing ? (
-        <div className="space-y-3 pb-[env(safe-area-inset-bottom)]">
-          <div className="space-y-1.5">
-            <label
-              htmlFor={`candidate-${candidate.id}-question`}
-              className="text-xs font-medium text-muted-foreground"
-            >
-              問題文
-            </label>
-            <textarea
-              id={`candidate-${candidate.id}-question`}
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows={2}
-              className="w-full border rounded-md px-3 py-2 text-base md:text-sm resize-y"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor={`candidate-${candidate.id}-answer`}
-              className="text-xs font-medium text-muted-foreground"
-            >
-              回答
-            </label>
-            <textarea
-              id={`candidate-${candidate.id}-answer`}
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              rows={2}
-              className="w-full border rounded-md px-3 py-2 text-base md:text-sm resize-y"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor={`candidate-${candidate.id}-explanation`}
-              className="text-xs font-medium text-muted-foreground"
-            >
-              補足説明 (任意)
-            </label>
-            <textarea
-              id={`candidate-${candidate.id}-explanation`}
-              value={explanation}
-              onChange={(e) => setExplanation(e.target.value)}
-              rows={3}
-              className="w-full border rounded-md px-3 py-2 text-base md:text-sm resize-y"
-              placeholder="[分野タグ] 自分が思い出しやすい具体例など"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              className="min-h-11"
-              onClick={handleSaveEdit}
-              disabled={updateMutation.isPending}
-            >
-              保存
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="min-h-11"
-              onClick={() => {
-                setQuestion(candidate.question);
-                setAnswer(candidate.answer);
-                setExplanation(candidate.explanation ?? "");
-                setEditing(false);
-              }}
-            >
-              キャンセル
-            </Button>
-          </div>
-        </div>
+        <CandidateCardEditor
+          candidateId={candidate.id}
+          question={question}
+          answer={answer}
+          explanation={explanation}
+          onQuestionChange={setQuestion}
+          onAnswerChange={setAnswer}
+          onExplanationChange={setExplanation}
+          onSave={handleSaveEdit}
+          onCancel={() => {
+            setQuestion(candidate.question);
+            setAnswer(candidate.answer);
+            setExplanation(candidate.explanation ?? "");
+            setEditing(false);
+          }}
+          saving={updateMutation.isPending}
+        />
       ) : (
         <div className="space-y-3">
           {candidate.quality_warnings.length > 0 && (
             <div
-              className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100"
+              className="rounded-lg border border-[var(--bronze)]/40 bg-[var(--bronze-faint)] px-3 py-2 text-xs text-foreground"
               role="alert"
             >
               <p className="font-medium">採用前に確認してください</p>
@@ -334,21 +279,37 @@ export function CandidateCard({
               </ul>
             </div>
           )}
+          {/* 問題文を主役に大きく、回答はその下に控えめに */}
           {candidate.card_type === "cloze_like" ? (
             <p className="knowledge-text text-lg font-medium leading-relaxed">
               <ClozeText text={question} mode="front" />
             </p>
           ) : (
-            <p className="knowledge-text text-lg font-medium leading-relaxed">{question}</p>
+            <p className="knowledge-text text-lg font-medium leading-relaxed">
+              {question}
+            </p>
           )}
-          <p className="knowledge-text text-sm text-muted-foreground">{answer}</p>
+          <p className="knowledge-text border-l-2 border-[var(--forest)]/30 pl-3 text-sm text-muted-foreground">
+            {answer}
+          </p>
           {explanation && (
-            <p className="knowledge-text text-sm text-muted-foreground border-l-2 border-[var(--bronze)]/35 pl-3 whitespace-pre-wrap">
+            <p className="knowledge-text whitespace-pre-wrap border-l-2 border-[var(--bronze)]/35 pl-3 text-sm text-muted-foreground">
               {explanation}
             </p>
           )}
+          {/* メタ情報 (focus type / 信頼度 / AI 判断理由) は控えめに */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {candidate.focus_type && (
+              <Badge variant="secondary">{candidate.focus_type}</Badge>
+            )}
+            {candidate.confidence !== null && (
+              <Badge variant="outline">
+                信頼度 {(candidate.confidence * 100).toFixed(0)}%
+              </Badge>
+            )}
+          </div>
           {candidate.rationale && (
-            <details className="rounded-md bg-[var(--bronze-faint)] px-3 py-2">
+            <details className="rounded-lg bg-[var(--bronze-faint)] px-3 py-2">
               <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
                 AI の判断理由
               </summary>
@@ -362,14 +323,13 @@ export function CandidateCard({
 
       {!isFinal && !editing && (
         <div className="space-y-2 pt-1">
-          <select
+          <NativeSelect
             value={deckId}
             onChange={(e) => {
               const next = e.target.value === "" ? "" : Number(e.target.value);
               setSelectedDeckId(next);
               if (next !== "") onDeckChosen?.(next);
             }}
-            className="w-full border rounded-md px-3 py-2 text-base md:text-sm min-h-11 bg-background max-w-full"
             aria-label="採用先のデッキ"
           >
             <option value="">採用先のデッキを選択</option>
@@ -379,16 +339,17 @@ export function CandidateCard({
                 {truncateDeckName(opt.name)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
+          {/* 採用が primary。SP では親指の届くカード下部に大きく配置 */}
           <Button
             type="button"
-            size="lg"
-            className="min-h-14 w-full rounded-md text-base"
+            size="touch"
+            className="min-h-14 w-full text-base"
             onClick={handleAdopt}
             disabled={!canAdopt || adoptMutation.isPending}
             aria-keyshortcuts="a"
           >
-            <Check className="size-4" aria-hidden />
+            <Check aria-hidden />
             採用して復習に回す
           </Button>
           {deckId === "" && (
@@ -399,38 +360,45 @@ export function CandidateCard({
           <div className="grid grid-cols-2 gap-2">
             <Button
               type="button"
-              size="lg"
+              size="touch"
               variant="outline"
-              className="min-h-11"
               onClick={() => setEditing(true)}
               aria-keyshortcuts="e"
             >
-              <Pencil className="size-4" aria-hidden />
+              <Pencil aria-hidden />
               編集
             </Button>
             <Button
               type="button"
-              size="lg"
-              variant="outline"
-              className="min-h-11 text-destructive"
+              size="touch"
+              variant="ghost"
+              className="text-destructive"
               onClick={handleReject}
               disabled={rejectMutation.isPending}
               aria-keyshortcuts="r"
             >
-              <X className="size-4" aria-hidden />
+              <X aria-hidden />
               却下
             </Button>
           </div>
         </div>
       )}
+
+      {/* 却下済みは取り消し導線を残す (Undo トーストが消えても復帰できる) */}
+      {candidate.status === "rejected" && (
+        <div className="pt-1">
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={handleRestore}
+            disabled={restoreMutation.isPending}
+          >
+            <RotateCcw aria-hidden />
+            却下を取り消す
+          </Button>
+        </div>
+      )}
     </article>
   );
-}
-
-const MAX_DECK_NAME_LENGTH = 28;
-
-function truncateDeckName(name: string): string {
-  return name.length > MAX_DECK_NAME_LENGTH
-    ? name.slice(0, MAX_DECK_NAME_LENGTH) + "…"
-    : name;
 }

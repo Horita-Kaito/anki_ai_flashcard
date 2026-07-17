@@ -11,7 +11,7 @@ export default function NewNotePage() {
     <PageShell
       title="メモを書く"
       description="授業・読書・調査中の断片を残し、そのままカード候補に変換します。"
-      maxWidth="2xl"
+      maxWidth="4xl"
     >
       <NewNotePageClient />
     </PageShell>

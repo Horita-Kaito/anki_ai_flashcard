@@ -1,28 +1,23 @@
 import Link from "next/link";
-import { StickyNote, Plus } from "lucide-react";
+import { NotebookPen, Plus } from "lucide-react";
 import { buttonVariants } from "@/shared/ui/button";
+import { EmptyState } from "@/shared/ui/empty-state";
 
 export function NoteSeedListEmpty() {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 border border-dashed rounded-xl p-8 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <StickyNote className="size-6 text-muted-foreground" aria-hidden />
-      </div>
-      <div className="space-y-1">
-        <p className="font-medium">まだメモがありません</p>
-        <p className="text-sm text-muted-foreground">
-          学習中に気になった断片を短いメモとして残しましょう。
-          <br />
-          AI があとでカード候補に変換します。
-        </p>
-      </div>
-      <Link
-        href="/notes/new"
-        className={`${buttonVariants({ size: "lg" })} min-h-11`}
-      >
-        <Plus className="size-4" aria-hidden />
-        最初のメモを書く
-      </Link>
-    </div>
+    <EmptyState
+      icon={<NotebookPen aria-hidden />}
+      title="最初のメモを書いてみましょう"
+      description="学習中に気づいた断片を短く残すと、AI がカード候補を作ります。まずは 1 つだけで大丈夫です。"
+      action={
+        <Link
+          href="/notes/new"
+          className={buttonVariants({ size: "touch" })}
+        >
+          <Plus data-icon="inline-start" />
+          最初のメモを書く
+        </Link>
+      }
+    />
   );
 }

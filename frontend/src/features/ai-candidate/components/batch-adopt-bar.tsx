@@ -8,6 +8,7 @@ import { useDeckList } from "@/entities/deck/api/deck-queries";
 import { buildHierarchicalOptions } from "@/shared/lib/deck-tree";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { NativeSelect } from "@/shared/ui/select";
 
 interface BatchAdoptBarProps {
   candidateIds: number[];
@@ -66,13 +67,13 @@ export function BatchAdoptBar({ candidateIds }: BatchAdoptBarProps) {
           md:p-0 md:inset-x-auto md:bottom-auto
         "
       >
-        <div className="flex items-center gap-2 max-w-3xl mx-auto md:max-w-none">
-          <select
+        <div className="mx-auto flex max-w-3xl items-center gap-2 md:max-w-none">
+          <NativeSelect
             value={deckId}
             onChange={(e) =>
               setDeckId(e.target.value === "" ? "" : Number(e.target.value))
             }
-            className="flex-1 md:flex-none border rounded-md px-2 py-1.5 text-sm md:text-sm min-h-11 md:min-h-9 bg-background min-w-0"
+            wrapperClassName="flex-1 md:flex-none md:w-56 min-w-0"
             aria-label="採用先のデッキ"
           >
             <option value="">デッキ選択</option>
@@ -82,11 +83,10 @@ export function BatchAdoptBar({ candidateIds }: BatchAdoptBarProps) {
                 {truncate(opt.name)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
           <Button
             type="button"
-            size="sm"
-            className="min-h-11 md:min-h-9"
+            size="touch"
             onClick={requestAdopt}
             disabled={batchMutation.isPending || deckId === ""}
           >

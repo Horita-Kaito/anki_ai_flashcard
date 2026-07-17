@@ -15,6 +15,10 @@ import { useDebouncedValue } from "@/shared/hooks/use-debounced-value";
 import { useInfiniteScroll } from "@/shared/hooks/use-infinite-scroll";
 import { Button } from "@/shared/ui/button";
 import { ConfirmDialog } from "@/shared/ui/confirm-dialog";
+import { EmptyState } from "@/shared/ui/empty-state";
+import { ErrorState } from "@/shared/ui/error-state";
+import { Input } from "@/shared/ui/input";
+import { NativeSelect } from "@/shared/ui/select";
 
 const BULK_LIMIT = 10;
 
@@ -126,22 +130,21 @@ export function NoteSeedList() {
             aria-hidden
             className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
           />
-          <input
+          <Input
             type="search"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="メモ本文・学習目的で検索"
-            className="w-full border rounded-md pl-10 pr-3 py-2.5 text-base md:text-sm min-h-11"
+            className="pl-10"
             aria-label="キーワード検索"
           />
         </div>
 
-        <select
+        <NativeSelect
           value={templateId}
           onChange={(e) =>
             setTemplateId(e.target.value === "" ? "" : Number(e.target.value))
           }
-          className="w-full border rounded-md px-3 py-2.5 text-base md:text-sm min-h-11 bg-background"
           aria-label="テンプレートで絞り込み"
         >
           <option value="">すべてのテンプレート</option>
@@ -150,7 +153,7 @@ export function NoteSeedList() {
               {t.name}
             </option>
           ))}
-        </select>
+        </NativeSelect>
 
         <label className="flex items-center gap-2 min-h-11 cursor-pointer select-none">
           <input
@@ -204,24 +207,24 @@ export function NoteSeedList() {
       {isLoading ? (
         <NoteSeedListSkeleton />
       ) : isError ? (
-        <div
-          role="alert"
-          className="border border-destructive/30 bg-destructive/5 rounded-xl p-4 space-y-2"
-        >
-          <p className="font-medium text-destructive">読み込みに失敗しました</p>
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="text-sm underline underline-offset-2 min-h-11"
-          >
-            再試行
-          </button>
-        </div>
+        <ErrorState
+          title="メモを読み込めませんでした"
+          description="通信状態を確認して、もう一度お試しください。"
+          onRetry={() => refetch()}
+        />
       ) : notes.length === 0 ? (
         hasActiveFilter ? (
-          <p className="text-sm text-muted-foreground p-4 text-center">
-            該当するメモが見つかりません
-          </p>
+          <EmptyState
+            icon={<Search aria-hidden />}
+            title="該当するメモが見つかりません"
+            description="検索条件を変えるか、絞り込みをクリアしてください。"
+            action={
+              <Button type="button" variant="outline" size="touch" onClick={resetFilters}>
+                <X data-icon="inline-start" />
+                絞り込みをクリア
+              </Button>
+            }
+          />
         ) : (
           <NoteSeedListEmpty />
         )
