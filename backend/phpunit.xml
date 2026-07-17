@@ -31,6 +31,17 @@
         <env name="DB_CONNECTION" value="sqlite" force="true"/>
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="DB_URL" value=""/>
+        <!--
+            <env> は $_ENV/getenv しか上書きせず、compose がコンテナに注入した
+            DB_CONNECTION=mysql は $_SERVER 側から Laravel に届いてしまう。
+            開発 MySQL に対して RefreshDatabase が走る事故を防ぐため
+            <server> でも強制する (tests/TestCase.php のガードとセット)。
+        -->
+        <server name="DB_CONNECTION" value="sqlite" force="true"/>
+        <server name="DB_DATABASE" value=":memory:" force="true"/>
+        <server name="DB_URL" value="" force="true"/>
+        <server name="DB_HOST" value="" force="true"/>
+        <server name="DB_PORT" value="" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
