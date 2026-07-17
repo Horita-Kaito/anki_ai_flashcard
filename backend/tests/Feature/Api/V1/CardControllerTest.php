@@ -38,6 +38,22 @@ final class CardControllerTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
+    public function test_schedule未作成のカードでもis_archivedはbooleanで返る(): void
+    {
+        $user = User::factory()->create();
+        $deck = Deck::factory()->for($user)->create();
+        Card::factory()->for($user)->for($deck)->create();
+
+        $response = $this->actingAs($user)
+            ->getJson('/api/v1/cards')
+            ->assertOk();
+
+        // whenLoaded は loaded かつ null のリレーションで null を返すため、
+        // schedule 行が無いカードで is_archived: null にならないことを保証する
+        $this->assertNull($response->json('data.0.schedule'));
+        $this->assertSame(false, $response->json('data.0.is_archived'));
+    }
+
     public function test_deck_idで絞り込める(): void
     {
         $user = User::factory()->create();

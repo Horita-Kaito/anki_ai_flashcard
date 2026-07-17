@@ -31,7 +31,11 @@ final class CardResource extends BaseJsonResource
                 'id' => $t->id,
                 'name' => $t->name,
             ])->values()),
-            'is_archived' => $this->whenLoaded('schedule', fn () => $this->schedule?->archived_at !== null, false),
+            // whenLoaded はリレーションがロード済みでも null の場合に null を返すため、
+            // schedule 未作成のカードでも boolean を保証するよう relationLoaded で分岐する
+            'is_archived' => $this->relationLoaded('schedule')
+                ? $this->schedule?->archived_at !== null
+                : false,
             'schedule' => $this->whenLoaded('schedule', fn () => $this->schedule ? [
                 'state' => $this->schedule->state?->value,
                 'repetitions' => $this->schedule->repetitions,
