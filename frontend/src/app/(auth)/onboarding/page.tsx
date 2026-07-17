@@ -2,58 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Code,
-  Languages,
-  Award,
-  Calculator,
-  Briefcase,
-  Lightbulb,
-  Check,
-  Loader2,
-} from "lucide-react";
-import { useCurrentUser } from "@/features/auth";
-import { useOnboardingStatus, useSubmitOnboarding } from "@/features/onboarding";
-import { Button } from "@/shared/ui/button";
+import { Loader2 } from "lucide-react";
 
-const GOALS = [
-  {
-    id: "programming",
-    icon: Code,
-    label: "プログラミング・IT",
-    description: "コード、アルゴリズム、設計パターン",
-  },
-  {
-    id: "language",
-    icon: Languages,
-    label: "英語・語学",
-    description: "単語、文法、リスニング",
-  },
-  {
-    id: "exam",
-    icon: Award,
-    label: "資格試験",
-    description: "試験対策、頻出問題",
-  },
-  {
-    id: "math_science",
-    icon: Calculator,
-    label: "数学・理系",
-    description: "公式、定理、証明",
-  },
-  {
-    id: "business",
-    icon: Briefcase,
-    label: "ビジネス・経営",
-    description: "用語、フレームワーク、戦略",
-  },
-  {
-    id: "other",
-    icon: Lightbulb,
-    label: "その他",
-    description: "自由な学習テーマ",
-  },
-] as const;
+import { useCurrentUser } from "@/features/auth";
+import { OnboardingWizard, useOnboardingStatus } from "@/features/onboarding";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -61,9 +13,13 @@ export default function OnboardingPage() {
   const isAuthenticated = !!user && !authLoading && !authError;
   const { data: onboardingStatus, isLoading: statusLoading } =
     useOnboardingStatus(isAuthenticated);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const submitMutation = useSubmitOnboarding();
   const redirected = useRef(false);
+  // ウィザード途中 (目的送信後) の completed 更新でリダイレクトしないよう、
+  // 初回ロード時点の完了状態だけを判定に使う
+  const [initialCompleted, setInitialCompleted] = useState<boolean | null>(null);
+  if (onboardingStatus && initialCompleted === null) {
+    setInitialCompleted(onboardingStatus.completed);
+  }
 
   useEffect(() => {
     if (redirected.current) return;
@@ -75,124 +31,28 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (redirected.current) return;
-    if (onboardingStatus?.completed) {
+    if (initialCompleted) {
       redirected.current = true;
       router.push("/dashboard");
     }
-  }, [onboardingStatus, router]);
+  }, [initialCompleted, router]);
 
-  if (authLoading || (isAuthenticated && statusLoading)) {
+  if (
+    authLoading ||
+    (isAuthenticated && statusLoading) ||
+    !user ||
+    initialCompleted !== false
+  ) {
     return (
-      <main className="flex-1 flex items-center justify-center">
+      <main className="flex min-h-dvh flex-1 items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </main>
     );
-  }
-
-  if (!user || onboardingStatus?.completed) {
-    return (
-      <main className="flex-1 flex items-center justify-center">
-        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      </main>
-    );
-  }
-
-  function toggleGoal(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  async function handleSubmit() {
-    try {
-      await submitMutation.mutateAsync([...selected]);
-      router.push("/dashboard");
-    } catch {
-      // error state is handled by submitMutation.isError
-    }
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center bg-background p-4 md:p-8 text-foreground">
-      <div className="w-full max-w-lg space-y-8">
-        <header className="space-y-2 text-center">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-            学習目的を教えてください
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            選択に応じて、最適なテンプレートとデッキを用意します（複数選択可）
-          </p>
-        </header>
-
-        <div className="grid grid-cols-2 gap-3">
-          {GOALS.map((goal) => {
-            const isSelected = selected.has(goal.id);
-            const Icon = goal.icon;
-
-            return (
-              <button
-                key={goal.id}
-                type="button"
-                onClick={() => toggleGoal(goal.id)}
-                className={`relative flex flex-col items-start gap-2 rounded-lg border p-4 text-left text-foreground transition-all min-h-[44px] ${
-                  isSelected
-                    ? "border-primary bg-[var(--forest-faint)]"
-                    : "border-border bg-card hover:border-primary/40 hover:bg-[var(--bronze-faint)]"
-                }`}
-              >
-                {isSelected && (
-                  <div className="absolute top-2.5 right-2.5 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <Check className="size-3" />
-                  </div>
-                )}
-                <Icon className="size-6 text-muted-foreground" />
-                <div className="space-y-0.5">
-                  <p className="text-sm font-medium leading-tight">
-                    {goal.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground leading-snug">
-                    {goal.description}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <Button
-          size="lg"
-          className="w-full min-h-11"
-          disabled={selected.size === 0 || submitMutation.isPending}
-          onClick={handleSubmit}
-        >
-          {submitMutation.isPending ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              セットアップ中...
-            </>
-          ) : (
-            "セットアップを開始"
-          )}
-        </Button>
-
-        {selected.size === 0 && !submitMutation.isPending && (
-          <p className="text-sm text-center text-muted-foreground">
-            学習目的を1つ以上選んでください
-          </p>
-        )}
-
-        {submitMutation.isError && (
-          <p role="alert" className="text-sm text-center text-red-600">
-            セットアップに失敗しました。もう一度お試しください。
-          </p>
-        )}
-      </div>
+    <main className="flex min-h-dvh flex-1 items-center justify-center bg-background p-4 py-10 text-foreground md:p-8">
+      <OnboardingWizard userName={user.name} />
     </main>
   );
 }

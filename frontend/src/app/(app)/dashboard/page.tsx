@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrentUser, useLogout } from "@/features/auth";
+import { useCurrentUser } from "@/features/auth";
 import { useOnboardingStatus } from "@/features/onboarding";
 import { DashboardOverview } from "@/features/dashboard";
 import { Button } from "@/shared/ui/button";
@@ -14,7 +14,6 @@ export default function DashboardPage() {
   const isAuthenticated = !!user && !isLoading && !isError;
   const { data: onboardingStatus, isLoading: statusLoading } =
     useOnboardingStatus(isAuthenticated);
-  const logout = useLogout();
 
   const redirected = useRef(false);
 
@@ -54,30 +53,10 @@ export default function DashboardPage() {
     return null;
   }
 
-  async function handleLogout() {
-    try {
-      await logout.mutateAsync();
-    } catch {
-      // ログアウト失敗でもクライアント側のセッションは破棄済み
-    }
-    router.push("/");
-  }
-
   return (
     <PageShell
       title="ダッシュボード"
-      description={`${user.name} さん、おかえりなさい。今日の作成・復習・整理をここから始めます。`}
-      action={
-        <Button
-          variant="outline"
-          size="lg"
-          onClick={handleLogout}
-          disabled={logout.isPending}
-          className="min-h-11"
-        >
-          ログアウト
-        </Button>
-      }
+      description={`${user.name} さん、おかえりなさい。今日やることから始めましょう。`}
     >
       <DashboardOverview />
     </PageShell>
