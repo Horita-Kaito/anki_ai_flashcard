@@ -21,6 +21,7 @@ AI-assisted flashcard app. Users turn learning notes into AI-generated card cand
 - Requirements and phase plan: `docs/requirements.md`, `docs/01_mvp_phases.md`
 - Personas and use cases: `docs/10_personas_use_cases.md`
 - Redesign brief: `docs/11_design_redesign_brief.md`
+- Redesign implementation record: `docs/15_ux_redesign_implementation.md`
 - API contract: `docs/03_api_specification.md`
 - Frontend architecture: `docs/05_frontend_design.md`
 - iOS architecture: `docs/12_ios_design.md`, `docs/13_ios_local_first_architecture.md`
