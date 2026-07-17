@@ -45,10 +45,10 @@ export function ReviewCardFlip({
       tabIndex={0}
       aria-label={showAnswer ? "答え表示中" : "タップして答えを表示"}
       className={`
-        border rounded-lg p-6 md:p-8 bg-card paper-rule
-        cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2
-        focus-visible:ring-ring
-        ${!showAnswer ? "min-h-[50vh] md:min-h-[40vh] flex flex-col" : ""}
+        border rounded-xl p-6 md:p-8 bg-card paper-rule
+        cursor-pointer select-none transition-colors focus-visible:outline-none
+        focus-visible:ring-2 focus-visible:ring-ring
+        ${!showAnswer ? "min-h-[50vh] md:min-h-[42vh] flex flex-col hover:border-primary/30" : ""}
       `}
     >
       <header className="flex items-center gap-2 mb-4 flex-wrap">
@@ -72,7 +72,7 @@ export function ReviewCardFlip({
         }
       >
         <div>
-          <p className="text-xs font-medium text-muted-foreground mb-2">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             問題
           </p>
           {card.card_type === "cloze_like" ? (
@@ -93,7 +93,9 @@ export function ReviewCardFlip({
       {/* 答え (展開) */}
       {showAnswer ? (
         <div className="border-t pt-4 space-y-3">
-          <p className="text-xs font-medium text-muted-foreground">答え</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--forest)]">
+            答え
+          </p>
           {(() => {
             // cloze_like は質問本文側で revealed 表示済みなので、
             // 答え欄は question から導出した正解一覧に置き換える。
